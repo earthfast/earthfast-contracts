@@ -1,0 +1,99 @@
+{
+  "ArmadaToken": {
+    "holders": [
+      {
+        "address": "ArmadaRegistry",
+        "balance": "200.0"
+      },
+      {
+        "address": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+        "balance": "900.0"
+      },
+      {
+        "address": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+        "balance": "900.0"
+      }
+    ]
+  },
+  "ArmadaRegistry": {
+    "version": "",
+    "nonce": "4",
+    "lastEpochLength": "604800",
+    "nextEpochLength": "604800",
+    "cuedEpochLength": "604800",
+    "gracePeriod": "86400",
+    "epochSlot": "0"
+  },
+  "ArmadaNodes": {
+    "topologyCreators": [
+      "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+    ],
+    "nodes": [
+      {
+        "id": "0xb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf6",
+        "operatorId": "0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563",
+        "host": "xx",
+        "region": "xx",
+        "topology": true,
+        "disabled": false,
+        "prices": [
+          "0.0",
+          "0.0"
+        ],
+        "projectIds": [
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000000000000000000000000000"
+        ]
+      },
+      {
+        "id": "0x405787fa12a823e0f2b7631cc41b3ba8828b3321ca811111fa75cd3aa3bb5ace",
+        "operatorId": "0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563",
+        "host": "xx",
+        "region": "xx",
+        "topology": false,
+        "disabled": false,
+        "prices": [
+          "1.0",
+          "1.0"
+        ],
+        "projectIds": [
+          "0xc2575a0e9e593c00f959f8c92f12db2869c3395a3b0502d05e2516446f71f85b",
+          "0xc2575a0e9e593c00f959f8c92f12db2869c3395a3b0502d05e2516446f71f85b"
+        ]
+      }
+    ]
+  },
+  "ArmadaOperators": {
+    "stakePerNode": "1.0",
+    "operators": [
+      {
+        "id": "0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563",
+        "owner": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+        "name": "armada",
+        "email": "@",
+        "stake": "100.0"
+      }
+    ]
+  },
+  "ArmadaProjects": {
+    "projectCreators": [
+      "0x90F79bf6EB2c4f870365E785982E1f101E93b906"
+    ],
+    "projects": [
+      {
+        "id": "0xc2575a0e9e593c00f959f8c92f12db2869c3395a3b0502d05e2516446f71f85b",
+        "owner": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+        "name": "hello-world",
+        "email": "@",
+        "escrow": "100.0",
+        "reserve": "2.0",
+        "content": "",
+        "checksum": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    ]
+  },
+  "ArmadaBilling": {
+    "billingNodeIndex": "0",
+    "renewalNodeIndex": "0"
+  }
+}

@@ -1,0 +1,10 @@
+.DS_Store
+.env
+.openzeppelin/unknown-*.json
+artifacts
+cache
+coverage
+coverage.json
+deployments/hardhat
+deployments/localhost
+node_modules

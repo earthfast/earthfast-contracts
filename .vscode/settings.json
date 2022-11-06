@@ -1,0 +1,11 @@
+{
+    "editor.tabSize": 2,
+    "editor.rulers": [
+      120,
+      200
+    ],
+    "eslint.workingDirectories": [
+      ".",
+    ],
+    "solidity.compileUsingRemoteVersion": "0.8.9"
+}

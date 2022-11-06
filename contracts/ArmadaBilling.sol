@@ -1,0 +1,153 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+
+import "./ArmadaNodes.sol";
+import "./ArmadaProjects.sol";
+import "./ArmadaRegistry.sol";
+import "./ArmadaTypes.sol";
+
+/// @title Entry point for managing node reservations by projects
+contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpgradeable {
+  using EnumerableSet for EnumerableSet.Bytes32Set;
+
+  ArmadaRegistry private _registry;
+
+  uint256 private _billingNodeIndex; // Ensures consistency during incremental reconciliation
+  uint256 private _renewalNodeIndex; // Ensures consistency during incremental reconciliation
+
+  event ReservationCanceled(bytes32 indexed nodeId, bytes32 indexed operatorId, bytes32 indexed projectId, uint256 price);
+  event ReservationResolved(bytes32 indexed nodeId, bytes32 indexed operatorId, bytes32 indexed projectId, uint256 price,
+    uint256 uptime, uint256 payout, uint256 epochStart);
+
+  modifier onlyImpl {
+    require(msg.sender == address(_registry), "not impl");
+    _;
+  }
+
+  modifier onlyAdmin {
+    require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "not admin");
+    _;
+  }
+
+  modifier onlyAdminOrTopologyNode(bytes32 nodeIdOrZero) {
+    if (nodeIdOrZero == 0) {
+      require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "not admin");
+    } else {
+      _registry.getOperators().requireTopologyNode(nodeIdOrZero, msg.sender);
+    }
+    _;
+  }
+
+  modifier whenReconciling() {
+    _registry.requireReconciling();
+    _;
+  }
+
+  /// @dev Called once to set up the contract. Not called during proxy upgrades.
+  function initialize(address[] calldata admins, ArmadaRegistry registry)
+  public initializer {
+    __Context_init();
+    __ERC165_init();
+    __ERC1967Upgrade_init();
+    __AccessControl_init();
+    __Pausable_init();
+    __UUPSUpgradeable_init();
+
+    _registry = registry;
+    for (uint256 i = 0; i < admins.length; ++i) {
+      require(admins[i] != address(0), "zero admin");
+      _grantRole(DEFAULT_ADMIN_ROLE, admins[i]);
+    }
+  }
+
+  /// @dev Reverts if proxy upgrade of this contract by msg.sender is not allowed
+  function _authorizeUpgrade(address) internal virtual override onlyAdmin {}
+
+  /// @dev CAUTION: This can break data consistency. Used for proxy-less upgrades.
+  function unsafeSetRegistry(ArmadaRegistry registry) public virtual onlyAdmin { _registry = registry; }
+
+  function pause() public virtual onlyAdmin { _pause(); }
+  function unpause() public virtual onlyAdmin { _unpause(); }
+
+  function getRegistry() public virtual view returns (ArmadaRegistry) { return _registry; }
+  function getBillingNodeIndex() public virtual view returns (uint256) { return _billingNodeIndex; }
+  function getRenewalNodeIndex() public virtual view returns (uint256) { return _renewalNodeIndex; }
+  function setBillingNodeIndexImpl(uint256 index) public virtual onlyImpl { _billingNodeIndex = index; }
+  function setRenewalNodeIndexImpl(uint256 index) public virtual onlyImpl { _renewalNodeIndex = index; }
+
+  /// @notice Called by the leader topology node to disburse escrow payments to operators.
+  /// @dev This must be called sequentially and fully, for all the nodes in the network.
+  /// @dev See ArmadaRegistry.advanceEpoch() for more details about reconciliation process.
+  /// @param topologyNodeId The topology node calling this function (zero is OK if admin)
+  /// @param nodeIds Content nodes being reported
+  /// @param uptimeBips Uptime of corresponding content node in basis points (1 is 0.01%)
+  function processBilling(bytes32 topologyNodeId, bytes32[] memory nodeIds, uint256[] memory uptimeBips)
+  public virtual onlyAdminOrTopologyNode(topologyNodeId) whenReconciling whenNotPaused {
+    ArmadaNodes allNodes = _registry.getNodes();
+    ArmadaProjects projects = _registry.getProjects();
+    uint256 lastEpoch = _registry.lastEpochSlot();
+    uint256 nextEpoch = _registry.nextEpochSlot();
+    require(_renewalNodeIndex == 0, "renewal in progress");
+    require(_billingNodeIndex < allNodes.getNodeCount(0, false), "billing finished");
+    for (uint256 i = 0; i < nodeIds.length; i++) {
+      ArmadaNode[] memory nodeCopy0 = allNodes.getNodes(0, false, _billingNodeIndex++, 1);
+      ArmadaNode memory nodeCopy = allNodes.getNode(nodeIds[i]);
+      require(nodeCopy.id == nodeCopy0[0].id, "order mismatch");
+      if (nodeCopy.projectIds[lastEpoch] != 0) {
+        bytes32 projectId = nodeCopy.projectIds[lastEpoch];
+        uint256 payout = nodeCopy.prices[lastEpoch] * uptimeBips[i] / 10000;
+        projects.setProjectEscrowImpl(projectId, payout, 0);
+        projects.setProjectReserveImpl(projectId, nodeCopy.prices[lastEpoch], 0);
+        _registry.getOperators().setOperatorStakeImpl(nodeCopy.operatorId, 0, payout);
+        emit ReservationResolved(nodeCopy.id, nodeCopy.operatorId, projectId, nodeCopy.prices[lastEpoch],
+          uptimeBips[i], payout, _registry.getLastEpochStart());
+        if (nodeCopy.projectIds[nextEpoch] != projectId) {
+          assert(_registry.getReservations().removeProjectNodeIdImpl(projectId, nodeCopy.id));
+        }
+      }
+    }
+  }
+
+  /// @notice Called by the leader topology node to roll over reservations between epochs.
+  /// @dev This must be called sequentially and fully, for all the nodes in the network.
+  /// @dev See ArmadaRegistry.advanceEpoch() for more details about reconciliation process.
+  /// @param topologyNodeId The topology node calling this function (zero is OK if admin)
+  /// @param nodeIds Content nodes being reported
+  function processRenewal(bytes32 topologyNodeId, bytes32[] memory nodeIds)
+  public virtual onlyAdminOrTopologyNode(topologyNodeId) whenReconciling whenNotPaused {
+    ArmadaNodes allNodes = _registry.getNodes();
+    ArmadaProjects projects = _registry.getProjects();
+    uint256 lastEpoch = _registry.lastEpochSlot();
+    uint256 nextEpoch = _registry.nextEpochSlot();
+    bool epochLengthChanged = _registry.getCuedEpochLength() != _registry.getLastEpochLength();
+    require(_billingNodeIndex == allNodes.getNodeCount(0, false), "billing in progress");
+    require(_renewalNodeIndex < allNodes.getNodeCount(0, false), "renewal finished");
+    (lastEpoch, nextEpoch) = (nextEpoch, lastEpoch);
+    for (uint256 i = 0; i < nodeIds.length; i++) {
+      allNodes.advanceNodeEpochImpl(nodeIds[i]);
+      ArmadaNode[] memory nodeCopy0 = allNodes.getNodes(0, false, _renewalNodeIndex++, 1);
+      ArmadaNode memory nodeCopy = allNodes.getNode(nodeIds[i]);
+      require(nodeCopy.id == nodeCopy0[0].id, "order mismatch");
+      if (nodeCopy.projectIds[nextEpoch] != 0) {
+        bytes32 projectId = nodeCopy.projectIds[nextEpoch];
+        uint256 nextPrice = nodeCopy.prices[nextEpoch];
+        if (epochLengthChanged) {
+          nextPrice /= _registry.getLastEpochLength();
+          nextPrice *= _registry.getCuedEpochLength();
+        }
+        projects.setProjectReserveImpl(projectId, 0, nextPrice);
+        ArmadaProject memory projectCopy = projects.getProject(projectId);
+        if (projectCopy.escrow < projectCopy.reserve) {
+          allNodes.setNodeProjectImpl(nodeCopy.id, nextEpoch, 0);
+          projects.setProjectReserveImpl(projectId, nextPrice, 0);
+          emit ReservationCanceled(nodeCopy.id, nodeCopy.operatorId, projectId, nodeCopy.prices[lastEpoch]);
+        }
+      }
+    }
+  }
+}

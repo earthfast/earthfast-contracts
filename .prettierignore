@@ -1,0 +1,8 @@
+.vscode
+artifacts
+cache
+coverage*
+data/*
+deployments
+gasReporterOutput.json
+node_modules
