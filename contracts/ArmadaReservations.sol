@@ -238,15 +238,16 @@ contract ArmadaReservations is AccessControlUpgradeable, PausableUpgradeable, UU
     return _projectNodeIds[projectId].length();
   }
 
-  /// @dev Reverts if skip or size are out of bounds
+  /// @dev Truncates the results if skip or size are out of bounds
   function getReservations(bytes32 projectId, uint256 skip, uint256 size)
   public virtual view returns (ArmadaNode[] memory result) {
     ArmadaNodes allNodes = _registry.getNodes();
     EnumerableSet.Bytes32Set storage nodeIds = _projectNodeIds[projectId];
-    uint256 n = Math.min(size, nodeIds.length() - skip);
+    uint256 length = nodeIds.length();
+    uint256 n = Math.min(size, length > skip ? length - skip : 0);
     result = new ArmadaNode[](n);
     for (uint256 i = 0; i < n; i++) {
-      result[i] = allNodes.getNode(nodeIds.at(i));
+      result[i] = allNodes.getNode(nodeIds.at(skip + i));
     }
   }
 }

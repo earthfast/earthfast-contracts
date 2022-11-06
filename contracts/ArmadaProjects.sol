@@ -256,7 +256,7 @@ contract ArmadaProjects is AccessControlUpgradeable, PausableUpgradeable, Reentr
     return _projectIds.length();
   }
 
-  /// @dev Reverts if skip or size are out of bounds
+  /// @dev Truncates the results if skip or size are out of bounds
   function getProjects(uint256 skip, uint256 size)
   public virtual view returns (ArmadaProject[] memory values) {
     uint256 length = _projectIds.length();

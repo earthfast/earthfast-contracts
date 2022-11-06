@@ -234,7 +234,7 @@ contract ArmadaOperators is AccessControlUpgradeable, PausableUpgradeable, Reent
     return _operatorIds.length();
   }
 
-  /// @dev Reverts if skip or size are out of bounds
+  /// @dev Truncates the results if skip or size are out of bounds
   function getOperators(uint256 skip, uint256 size)
   public virtual view returns (ArmadaOperator[] memory values) {
     uint256 length = _operatorIds.length();

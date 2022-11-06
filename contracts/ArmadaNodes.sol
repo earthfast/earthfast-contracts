@@ -258,7 +258,7 @@ contract ArmadaNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUpgra
     return nodeIds.length();
   }
 
-  /// @dev Reverts if skip or size are out of bounds
+  /// @dev Truncates the results if skip or size are out of bounds
   function getNodes(bytes32 operatorIdOrZero, bool topology, uint256 skip, uint256 size)
   public virtual view returns (ArmadaNode[] memory values) {
     EnumerableSet.Bytes32Set storage nodeIds = operatorIdOrZero == 0 ?
