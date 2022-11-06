@@ -4,7 +4,7 @@ import { expect } from "chai";
 import { Result } from "ethers/lib/utils";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine } from "../lib/test";
-import { parseTokens, signers } from "../lib/util";
+import { approve, parseTokens, signers } from "../lib/util";
 import { ArmadaBilling } from "../typechain-types/contracts/ArmadaBilling";
 import { ArmadaCreateNodeDataStruct, ArmadaNodes } from "../typechain-types/contracts/ArmadaNodes";
 import { ArmadaOperators } from "../typechain-types/contracts/ArmadaOperators";
@@ -50,9 +50,8 @@ describe("Benchmark", function () {
     // Create operator
     const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o", "e"));
     const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
-    expect(await token.connect(admin).transfer(operator.address, parseTokens("100"))).to.be.ok;
-    expect(await token.connect(operator).approve(operators.address, parseTokens("100"))).to.be.ok;
-    expect(await operators.connect(operator).depositOperatorStake(operatorId, parseTokens("100"))).to.be.ok;
+    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
     // Create topology node
     expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
@@ -72,9 +71,8 @@ describe("Benchmark", function () {
     const p: ArmadaCreateProjectDataStruct = { name: "p", owner: project.address, email: "e", content: "c", checksum: HashZero };
     const createProject = await expectReceipt(projects.connect(project).createProject(p));
     const [projectId] = await expectEvent(createProject, projects, "ProjectCreated");
-    expect(await token.connect(admin).transfer(project.address, parseTokens("1"))).to.be.ok;
-    expect(await token.connect(project).approve(projects.address, parseTokens("1"))).to.be.ok;
-    expect(await projects.connect(project).depositProjectEscrow(projectId, parseTokens("1"))).to.be.ok;
+    const projectsPermit = await approve(hre, token, admin.address, projects.address, parseTokens("1"));
+    expect(await projects.connect(admin).depositProjectEscrow(projectId, parseTokens("1"), ...projectsPermit)).to.be.ok;
 
     // Create reservations
     const prices = (nodeIds as []).map(() => 1);

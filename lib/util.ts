@@ -1,19 +1,51 @@
 import { promises as fs } from "fs";
 import { TransactionReceipt, TransactionResponse } from "@ethersproject/abstract-provider";
+import { TypedDataSigner } from "@ethersproject/abstract-signer";
 import { Zero } from "@ethersproject/constants";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import * as ethutil from "ethereumjs-util";
 import * as ethwallet from "ethereumjs-wallet";
-import { BigNumber, BigNumberish, Contract } from "ethers";
+import { BigNumber, BigNumberish, Contract, ethers, TypedDataField } from "ethers";
 import { formatUnits, Interface, parseUnits, Result } from "ethers/lib/utils";
 import { HardhatRuntimeEnvironment, Libraries } from "hardhat/types";
 import { keyIn } from "readline-sync";
+
+// @ts-ignore Type created during hardhat compile
+type ERC20Permit = import("../typechain-types").ERC20Permit;
 
 export const stringify = (value: any): string => JSON.stringify(value, null, 2);
 export const parseTokens = (value: string): BigNumber => parseUnits(value, 18);
 export const formatTokens = (value: BigNumberish): string => formatUnits(value, 18);
 export const toHexString = (value: number): string => `0x${value.toString(16)}`;
 export const coverage = (hre: HardhatRuntimeEnvironment): boolean => (hre as any).__SOLIDITY_COVERAGE_RUNNING === true;
+
+export const Permit: Record<string, Array<TypedDataField>> = {
+  Permit: [
+    { name: "owner", type: "address" },
+    { name: "spender", type: "address" },
+    { name: "value", type: "uint256" },
+    { name: "nonce", type: "uint256" },
+    { name: "deadline", type: "uint256" },
+  ],
+};
+
+export async function approve(
+  hre: HardhatRuntimeEnvironment,
+  token: ERC20Permit,
+  owner: string,
+  spender: string,
+  value: BigNumber
+): Promise<[number, number, string, string]> {
+  const chainId = await hre.getChainId();
+  const deadline = Math.floor(Date.now() / 1000) + 3600;
+  const nonce = await token.nonces(owner);
+  const domain = { name: await token.name(), version: "1", chainId, verifyingContract: token.address };
+  const values = { owner, spender, value, nonce, deadline };
+  const signer = await hre.ethers.getSigner(owner);
+  const signature = await (signer as unknown as TypedDataSigner)._signTypedData(domain, Permit, values);
+  const sig = ethers.utils.splitSignature(signature);
+  return [deadline, sig.v, sig.r, sig.s];
+}
 
 export async function signers(hre: HardhatRuntimeEnvironment): Promise<{
   deployer: SignerWithAddress;

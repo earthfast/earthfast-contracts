@@ -4,7 +4,7 @@ import { expect } from "chai";
 import { Result } from "ethers/lib/utils";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine } from "../lib/test";
-import { parseTokens, signers } from "../lib/util";
+import { approve, parseTokens, signers } from "../lib/util";
 import { ArmadaBilling } from "../typechain-types/contracts/ArmadaBilling";
 import { ArmadaCreateNodeDataStruct, ArmadaNodes } from "../typechain-types/contracts/ArmadaNodes";
 import { ArmadaOperators, ArmadaOperatorStruct } from "../typechain-types/contracts/ArmadaOperators";
@@ -81,8 +81,8 @@ describe("ArmadaRegistry", function () {
     const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     const [operatorId1] = await expectEvent(createOperator1, operators, "OperatorCreated");
-    expect(await token.connect(admin).approve(operators.address, parseTokens("100"))).to.be.ok;
-    expect(await operators.connect(admin).depositOperatorStake(operatorId1, parseTokens("100"))).to.be.ok;
+    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    expect(await operators.connect(admin).depositOperatorStake(operatorId1, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
     // Create topology node
     expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;

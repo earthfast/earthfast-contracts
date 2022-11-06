@@ -88,7 +88,7 @@ export interface ArmadaProjectsInterface extends utils.Interface {
     "PROJECT_CREATOR_ROLE()": FunctionFragment;
     "createProject((address,string,string,string,bytes32))": FunctionFragment;
     "deleteProject(bytes32)": FunctionFragment;
-    "depositProjectEscrow(bytes32,uint256)": FunctionFragment;
+    "depositProjectEscrow(bytes32,uint256,uint256,uint8,bytes32,bytes32)": FunctionFragment;
     "getProject(bytes32)": FunctionFragment;
     "getProjectCount()": FunctionFragment;
     "getProjects(uint256,uint256)": FunctionFragment;
@@ -113,7 +113,7 @@ export interface ArmadaProjectsInterface extends utils.Interface {
     "unsafeSetRegistry(address)": FunctionFragment;
     "upgradeTo(address)": FunctionFragment;
     "upgradeToAndCall(address,bytes)": FunctionFragment;
-    "withdrawProjectEscrow(bytes32,uint256)": FunctionFragment;
+    "withdrawProjectEscrow(bytes32,uint256,address)": FunctionFragment;
   };
 
   getFunction(
@@ -173,7 +173,14 @@ export interface ArmadaProjectsInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "depositProjectEscrow",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BigNumberish>]
+    values: [
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BytesLike>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "getProject",
@@ -288,7 +295,11 @@ export interface ArmadaProjectsInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawProjectEscrow",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BigNumberish>]
+    values: [
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>
+    ]
   ): string;
 
   decodeFunctionResult(
@@ -642,6 +653,10 @@ export interface ArmadaProjects extends BaseContract {
     depositProjectEscrow(
       projectId: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -775,6 +790,7 @@ export interface ArmadaProjects extends BaseContract {
     withdrawProjectEscrow(
       projectId: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
+      to: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
@@ -798,6 +814,10 @@ export interface ArmadaProjects extends BaseContract {
   depositProjectEscrow(
     projectId: PromiseOrValue<BytesLike>,
     amount: PromiseOrValue<BigNumberish>,
+    deadline: PromiseOrValue<BigNumberish>,
+    v: PromiseOrValue<BigNumberish>,
+    r: PromiseOrValue<BytesLike>,
+    s: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -929,6 +949,7 @@ export interface ArmadaProjects extends BaseContract {
   withdrawProjectEscrow(
     projectId: PromiseOrValue<BytesLike>,
     amount: PromiseOrValue<BigNumberish>,
+    to: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -952,6 +973,10 @@ export interface ArmadaProjects extends BaseContract {
     depositProjectEscrow(
       projectId: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1079,6 +1104,7 @@ export interface ArmadaProjects extends BaseContract {
     withdrawProjectEscrow(
       projectId: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
+      to: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -1256,6 +1282,10 @@ export interface ArmadaProjects extends BaseContract {
     depositProjectEscrow(
       projectId: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1387,6 +1417,7 @@ export interface ArmadaProjects extends BaseContract {
     withdrawProjectEscrow(
       projectId: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
+      to: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -1415,6 +1446,10 @@ export interface ArmadaProjects extends BaseContract {
     depositProjectEscrow(
       projectId: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1546,6 +1581,7 @@ export interface ArmadaProjects extends BaseContract {
     withdrawProjectEscrow(
       projectId: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
+      to: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

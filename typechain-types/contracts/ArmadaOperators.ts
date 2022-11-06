@@ -56,7 +56,7 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
     "IMPORTER_ROLE()": FunctionFragment;
     "createOperator(address,string,string)": FunctionFragment;
     "deleteOperator(bytes32)": FunctionFragment;
-    "depositOperatorStake(bytes32,uint256)": FunctionFragment;
+    "depositOperatorStake(bytes32,uint256,uint256,uint8,bytes32,bytes32)": FunctionFragment;
     "getOperator(bytes32)": FunctionFragment;
     "getOperatorCount()": FunctionFragment;
     "getOperators(uint256,uint256)": FunctionFragment;
@@ -82,7 +82,7 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
     "unsafeSetRegistry(address)": FunctionFragment;
     "upgradeTo(address)": FunctionFragment;
     "upgradeToAndCall(address,bytes)": FunctionFragment;
-    "withdrawOperatorStake(bytes32,uint256)": FunctionFragment;
+    "withdrawOperatorStake(bytes32,uint256,address)": FunctionFragment;
   };
 
   getFunction(
@@ -142,7 +142,14 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "depositOperatorStake",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BigNumberish>]
+    values: [
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BytesLike>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "getOperator",
@@ -250,7 +257,11 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawOperatorStake",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BigNumberish>]
+    values: [
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>
+    ]
   ): string;
 
   decodeFunctionResult(
@@ -586,6 +597,10 @@ export interface ArmadaOperators extends BaseContract {
     depositOperatorStake(
       operatorId: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -718,6 +733,7 @@ export interface ArmadaOperators extends BaseContract {
     withdrawOperatorStake(
       operatorId: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
+      to: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
@@ -741,6 +757,10 @@ export interface ArmadaOperators extends BaseContract {
   depositOperatorStake(
     operatorId: PromiseOrValue<BytesLike>,
     amount: PromiseOrValue<BigNumberish>,
+    deadline: PromiseOrValue<BigNumberish>,
+    v: PromiseOrValue<BigNumberish>,
+    r: PromiseOrValue<BytesLike>,
+    s: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -871,6 +891,7 @@ export interface ArmadaOperators extends BaseContract {
   withdrawOperatorStake(
     operatorId: PromiseOrValue<BytesLike>,
     amount: PromiseOrValue<BigNumberish>,
+    to: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -894,6 +915,10 @@ export interface ArmadaOperators extends BaseContract {
     depositOperatorStake(
       operatorId: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1020,6 +1045,7 @@ export interface ArmadaOperators extends BaseContract {
     withdrawOperatorStake(
       operatorId: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
+      to: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -1174,6 +1200,10 @@ export interface ArmadaOperators extends BaseContract {
     depositOperatorStake(
       operatorId: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1304,6 +1334,7 @@ export interface ArmadaOperators extends BaseContract {
     withdrawOperatorStake(
       operatorId: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
+      to: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -1330,6 +1361,10 @@ export interface ArmadaOperators extends BaseContract {
     depositOperatorStake(
       operatorId: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1460,6 +1495,7 @@ export interface ArmadaOperators extends BaseContract {
     withdrawOperatorStake(
       operatorId: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
+      to: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

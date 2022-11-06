@@ -197,18 +197,19 @@ contract ArmadaOperators is AccessControlUpgradeable, PausableUpgradeable, Reent
   /// @notice Transfers tokens into the contract and applies them toward given operator stake.
   /// @dev Requires token allowance for the corresponding amount from msg.sender to ArmadaOperators.
   /// @dev CAUTION: To avoid loss of funds, do NOT deposit to this contract by token.transfer().
-  function depositOperatorStake(bytes32 operatorId, uint256 amount)
+  function depositOperatorStake(bytes32 operatorId, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
   public virtual whenNotPaused {
     ArmadaOperator storage operator = _operators[operatorId];
     require(operator.id != 0, "unknown operator");
     uint256 oldStake = operator.stake;
     operator.stake += amount;
+    _registry.getToken().permit(msg.sender, address(this), amount, deadline, v, r, s);
     _registry.getToken().transferFrom(msg.sender, address(_registry), amount);
     emit OperatorStakeChanged(operatorId, oldStake, operator.stake);
   }
 
-  /// @notice Transfers stake from contract to operator owner. Reverts if stake is locked.
-  function withdrawOperatorStake(bytes32 operatorId, uint256 amount)
+  /// @notice Transfers stake from contract to given recipient. Reverts if stake is locked.
+  function withdrawOperatorStake(bytes32 operatorId, uint256 amount, address to)
   public virtual nonReentrant onlyOperator(operatorId) whenNotReconciling whenNotPaused {
     ArmadaOperator storage operator = _operators[operatorId];
     assert(operator.id != 0); // Impossible because of onlyOperator
@@ -217,7 +218,7 @@ contract ArmadaOperators is AccessControlUpgradeable, PausableUpgradeable, Reent
     require(operator.stake - amount >= lockedStake, "not enough stake");
     uint256 oldStake = operator.stake;
     operator.stake -= amount;
-    _registry.getToken().transferFrom(address(_registry), operator.owner, amount);
+    _registry.getToken().transferFrom(address(_registry), to, amount);
     emit OperatorStakeChanged(operatorId, oldStake, operator.stake);
   }
 

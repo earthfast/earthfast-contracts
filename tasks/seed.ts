@@ -1,6 +1,6 @@
 import { HashZero } from "@ethersproject/constants";
 import { task } from "hardhat/config";
-import { attach, decodeEvent, parseTokens, signers, wait } from "../lib/util";
+import { approve, attach, decodeEvent, parseTokens, signers, wait } from "../lib/util";
 
 // @ts-ignore Type created during hardhat compile
 type ArmadaToken = import("../typechain-types").Token;
@@ -46,8 +46,8 @@ task("seed", "Uploads dummy programmatic contract data").setAction(async (_args,
   const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "", stake: 0 };
   const createOperator1 = await wait(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
   const [operatorId1] = await decodeEvent(createOperator1, operators, "OperatorCreated");
-  await wait(token.connect(admin).approve(operators.address, parseTokens("100")));
-  await wait(operators.connect(admin).depositOperatorStake(operatorId1, parseTokens("100")));
+  const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+  await wait(operators.connect(admin).depositOperatorStake(operatorId1, parseTokens("100"), ...operatorsPermit));
 
   // Create nodes
   await wait(nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address));
@@ -62,8 +62,8 @@ task("seed", "Uploads dummy programmatic contract data").setAction(async (_args,
   const p1: ArmadaCreateProjectDataStruct = { owner: project.address, name: "p1", email: "", content: "", checksum: HashZero }; // prettier-ignore
   const createProject1 = await wait(projects.connect(project).createProject(p1));
   const [projectId1] = await decodeEvent(createProject1, projects, "ProjectCreated");
-  await wait(token.connect(admin).approve(projects.address, parseTokens("100")));
-  await wait(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100")));
+  const projectsPermit = await approve(hre, token, admin.address, projects.address, parseTokens("100"));
+  await wait(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), ...projectsPermit));
 
   // Create reservation
   await wait(reservations.connect(project).createReservations(projectId1, [nodeId2], [price1], { last: false, next: true })); // prettier-ignore

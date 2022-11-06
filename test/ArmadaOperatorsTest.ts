@@ -5,7 +5,7 @@ import shallowDeepEqual from "chai-shallow-deep-equal";
 import { Result } from "ethers/lib/utils";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, newId } from "../lib/test";
-import { parseTokens, signers } from "../lib/util";
+import { approve, parseTokens, signers } from "../lib/util";
 import { ArmadaCreateNodeDataStruct, ArmadaNodes } from "../typechain-types/contracts/ArmadaNodes";
 import { ArmadaOperators, ArmadaOperatorStruct } from "../typechain-types/contracts/ArmadaOperators";
 import { ArmadaRegistry } from "../typechain-types/contracts/ArmadaRegistry";
@@ -67,9 +67,8 @@ describe("ArmadaOperators", function () {
     const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
 
     // Deposit stake
-    expect(await token.connect(admin).transfer(operator.address, parseTokens("100"))).to.be.ok;
-    expect(await token.connect(operator).approve(operators.address, parseTokens("100"))).to.be.ok;
-    expect(await operators.connect(operator).depositOperatorStake(operatorId, parseTokens("100"))).to.be.ok;
+    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
     // Grant creator role
     expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
@@ -201,10 +200,9 @@ describe("ArmadaOperators", function () {
     await expect(nodes.connect(operator).createNodes(o1.id, false, [n1, n2])).to.be.revertedWith("not enough stake");
 
     // Deposit stake
-    expect(await token.connect(admin).transfer(operator.address, parseTokens("100"))).to.be.ok;
-    expect(await token.connect(operator).approve(operators.address, parseTokens("100"))).to.be.ok;
-    await expect(operators.connect(operator).depositOperatorStake(HashZero, parseTokens("100"))).to.be.revertedWith("unknown operator");
-    expect(await operators.connect(operator).depositOperatorStake(o1.id, parseTokens("100"))).to.be.ok;
+    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    await expect(operators.connect(admin).depositOperatorStake(HashZero, parseTokens("100"), ...operatorsPermit)).to.be.revertedWith("unknown operator");
+    expect(await operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), ...operatorsPermit)).to.be.ok;
     expect(await token.connect(admin).balanceOf(operator.address)).to.equal(parseTokens("0"));
     expect(await token.connect(admin).balanceOf(registry.address)).to.equal(parseTokens("100"));
     expect((await operators.getOperator(o1.id)).stake).to.equal(parseTokens("100"));
@@ -218,14 +216,14 @@ describe("ArmadaOperators", function () {
     expect(nodeId2).to.not.equal(HashZero);
 
     // Withdraw stake with nodes
-    await expect(operators.withdrawOperatorStake(o1.id, parseTokens("100"))).to.be.revertedWith("not operator");
-    await expect(operators.connect(operator).withdrawOperatorStake(HashZero, parseTokens("100"))).to.be.revertedWith("unknown operator");
-    await expect(operators.connect(operator).withdrawOperatorStake(o1.id, parseTokens("100"))).to.be.revertedWith("not enough stake");
-    expect(await operators.connect(operator).withdrawOperatorStake(o1.id, parseTokens("98"))).to.be.ok;
+    await expect(operators.withdrawOperatorStake(o1.id, parseTokens("100"), operator.address)).to.be.revertedWith("not operator");
+    await expect(operators.connect(operator).withdrawOperatorStake(HashZero, parseTokens("100"), operator.address)).to.be.revertedWith("unknown operator");
+    await expect(operators.connect(operator).withdrawOperatorStake(o1.id, parseTokens("100"), operator.address)).to.be.revertedWith("not enough stake");
+    expect(await operators.connect(operator).withdrawOperatorStake(o1.id, parseTokens("98"), operator.address)).to.be.ok;
     expect(await token.connect(admin).balanceOf(operator.address)).to.equal(parseTokens("98"));
     expect(await token.connect(admin).balanceOf(registry.address)).to.equal(parseTokens("2"));
     expect((await operators.getOperator(o1.id)).stake).to.equal(parseTokens("2"));
-    await expect(operators.connect(operator).withdrawOperatorStake(o1.id, parseTokens("2"))).to.be.revertedWith("not enough stake");
+    await expect(operators.connect(operator).withdrawOperatorStake(o1.id, parseTokens("2"), operator.address)).to.be.revertedWith("not enough stake");
 
     // Delete operator with nodes
     await expect(operators.connect(admin).deleteOperator(o1.id)).to.be.revertedWith("operator has nodes");
@@ -243,7 +241,7 @@ describe("ArmadaOperators", function () {
     await expect(operators.connect(admin).deleteOperator(o1.id)).to.be.revertedWith("operator has stake");
 
     // Withdraw stake
-    expect(await operators.connect(operator).withdrawOperatorStake(o1.id, parseTokens("2"))).to.be.ok;
+    expect(await operators.connect(operator).withdrawOperatorStake(o1.id, parseTokens("2"), operator.address)).to.be.ok;
     expect(await token.connect(admin).balanceOf(operator.address)).to.equal(parseTokens("100"));
     expect(await token.connect(admin).balanceOf(registry.address)).to.equal(parseTokens("0"));
     expect((await operators.getOperator(o1.id)).stake).to.equal(parseTokens("0"));

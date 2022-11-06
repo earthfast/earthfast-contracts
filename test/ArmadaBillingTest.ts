@@ -6,7 +6,7 @@ import { BigNumber } from "ethers";
 import { Result } from "ethers/lib/utils";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine, mineWith } from "../lib/test";
-import { formatTokens, parseTokens, signers } from "../lib/util";
+import { approve, formatTokens, parseTokens, signers } from "../lib/util";
 import { ArmadaBilling } from "../typechain-types/contracts/ArmadaBilling";
 import { ArmadaCreateNodeDataStruct, ArmadaNodes } from "../typechain-types/contracts/ArmadaNodes";
 import { ArmadaOperators, ArmadaOperatorStruct } from "../typechain-types/contracts/ArmadaOperators";
@@ -66,8 +66,8 @@ describe("ArmadaBilling", function () {
     const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     [operatorId1] = await expectEvent(createOperator1, operators, "OperatorCreated");
-    expect(await token.connect(admin).approve(operators.address, parseTokens("100"))).to.be.ok;
-    expect(await operators.connect(admin).depositOperatorStake(operatorId1, parseTokens("100"))).to.be.ok;
+    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    expect(await operators.connect(admin).depositOperatorStake(operatorId1, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
     // Create topology node
     expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
@@ -88,8 +88,8 @@ describe("ArmadaBilling", function () {
     const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    expect(await token.connect(admin).approve(projects.address, parseTokens("100"))).to.be.ok;
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"))).to.be.ok;
+    const projectsPermit = await approve(hre, token, admin.address, projects.address, parseTokens("100"));
+    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), ...projectsPermit)).to.be.ok;
 
     // Jump to the next epoch start and mark the previous epoch as reconciled,
     // and force align epoch start to a multiple of epochLength for convenience.
@@ -247,7 +247,7 @@ describe("ArmadaBilling", function () {
   });
 
   it("Should auto-release nodes if project runs out of escrow", async function () {
-    await mineWith(hre, async () => expect(await projects.connect(project).withdrawProjectEscrow(projectId1, price.mul(94))).to.be.ok);
+    await mineWith(hre, async () => expect(await projects.connect(project).withdrawProjectEscrow(projectId1, price.mul(94), project.address)).to.be.ok);
 
     const proratedPrice = pricePerSec.mul(await epochRemainder());
     expect(Number.parseFloat(formatTokens(proratedPrice))).to.be.equal(0.99);
@@ -368,7 +368,7 @@ describe("ArmadaBilling", function () {
   });
 
   it("Should decrease epoch duration", async function () {
-    expect(await projects.connect(project).withdrawProjectEscrow(projectId1, parseTokens("95.5"))).to.be.ok;
+    expect(await projects.connect(project).withdrawProjectEscrow(projectId1, parseTokens("95.5"), project.address)).to.be.ok;
     await mineWith(hre, async () => expect(await registry.connect(admin).setCuedEpochLength(epochLength / 2)).to.be.ok);
 
     const proratedPrice = pricePerSec.mul(await epochRemainder());

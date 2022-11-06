@@ -221,25 +221,26 @@ contract ArmadaProjects is AccessControlUpgradeable, PausableUpgradeable, Reentr
   /// @notice Transfers tokens into the contract and applies them toward given operator stake.
   /// @dev Requires token allowance for the corresponding amount from msg.sender to ArmadaProjects.
   /// @dev CAUTION: To avoid loss of funds, do NOT deposit to this contract by token.transfer().
-  function depositProjectEscrow(bytes32 projectId, uint256 amount)
+  function depositProjectEscrow(bytes32 projectId, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
   public virtual whenNotPaused {
     ArmadaProject storage project = _projects[projectId];
     require(project.id != 0, "unknown project");
     uint256 oldEscrow = project.escrow;
     project.escrow += amount;
+    _registry.getToken().permit(msg.sender, address(this), amount, deadline, v, r, s);
     _registry.getToken().transferFrom(msg.sender, address(_registry), amount);
     emit ProjectEscrowChanged(projectId, oldEscrow, project.escrow);
   }
 
-  /// @notice Transfers escrow from contract to project owner. Reverts if escrow is reserved.
-  function withdrawProjectEscrow(bytes32 projectId, uint256 amount)
+  /// @notice Transfers escrow from contract to given recipient. Reverts if escrow is reserved.
+  function withdrawProjectEscrow(bytes32 projectId, uint256 amount, address to)
   public virtual nonReentrant onlyProjectOwner(projectId) whenNotReconciling whenNotPaused {
     ArmadaProject storage project = _projects[projectId];
     assert(project.id != 0); // Impossible because of onlyProjectOwner
     require(project.escrow >= project.reserve + amount, "not enough escrow");
     uint256 oldEscrow = project.escrow;
     project.escrow -= amount;
-    _registry.getToken().transferFrom(address(_registry), project.owner, amount);
+    _registry.getToken().transferFrom(address(_registry), to, amount);
     emit ProjectEscrowChanged(projectId, oldEscrow, project.escrow);
   }
 
