@@ -99,6 +99,7 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
       ArmadaNode[] memory nodeCopy0 = allNodes.getNodes(0, false, _billingNodeIndex++, 1);
       ArmadaNode memory nodeCopy = allNodes.getNode(nodeIds[i]);
       require(nodeCopy.id == nodeCopy0[0].id, "order mismatch");
+      require(uptimeBips[i] <= 10000, "invalid uptime");
       if (nodeCopy.projectIds[lastEpoch] != 0) {
         bytes32 projectId = nodeCopy.projectIds[lastEpoch];
         uint256 payout = nodeCopy.prices[lastEpoch] * uptimeBips[i] / 10000;

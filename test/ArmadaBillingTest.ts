@@ -176,6 +176,13 @@ describe("ArmadaBilling", function () {
     await expect(billing.connect(admin).processRenewal(HashZero, [nodeId2, nodeId1])).to.be.revertedWith("order mismatch");
   });
 
+  it("Should check node uptime bounds", async function () {
+    await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
+    await mine(hre, epochLength);
+    await expect(billing.connect(admin).processBilling(HashZero, [nodeId1, nodeId2], [10001, 10001])).to.be.revertedWith("invalid uptime");
+    expect(await billing.connect(admin).processBilling(HashZero, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+  });
+
   it("Should allow admin to unsafe set registry", async function () {
     // check current registry
     expect(await billing.getRegistry()).to.equal(registry.address);
