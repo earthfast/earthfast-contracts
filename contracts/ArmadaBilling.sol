@@ -129,7 +129,6 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
     require(_billingNodeIndex == allNodes.getNodeCount(0, false), "billing in progress");
     require(_renewalNodeIndex < allNodes.getNodeCount(0, false), "renewal finished");
     bool epochLengthChanged = _registry.getNextEpochLength() != _registry.getCuedEpochLength();
-    (lastEpoch, nextEpoch) = (nextEpoch, lastEpoch);
     for (uint256 i = 0; i < nodeIds.length; i++) {
       allNodes.advanceNodeEpochImpl(nodeIds[i]);
       ArmadaNode[] memory nodeCopy0 = allNodes.getNodes(0, false, _renewalNodeIndex++, 1);

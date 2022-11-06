@@ -212,7 +212,6 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
     require(_billing.getRenewalNodeIndex() == nodeCount, "renewal in progress");
     _billing.setBillingNodeIndexImpl(0);
     _billing.setRenewalNodeIndexImpl(0);
-    _epochSlot = (_epochSlot + 1) % 2;
     _lastEpochStart += _lastEpochLength;
     _lastEpochLength = _nextEpochLength;
     _nextEpochLength = _cuedEpochLength;
