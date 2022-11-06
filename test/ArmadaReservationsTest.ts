@@ -181,6 +181,28 @@ describe("ArmadaReservations", function () {
     expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(0));
   });
 
+  it("Should restore this epoch price to next epoch price if releasing node as admin", async function () {
+    expect(await nodes.connect(operator).setNodePrices(operatorId1, [nodeId1], [price], { last: true, next: false })).to.be.ok;
+    expect(await nodes.connect(operator).setNodePrices(operatorId1, [nodeId1], [price.mul(2)], { last: false, next: true })).to.be.ok;
+
+    const proratedPrice1 = pricePerSec.mul(await epochRemainder());
+    expect(proratedPrice1.lt(price));
+    expect(await reservations.connect(project).createReservations(projectId1, [nodeId1], [price], { last: true, next: false })).to.be.ok;
+    expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice1);
+    expect(await reservations.connect(admin).deleteReservations(projectId1, [nodeId1], { last: true, next: false })).to.be.ok;
+    expect((await projects.getProject(projectId1)).reserve).to.equal(0);
+
+    await mine(hre, epochLength);
+    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+
+    const proratedPrice2 = pricePerSec.mul(2).mul(await epochRemainder());
+    expect(proratedPrice2.gt(price));
+    expect(await reservations.connect(project).createReservations(projectId1, [nodeId1], [price.mul(2)], { last: true, next: false })).to.be.ok;
+    expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice2);
+  });
+
   it("Should delete reservation in current epoch only if admin", async function () {
     await expect(reservations.connect(project).deleteReservations(projectId1, [nodeId1, nodeId2], { last: true, next: true })).to.be.revertedWith("not admin");
     expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok;

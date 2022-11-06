@@ -181,7 +181,10 @@ contract ArmadaReservations is AccessControlUpgradeable, PausableUpgradeable, UU
   /// Project owner can use slot.next to schedule reservation to be deleted in the next epoch.
   /// Admin can additionally use slot.last to immediately delete reservation in the current epoch.
   /// The latter is an emergency mechanism. As a side effect, the project won't be billed for the
-  /// node usage in the epoch so far, and the operator won't be credited for providing their node.
+  /// node usage in the epoch so far, and the operator won't be credited for providing this node.
+  /// Moreover, the current epoch price of the released node will be set to its next epoch price,
+  /// so if there was a price change scheduled by the operator, it will be accelerated to happen
+  /// in this epoch.
   function deleteReservations(bytes32 projectId, bytes32[] memory nodeIds, ArmadaSlot calldata slot)
   public virtual onlyAdminOrProjectOwner(projectId) whenNotReconciling whenNotPaused {
     require(slot.last || slot.next, "no slot");
@@ -211,7 +214,9 @@ contract ArmadaReservations is AccessControlUpgradeable, PausableUpgradeable, UU
     uint256 nextPrice = 0;
     if (slot.last) {
       lastPrice = nodeCopy.prices[lastEpoch];
+      nextPrice = nodeCopy.prices[nextEpoch];
       require(nodeCopy.projectIds[lastEpoch] == projectId, "node not reserved");
+      _registry.getNodes().setNodePriceImpl(nodeCopy.id, lastEpoch, nextPrice);
       _registry.getNodes().setNodeProjectImpl(nodeCopy.id, lastEpoch, 0);
       _registry.getProjects().setProjectReserveImpl(projectId, lastPrice, 0);
       if (nodeCopy.projectIds[nextEpoch] != projectId) {
