@@ -274,34 +274,177 @@ describe("ArmadaBilling", function () {
     expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(0));
   });
 
-  it("Should change epoch duration", async function () {
+  it("Should increase epoch duration", async function () {
     await mineWith(hre, async () => expect(await registry.connect(admin).setCuedEpochLength(epochLength * 2)).to.be.ok);
 
     const proratedPrice = pricePerSec.mul(await epochRemainder());
     expect(Number.parseFloat(formatTokens(proratedPrice))).to.be.equal(0.99);
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok);
+    expect(await registry.getLastEpochLength()).to.equal(100);
+    expect(await registry.getNextEpochLength()).to.equal(100);
+    expect(await registry.getCuedEpochLength()).to.equal(200);
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
+    expect((await nodes.getNode(nodeId1)).prices[(await registry.lastEpochSlot()).toNumber()]).to.equal(proratedPrice);
+    expect((await nodes.getNode(nodeId2)).prices[(await registry.lastEpochSlot()).toNumber()]).to.equal(proratedPrice);
+    expect((await nodes.getNode(nodeId1)).prices[(await registry.nextEpochSlot()).toNumber()]).to.equal(price);
+    expect((await nodes.getNode(nodeId2)).prices[(await registry.nextEpochSlot()).toNumber()]).to.equal(price);
+    expect((await nodes.getNode(nodeId1)).projectIds[(await registry.lastEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId2)).projectIds[(await registry.lastEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId1)).projectIds[(await registry.nextEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId2)).projectIds[(await registry.nextEpochSlot()).toNumber()]).to.equal(projectId1);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(100));
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice.add(price).mul(2));
 
+    // Reconcile last epoch
     await mine(hre, epochLength);
     expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
     expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
     expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await registry.getLastEpochLength()).to.equal(100);
+    expect(await registry.getNextEpochLength()).to.equal(200);
+    expect(await registry.getCuedEpochLength()).to.equal(200);
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
+    expect((await nodes.getNode(nodeId1)).prices[(await registry.lastEpochSlot()).toNumber()]).to.equal(price);
+    expect((await nodes.getNode(nodeId2)).prices[(await registry.lastEpochSlot()).toNumber()]).to.equal(price);
+    expect((await nodes.getNode(nodeId1)).prices[(await registry.nextEpochSlot()).toNumber()]).to.equal(price.mul(2));
+    expect((await nodes.getNode(nodeId2)).prices[(await registry.nextEpochSlot()).toNumber()]).to.equal(price.mul(2));
+    expect((await nodes.getNode(nodeId1)).projectIds[(await registry.lastEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId2)).projectIds[(await registry.lastEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId1)).projectIds[(await registry.nextEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId2)).projectIds[(await registry.nextEpochSlot()).toNumber()]).to.equal(projectId1);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100).add(proratedPrice.mul(2)));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(100).sub(proratedPrice.mul(2)));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(6));
 
+    // Reconcile next epoch
     await mine(hre, epochLength);
     expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
     expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
     expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await registry.getLastEpochLength()).to.equal(200);
+    expect(await registry.getNextEpochLength()).to.equal(200);
+    expect(await registry.getCuedEpochLength()).to.equal(200);
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
+    expect((await nodes.getNode(nodeId1)).prices[(await registry.lastEpochSlot()).toNumber()]).to.equal(price.mul(2));
+    expect((await nodes.getNode(nodeId2)).prices[(await registry.lastEpochSlot()).toNumber()]).to.equal(price.mul(2));
+    expect((await nodes.getNode(nodeId1)).prices[(await registry.nextEpochSlot()).toNumber()]).to.equal(price.mul(2));
+    expect((await nodes.getNode(nodeId2)).prices[(await registry.nextEpochSlot()).toNumber()]).to.equal(price.mul(2));
+    expect((await nodes.getNode(nodeId1)).projectIds[(await registry.lastEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId2)).projectIds[(await registry.lastEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId1)).projectIds[(await registry.nextEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId2)).projectIds[(await registry.nextEpochSlot()).toNumber()]).to.equal(projectId1);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(102).add(proratedPrice.mul(2)));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(98).sub(proratedPrice.mul(2)));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(8));
+
+    // Reconcile cued epoch
+    await mine(hre, epochLength * 2);
+    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await registry.getLastEpochLength()).to.equal(200);
+    expect(await registry.getNextEpochLength()).to.equal(200);
+    expect(await registry.getCuedEpochLength()).to.equal(200);
+    expect(await reservations.getReservationCount(projectId1)).to.equal(2);
+    expect((await nodes.getNode(nodeId1)).prices[(await registry.lastEpochSlot()).toNumber()]).to.equal(price.mul(2));
+    expect((await nodes.getNode(nodeId2)).prices[(await registry.lastEpochSlot()).toNumber()]).to.equal(price.mul(2));
+    expect((await nodes.getNode(nodeId1)).prices[(await registry.nextEpochSlot()).toNumber()]).to.equal(price.mul(2));
+    expect((await nodes.getNode(nodeId2)).prices[(await registry.nextEpochSlot()).toNumber()]).to.equal(price.mul(2));
+    expect((await nodes.getNode(nodeId1)).projectIds[(await registry.lastEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId2)).projectIds[(await registry.lastEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId1)).projectIds[(await registry.nextEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId2)).projectIds[(await registry.nextEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(106).add(proratedPrice.mul(2)));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(94).sub(proratedPrice.mul(2)));
+    expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(8));
+  });
+
+  it("Should decrease epoch duration", async function () {
+    expect(await projects.connect(project).withdrawProjectEscrow(projectId1, parseTokens("95.5"))).to.be.ok;
+    await mineWith(hre, async () => expect(await registry.connect(admin).setCuedEpochLength(epochLength / 2)).to.be.ok);
+
+    const proratedPrice = pricePerSec.mul(await epochRemainder());
+    expect(Number.parseFloat(formatTokens(proratedPrice))).to.be.equal(0.98);
+    await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok);
+    expect(await registry.getLastEpochLength()).to.equal(100);
+    expect(await registry.getNextEpochLength()).to.equal(100);
+    expect(await registry.getCuedEpochLength()).to.equal(50);
+    expect(await reservations.getReservationCount(projectId1)).to.equal(2);
+    expect((await nodes.getNode(nodeId1)).prices[(await registry.lastEpochSlot()).toNumber()]).to.equal(proratedPrice);
+    expect((await nodes.getNode(nodeId2)).prices[(await registry.lastEpochSlot()).toNumber()]).to.equal(proratedPrice);
+    expect((await nodes.getNode(nodeId1)).prices[(await registry.nextEpochSlot()).toNumber()]).to.equal(price);
+    expect((await nodes.getNode(nodeId2)).prices[(await registry.nextEpochSlot()).toNumber()]).to.equal(price);
+    expect((await nodes.getNode(nodeId1)).projectIds[(await registry.lastEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId2)).projectIds[(await registry.lastEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId1)).projectIds[(await registry.nextEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId2)).projectIds[(await registry.nextEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(parseTokens("4.5"));
+    expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice.add(parseTokens("1")).mul(2));
+
+    // Reconcile last epoch - node #2 gets loses renewal
+    await mine(hre, epochLength);
+    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await registry.getLastEpochLength()).to.equal(100);
+    expect(await registry.getNextEpochLength()).to.equal(50);
+    expect(await registry.getCuedEpochLength()).to.equal(50);
+    expect(await reservations.getReservationCount(projectId1)).to.equal(2);
+    expect((await nodes.getNode(nodeId1)).prices[(await registry.lastEpochSlot()).toNumber()]).to.equal(price);
+    expect((await nodes.getNode(nodeId2)).prices[(await registry.lastEpochSlot()).toNumber()]).to.equal(price);
+    expect((await nodes.getNode(nodeId1)).prices[(await registry.nextEpochSlot()).toNumber()]).to.equal(price.div(2));
+    expect((await nodes.getNode(nodeId2)).prices[(await registry.nextEpochSlot()).toNumber()]).to.equal(price.div(2));
+    expect((await nodes.getNode(nodeId1)).projectIds[(await registry.lastEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId2)).projectIds[(await registry.lastEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId1)).projectIds[(await registry.nextEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId2)).projectIds[(await registry.nextEpochSlot()).toNumber()]).to.equal(HashZero);
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100).add(proratedPrice.mul(2)));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(parseTokens("4.5").sub(proratedPrice.mul(2))); // 2.54
+    expect((await projects.getProject(projectId1)).reserve).to.equal(parseTokens("1").mul(2).add(parseTokens("0.5")));
+
+    // Reconcile next epoch - node #1 loses renewal, node #2 gets released
+    await mine(hre, epochLength);
+    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await registry.getLastEpochLength()).to.equal(50);
+    expect(await registry.getNextEpochLength()).to.equal(50);
+    expect(await registry.getCuedEpochLength()).to.equal(50);
+    expect(await reservations.getReservationCount(projectId1)).to.equal(1);
+    expect((await nodes.getNode(nodeId1)).prices[(await registry.lastEpochSlot()).toNumber()]).to.equal(price.div(2));
+    expect((await nodes.getNode(nodeId2)).prices[(await registry.lastEpochSlot()).toNumber()]).to.equal(price.div(2));
+    expect((await nodes.getNode(nodeId1)).prices[(await registry.nextEpochSlot()).toNumber()]).to.equal(price.div(2));
+    expect((await nodes.getNode(nodeId2)).prices[(await registry.nextEpochSlot()).toNumber()]).to.equal(price.div(2));
+    expect((await nodes.getNode(nodeId1)).projectIds[(await registry.lastEpochSlot()).toNumber()]).to.equal(projectId1);
+    expect((await nodes.getNode(nodeId2)).projectIds[(await registry.lastEpochSlot()).toNumber()]).to.equal(HashZero);
+    expect((await nodes.getNode(nodeId1)).projectIds[(await registry.nextEpochSlot()).toNumber()]).to.equal(HashZero);
+    expect((await nodes.getNode(nodeId2)).projectIds[(await registry.nextEpochSlot()).toNumber()]).to.equal(HashZero);
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100).add(proratedPrice.add(price).mul(2)));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(parseTokens("4.5").sub(proratedPrice.add(price).mul(2))); // 0.54
+    expect((await projects.getProject(projectId1)).reserve).to.equal(parseTokens("0.5"));
+
+    // Reconcile cued epoch - node #1 gets released
+    await mine(hre, epochLength / 2);
+    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await registry.getLastEpochLength()).to.equal(50);
+    expect(await registry.getNextEpochLength()).to.equal(50);
+    expect(await registry.getCuedEpochLength()).to.equal(50);
+    expect(await reservations.getReservationCount(projectId1)).to.equal(0);
+    expect((await nodes.getNode(nodeId1)).prices[(await registry.lastEpochSlot()).toNumber()]).to.equal(price.div(2));
+    expect((await nodes.getNode(nodeId2)).prices[(await registry.lastEpochSlot()).toNumber()]).to.equal(price.div(2));
+    expect((await nodes.getNode(nodeId1)).prices[(await registry.nextEpochSlot()).toNumber()]).to.equal(price.div(2));
+    expect((await nodes.getNode(nodeId2)).prices[(await registry.nextEpochSlot()).toNumber()]).to.equal(price.div(2));
+    expect((await nodes.getNode(nodeId1)).projectIds[(await registry.lastEpochSlot()).toNumber()]).to.equal(HashZero);
+    expect((await nodes.getNode(nodeId2)).projectIds[(await registry.lastEpochSlot()).toNumber()]).to.equal(HashZero);
+    expect((await nodes.getNode(nodeId1)).projectIds[(await registry.nextEpochSlot()).toNumber()]).to.equal(HashZero);
+    expect((await nodes.getNode(nodeId2)).projectIds[(await registry.nextEpochSlot()).toNumber()]).to.equal(HashZero);
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100).add(proratedPrice.add(price).mul(2).add(price.div(2))));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(parseTokens("4.5").sub(proratedPrice.add(price).mul(2).add(price.div(2)))); // 0.04
+    expect((await projects.getProject(projectId1)).reserve).to.equal(0);
   });
 
   it("Should allow admin to pause and unpause ", async function () {

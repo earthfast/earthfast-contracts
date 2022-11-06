@@ -125,9 +125,9 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
     ArmadaProjects projects = _registry.getProjects();
     uint256 lastEpoch = _registry.lastEpochSlot();
     uint256 nextEpoch = _registry.nextEpochSlot();
-    bool epochLengthChanged = _registry.getCuedEpochLength() != _registry.getLastEpochLength();
     require(_billingNodeIndex == allNodes.getNodeCount(0, false), "billing in progress");
     require(_renewalNodeIndex < allNodes.getNodeCount(0, false), "renewal finished");
+    bool epochLengthChanged = _registry.getNextEpochLength() != _registry.getCuedEpochLength();
     (lastEpoch, nextEpoch) = (nextEpoch, lastEpoch);
     for (uint256 i = 0; i < nodeIds.length; i++) {
       allNodes.advanceNodeEpochImpl(nodeIds[i]);
@@ -138,8 +138,9 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
         bytes32 projectId = nodeCopy.projectIds[nextEpoch];
         uint256 nextPrice = nodeCopy.prices[nextEpoch];
         if (epochLengthChanged) {
-          nextPrice /= _registry.getLastEpochLength();
+          nextPrice /= _registry.getNextEpochLength();
           nextPrice *= _registry.getCuedEpochLength();
+          allNodes.setNodePriceImpl(nodeCopy.id, nextEpoch, nextPrice);
         }
         projects.setProjectReserveImpl(projectId, 0, nextPrice);
         ArmadaProject memory projectCopy = projects.getProject(projectId);
