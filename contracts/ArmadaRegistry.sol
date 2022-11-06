@@ -95,6 +95,7 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
     _projects = data.projects;
     _reservations = data.reservations;
 
+    require(admins.length > 0, "no admins");
     for (uint256 i = 0; i < admins.length; ++i) {
       require(admins[i] != address(0), "zero admin");
       _grantRole(DEFAULT_ADMIN_ROLE, admins[i]);

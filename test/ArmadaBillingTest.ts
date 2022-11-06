@@ -124,6 +124,12 @@ describe("ArmadaBilling", function () {
     }
   });
 
+  it("Should disallow empty admins", async function () {
+    const billingFactory = await hre.ethers.getContractFactory("ArmadaBilling");
+    const billingArgs = [[], registry.address];
+    await expect(hre.upgrades.deployProxy(billingFactory, billingArgs, { kind: "uups" })).to.be.revertedWith("no admins");
+  });
+
   it("Should disallow zero admin", async function () {
     const billingFactory = await hre.ethers.getContractFactory("ArmadaBilling");
     const billingArgs = [[AddressZero], registry.address];

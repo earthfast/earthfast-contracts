@@ -9,6 +9,7 @@ describe("ArmadaTimelock", function () {
     const { deployer } = await signers(hre);
     const factory = await hre.ethers.getContractFactory("ArmadaTimelock");
 
+    await expect(factory.deploy(0, [], [AddressZero], [AddressZero])).to.be.revertedWith("no admins");
     await expect(factory.deploy(0, [AddressZero], [AddressZero], [AddressZero])).to.be.revertedWith("zero admin");
 
     const timelock = <ArmadaTimelock>await factory.deploy(0, [deployer.address], [AddressZero], [AddressZero]);

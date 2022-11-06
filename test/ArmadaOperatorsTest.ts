@@ -40,6 +40,13 @@ describe("ArmadaOperators", function () {
     snapshotId = await hre.ethers.provider.send("evm_snapshot", []);
   });
 
+  it("Should disallow empty admins", async function () {
+    const stakePerNode = parseTokens("1");
+    const operatorsFactory = await hre.ethers.getContractFactory("ArmadaOperators");
+    const operatorsArgs = [[], registry.address, stakePerNode, true];
+    await expect(hre.upgrades.deployProxy(operatorsFactory, operatorsArgs, { kind: "uups" })).to.be.revertedWith("no admins");
+  });
+
   it("Should disallow zero admin", async function () {
     const stakePerNode = parseTokens("1");
     const operatorsFactory = await hre.ethers.getContractFactory("ArmadaOperators");

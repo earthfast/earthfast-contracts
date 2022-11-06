@@ -43,6 +43,15 @@ describe("ArmadaNodes", function () {
     snapshotId = await hre.ethers.provider.send("evm_snapshot", []);
   });
 
+  it("Should disallow empty admins", async function () {
+    const nodesImplFactory = await hre.ethers.getContractFactory("ArmadaNodesImpl");
+    const nodesImpl = await nodesImplFactory.deploy();
+
+    const nodesFactory = await hre.ethers.getContractFactory("ArmadaNodes", { libraries: { ArmadaNodesImpl: nodesImpl.address } });
+    const nodesArgs = [[], registry.address, true];
+    await expect(hre.upgrades.deployProxy(nodesFactory, nodesArgs, { kind: "uups" })).to.be.revertedWith("no admins");
+  });
+
   it("Should upgrade", async function () {
     const { nodes } = await fixtures(hre);
     expect(await nodes.setTest(1)).to.be.ok;

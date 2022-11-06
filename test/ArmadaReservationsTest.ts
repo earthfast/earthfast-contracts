@@ -123,6 +123,12 @@ describe("ArmadaReservations", function () {
     }
   });
 
+  it("Should disallow empty admins", async function () {
+    const reservationsFactory = await hre.ethers.getContractFactory("ArmadaReservations");
+    const reservationsArgs = [[], registry.address, true];
+    await expect(hre.upgrades.deployProxy(reservationsFactory, reservationsArgs, { kind: "uups" })).to.be.revertedWith("no admins");
+  });
+
   it("Should disallow zero admin", async function () {
     const reservationsFactory = await hre.ethers.getContractFactory("ArmadaReservations");
     const reservationsArgs = [[AddressZero], registry.address, true];

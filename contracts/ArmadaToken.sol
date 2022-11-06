@@ -12,6 +12,7 @@ contract ArmadaToken is ERC20Votes, AccessControl, Pausable {
   constructor(address[] memory admins, address[] memory minters, address[] memory pausers)
     ERC20("Armada", "ARMADA")
     ERC20Permit("Armada") {
+    require(admins.length > 0, "no admins");
     for (uint256 i = 0; i < admins.length; ++i) {
       require(admins[i] != address(0), "zero admin");
       _grantRole(DEFAULT_ADMIN_ROLE, admins[i]);

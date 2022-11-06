@@ -86,6 +86,7 @@ contract ArmadaNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUpgra
     __UUPSUpgradeable_init();
 
     _registry = registry;
+    require(admins.length > 0, "no admins");
     for (uint256 i = 0; i < admins.length; ++i) {
       require(admins[i] != address(0), "zero admin");
       _grantRole(DEFAULT_ADMIN_ROLE, admins[i]);

@@ -310,6 +310,10 @@ describe("ArmadaRegistry", function () {
     newRegistryArgs = { ...registryArgs, epochSlot: 100 };
     await expect(newRegistry.connect(admin).initialize([admin.address], newRegistryArgs)).to.be.revertedWith("epoch slot");
 
+    // no admins provided
+    newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });
+    await expect(newRegistry.connect(admin).initialize([], registryArgs)).to.be.revertedWith("no admins");
+
     // admin address is zero
     newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });
     await expect(newRegistry.connect(admin).initialize([admin.address, AddressZero], registryArgs)).to.be.revertedWith("zero admin");

@@ -8,6 +8,7 @@ contract ArmadaTimelock is TimelockController {
     TimelockController(minDelay, proposers, executors) {
     // Use explicit admins for CREATE2 compatibility
     _revokeRole(TIMELOCK_ADMIN_ROLE, msg.sender);
+    require(admins.length > 0, "no admins");
     for (uint256 i = 0; i < admins.length; ++i) {
       require(admins[i] != address(0), "zero admin");
       _grantRole(TIMELOCK_ADMIN_ROLE, admins[i]);

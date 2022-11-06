@@ -94,6 +94,7 @@ contract ArmadaOperators is AccessControlUpgradeable, PausableUpgradeable, Reent
 
     _registry = registry;
     _stakePerNode = stakePerNode;
+    require(admins.length > 0, "no admins");
     for (uint256 i = 0; i < admins.length; ++i) {
       require(admins[i] != address(0), "zero admin");
       _grantRole(DEFAULT_ADMIN_ROLE, admins[i]);

@@ -45,6 +45,12 @@ describe("ArmadaProjects", function () {
     snapshotId = await hre.ethers.provider.send("evm_snapshot", []);
   });
 
+  it("Should disallow empty admins", async function () {
+    const projectsFactory = await hre.ethers.getContractFactory("ArmadaProjects");
+    const projectsArgs = [[], registry.address, true];
+    await expect(hre.upgrades.deployProxy(projectsFactory, projectsArgs, { kind: "uups" })).to.be.revertedWith("no admins");
+  });
+
   it("Should disallow zero admin", async function () {
     const projectsFactory = await hre.ethers.getContractFactory("ArmadaProjects");
     const projectsArgs = [[AddressZero], registry.address, true];
