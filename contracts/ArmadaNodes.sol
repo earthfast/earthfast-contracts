@@ -222,7 +222,7 @@ contract ArmadaNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUpgra
     }
   }
 
-  /// @notice Changes content node or topology node hosts and regions. Reverts if nodes are reserved.
+  /// @notice Changes content node or topology node hosts and regions. Reverts if nodes are reserved (unless admin).
   /// @dev Does not check host or region for validity or uniqueness
   function setNodeHosts(bytes32 operatorId, bytes32[] memory nodeIds, string[] memory hosts, string[] memory regions)
   public virtual onlyAdminOrOperator(operatorId) whenNotReconciling whenNotPaused {
@@ -230,14 +230,20 @@ contract ArmadaNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUpgra
     ArmadaNodesImpl.setNodeHostsImpl(_registry, _nodes, admin, operatorId, nodeIds, hosts, regions);
   }
 
-  /// @notice Changes content node prices - spot price (current epoch only), renewal price (starting from next epoch),
-  /// or both. Reverts if changing spot price but the nodes are already reserved in the current epoch.
+  /// @notice Changes content node prices: spot price (current epoch only), renewal price (starting from next epoch).
+  /// Reverts if changing the spot price and the nodes are already reserved in the current epoch.
+  /// Reverts if changing the renewal price too close before next epoch start, as set by ArmadaRegistry gracePeriod.
+  /// Cancels node renewal if the node price went up and the project escrow is no longer enough.
+  /// @param slot specifies which type of node prices to change - spot price, renewal price, or both.
   function setNodePrices(bytes32 operatorId, bytes32[] memory nodeIds, uint256[] memory prices, ArmadaSlot calldata slot)
   public virtual onlyOperator(operatorId) whenNotReconciling whenNotPaused {
     ArmadaNodesImpl.setNodePricesImpl(_registry, _nodes, operatorId, nodeIds, prices, slot);
   }
 
-  /// @notice Disabled node won't take new reservations and won't renew when epoch ends.
+  /// @notice Disabled nodes won't take new reservations and won't renew when epoch ends.
+  /// Disabled nodes will still keep their current reservations until the end of the current epoch.
+  /// Reenabled nodes will not retain their old reservations, and will need to be reserved again.
+  /// Reverts if enabling or disabling nodes too close before next epoch start, as set by ArmadaRegistry gracePeriod.
   function setNodeDisabled(bytes32 operatorId, bytes32[] memory nodeIds, bool[] memory disabled)
   public virtual onlyOperator(operatorId) whenNotReconciling whenNotPaused {
     ArmadaNodesImpl.setNodeDisabledImpl(_registry, _nodes, operatorId, nodeIds, disabled);
