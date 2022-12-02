@@ -366,10 +366,10 @@ describe("ArmadaReservations", function () {
 
     // implementation call is disallowed from EOA
     await expect(reservations.removeProjectNodeIdImpl(HashZero, HashZero)).to.be.revertedWith("not impl");
-    await expect(reservations.deleteReservationImpl(HashZero, HashZero, 0, 0, { last: false, next: false })).to.be.revertedWith("not impl");
+    await expect(reservations.deleteReservationImpl(AddressZero, AddressZero, HashZero, HashZero, { last: false, next: false })).to.be.revertedWith("not impl");
 
     // implementation call is disallowed from unauthorized contract
     await expect(reservations.connect(newRegistry.signer).removeProjectNodeIdImpl(HashZero, HashZero)).to.be.revertedWith("not impl");
-    await expect(reservations.connect(newRegistry.signer).deleteReservationImpl(HashZero, HashZero, 0, 0, { last: false, next: false })).to.be.revertedWith("not impl");
+    await expect(reservations.connect(newRegistry.signer).deleteReservationImpl(AddressZero, AddressZero, HashZero, HashZero, { last: false, next: false })).to.be.revertedWith("not impl");
   });
 });

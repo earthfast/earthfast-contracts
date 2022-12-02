@@ -23,7 +23,7 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
   uint256 private _nextEpochLength; // Duration of the next epoch in seconds
   uint256 private _cuedEpochLength; // Pending change of the epoch duration, becomes effective after the next epoch
   uint256 private _gracePeriod;     // Period in seconds at the end of the epoch when node prices can't change
-  uint256 private _epochSlot;       // Current index into the node reservation ring buffers (0 or 1)
+  uint256 private _reserved;        // Unused, guaranteed to be zero on all deployments and can be reused in the future
 
   ArmadaToken private _token;
   ArmadaBilling private _billing;
@@ -77,7 +77,6 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
     require(data.epochStart <= block.timestamp, "late epoch start");
     require(data.lastEpochLength != 0, "zero last epoch length");
     require(data.nextEpochLength != 0, "zero next epoch length");
-    require(data.epochSlot <= 1, "epoch slot");
 
     _version = data.version;
     _nonce = data.nonce;
@@ -86,7 +85,6 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
     _nextEpochLength = data.nextEpochLength;
     _cuedEpochLength = data.nextEpochLength;
     _gracePeriod = data.gracePeriod;
-    _epochSlot = data.epochSlot;
 
     _token = data.token;
     _billing = data.billing;
@@ -178,9 +176,6 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
     uint256 epochEnd = _lastEpochStart + _lastEpochLength;
     return epochEnd > block.timestamp ? epochEnd - block.timestamp : 0;
   }
-
-  function lastEpochSlot() public virtual view returns (uint256) { return _epochSlot; }
-  function nextEpochSlot() public virtual view returns (uint256) { return (_epochSlot + 1) % 2; }
 
   function getGracePeriod() public virtual view returns (uint256) { return _gracePeriod; }
   function setGracePeriod(uint256 period) public virtual onlyAdmin { _gracePeriod = period; }

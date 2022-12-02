@@ -12,13 +12,11 @@ library ArmadaNodesImpl {
   event NodeDisabledChanged(bytes32 indexed nodeId, bool oldDisabled, bool newDisabled);
 
   function setNodeHostsImpl(
-    ArmadaRegistry _registry, mapping(bytes32 => ArmadaNode) storage _nodes, bool admin,
+    mapping(bytes32 => ArmadaNode) storage _nodes, bool admin,
     bytes32 operatorId, bytes32[] memory nodeIds, string[] memory hosts, string[] memory regions)
   public {
     require(nodeIds.length == hosts.length, "length mismatch");
     require(nodeIds.length == regions.length, "length mismatch");
-    uint256 lastEpoch = _registry.lastEpochSlot();
-    uint256 nextEpoch = _registry.nextEpochSlot();
     for (uint256 i = 0; i < nodeIds.length; i++) {
       require(bytes(hosts[i]).length > 0, "empty host");
       require(bytes(hosts[i]).length <= ARMADA_MAX_HOST_BYTES, "host too long");
@@ -27,7 +25,8 @@ library ArmadaNodesImpl {
       ArmadaNode storage node = _nodes[nodeIds[i]];
       require(node.id != 0, "unknown node");
       require(node.operatorId == operatorId, "operator mismatch");
-      require(admin || (node.projectIds[lastEpoch] == 0 && node.projectIds[nextEpoch] == 0), "node reserved");
+      require(admin || (node.projectIds[ARMADA_LAST_EPOCH] == 0 &&
+        node.projectIds[ARMADA_NEXT_EPOCH] == 0), "node reserved");
       string memory oldHost = node.host;
       string memory oldRegion = node.region;
       node.host = hosts[i];
@@ -41,31 +40,30 @@ library ArmadaNodesImpl {
     bytes32 operatorId, bytes32[] memory nodeIds, uint256[] memory prices, ArmadaSlot calldata slot)
   public {
     require(nodeIds.length == prices.length, "length mismatch");
+    ArmadaNodes allNodes = _registry.getNodes();
     ArmadaProjects projects = _registry.getProjects();
     ArmadaReservations reservations = _registry.getReservations();
-    uint256 lastEpoch = _registry.lastEpochSlot();
-    uint256 nextEpoch = _registry.nextEpochSlot();
     for (uint256 i = 0; i < nodeIds.length; i++) {
       ArmadaNode storage node = _nodes[nodeIds[i]];
       require(node.id != 0, "unknown node");
       require(node.operatorId == operatorId, "operator mismatch");
       require(!node.topology, "topology node");
-      uint256 oldLastPrice = node.prices[lastEpoch];
-      uint256 oldNextPrice = node.prices[nextEpoch];
+      uint256 oldLastPrice = node.prices[ARMADA_LAST_EPOCH];
+      uint256 oldNextPrice = node.prices[ARMADA_NEXT_EPOCH];
       if (slot.last) {
-        require(node.projectIds[lastEpoch] == 0, "node reserved");
-        node.prices[lastEpoch] = prices[i];
+        require(node.projectIds[ARMADA_LAST_EPOCH] == 0, "node reserved");
+        node.prices[ARMADA_LAST_EPOCH] = prices[i];
       }
       if (slot.next) {
-        node.prices[nextEpoch] = prices[i];
-        bytes32 projectId = node.projectIds[nextEpoch];
+        node.prices[ARMADA_NEXT_EPOCH] = prices[i];
+        bytes32 projectId = node.projectIds[ARMADA_NEXT_EPOCH];
         if (projectId != 0) {
           projects.setProjectReserveImpl(projectId, oldNextPrice, prices[i]);
           ArmadaProject memory projectCopy = projects.getProject(projectId);
           if (projectCopy.escrow < projectCopy.reserve) {
             _registry.requireNotGracePeriod();
             ArmadaSlot memory slot_ = ArmadaSlot({ last: false, next: true });
-            reservations.deleteReservationImpl(projectId, node.id, lastEpoch, nextEpoch, slot_);
+            reservations.deleteReservationImpl(allNodes, projects, projectId, node.id, slot_);
           }
         }
       }
@@ -78,20 +76,20 @@ library ArmadaNodesImpl {
     bytes32 operatorId, bytes32[] memory nodeIds, bool[] memory disabled)
   public {
     require(nodeIds.length == disabled.length, "length mismatch");
+    ArmadaNodes allNodes = _registry.getNodes();
+    ArmadaProjects projects = _registry.getProjects();
     ArmadaReservations reservations = _registry.getReservations();
-    uint256 lastEpoch = _registry.lastEpochSlot();
-    uint256 nextEpoch = _registry.nextEpochSlot();
     for (uint256 i = 0; i < nodeIds.length; i++) {
       ArmadaNode storage node = _nodes[nodeIds[i]];
       require(node.id != 0, "unknown node");
       require(node.operatorId == operatorId, "operator mismatch");
       bool oldDisabled = node.disabled;
       node.disabled = disabled[i];
-      bytes32 projectId = node.projectIds[nextEpoch];
+      bytes32 projectId = node.projectIds[ARMADA_NEXT_EPOCH];
       if (projectId != 0) {
         _registry.requireNotGracePeriod();
         ArmadaSlot memory slot_ = ArmadaSlot({ last: false, next: true });
-        reservations.deleteReservationImpl(projectId, node.id, lastEpoch, nextEpoch, slot_);
+        reservations.deleteReservationImpl(allNodes, projects, projectId, node.id, slot_);
       }
       emit NodeDisabledChanged(node.id, oldDisabled, disabled[i]);
     }
