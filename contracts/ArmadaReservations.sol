@@ -136,20 +136,17 @@ contract ArmadaReservations is AccessControlUpgradeable, PausableUpgradeable, UU
   public virtual onlyProjectOwner(projectId) whenNotReconciling whenNotPaused {
     require(slot.last || slot.next, "no slot");
     require(nodeIds.length == maxPrices.length, "length mismatch");
-    uint256 lastEpoch = _registry.lastEpochSlot();
-    uint256 nextEpoch = _registry.nextEpochSlot();
     uint256 epochRemainder = _registry.getEpochRemainder();
     for (uint256 i = 0; i < nodeIds.length; i++) {
       ArmadaNode memory nodeCopy = _registry.getNodes().getNode(nodeIds[i]);
-      createReservationImpl(projectId, nodeCopy, lastEpoch, nextEpoch, epochRemainder, maxPrices[i], slot);
+      createReservationImpl(projectId, nodeCopy, epochRemainder, maxPrices[i], slot);
     }
     ArmadaProject memory projectCopy = _registry.getProjects().getProject(projectId);
     require(projectCopy.escrow >= projectCopy.reserve, "not enough escrow");
   }
 
   function createReservationImpl(
-    bytes32 projectId, ArmadaNode memory nodeCopy, uint256 lastEpoch, uint256 nextEpoch, uint256 epochRemainder,
-    uint256 maxPrice, ArmadaSlot calldata slot)
+    bytes32 projectId, ArmadaNode memory nodeCopy, uint256 epochRemainder, uint256 maxPrice, ArmadaSlot calldata slot)
   internal virtual {
     ArmadaNodes allNodes = _registry.getNodes();
     require(!nodeCopy.topology, "topology node");
@@ -157,19 +154,19 @@ contract ArmadaReservations is AccessControlUpgradeable, PausableUpgradeable, UU
     uint256 lastPrice = 0;
     uint256 nextPrice = 0;
     if (slot.last) {
-      require(nodeCopy.projectIds[lastEpoch] == 0, "node reserved");
-      lastPrice = nodeCopy.prices[lastEpoch];
+      require(nodeCopy.projectIds[ARMADA_LAST_EPOCH] == 0, "node reserved");
+      lastPrice = nodeCopy.prices[ARMADA_LAST_EPOCH];
       require(lastPrice <= maxPrice, "price mismatch");
       uint256 proratedPrice = lastPrice * epochRemainder / _registry.getLastEpochLength(); 
-      allNodes.setNodeProjectImpl(nodeCopy.id, lastEpoch, projectId);
-      allNodes.setNodePriceImpl(nodeCopy.id, lastEpoch, proratedPrice);
+      allNodes.setNodeProjectImpl(nodeCopy.id, ARMADA_LAST_EPOCH, projectId);
+      allNodes.setNodePriceImpl(nodeCopy.id, ARMADA_LAST_EPOCH, proratedPrice);
       _registry.getProjects().setProjectReserveImpl(projectId, 0, proratedPrice);
     }
     if (slot.next) {
-      require(nodeCopy.projectIds[nextEpoch] == 0, "node reserved");
-      nextPrice = nodeCopy.prices[nextEpoch];
+      require(nodeCopy.projectIds[ARMADA_NEXT_EPOCH] == 0, "node reserved");
+      nextPrice = nodeCopy.prices[ARMADA_NEXT_EPOCH];
       require(nextPrice <= maxPrice, "price mismatch");
-      allNodes.setNodeProjectImpl(nodeCopy.id, nextEpoch, projectId);
+      allNodes.setNodeProjectImpl(nodeCopy.id, ARMADA_NEXT_EPOCH, projectId);
       _registry.getProjects().setProjectReserveImpl(projectId, 0, nextPrice);
     }
     _projectNodeIds[projectId].add(nodeCopy.id);
@@ -190,45 +187,41 @@ contract ArmadaReservations is AccessControlUpgradeable, PausableUpgradeable, UU
     require(slot.last || slot.next, "no slot");
     require(!slot.last || hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "not admin");
     ArmadaNodes allNodes = _registry.getNodes();
-    uint256 lastEpoch = _registry.lastEpochSlot();
-    uint256 nextEpoch = _registry.nextEpochSlot();
     for (uint256 i = 0; i < nodeIds.length; i++) {
       bytes32 nodeId = nodeIds[i];
       ArmadaNode memory nodeCopy = allNodes.getNode(nodeId);
-      deleteReservationImpl(projectId, nodeCopy, lastEpoch, nextEpoch, slot);
+      deleteReservationImpl(projectId, nodeCopy, slot);
     }
   }
 
-  function deleteReservationImpl(
-    bytes32 projectId, bytes32 nodeId, uint256 lastEpoch, uint256 nextEpoch, ArmadaSlot calldata slot)
+  function deleteReservationImpl(bytes32 projectId, bytes32 nodeId, ArmadaSlot calldata slot)
   public virtual onlyImpl whenNotPaused {
     ArmadaNodes allNodes = _registry.getNodes();
     ArmadaNode memory nodeCopy = allNodes.getNode(nodeId);
-    deleteReservationImpl(projectId, nodeCopy, lastEpoch, nextEpoch, slot);
+    deleteReservationImpl(projectId, nodeCopy, slot);
   }
 
-  function deleteReservationImpl(
-    bytes32 projectId, ArmadaNode memory nodeCopy, uint256 lastEpoch, uint256 nextEpoch, ArmadaSlot calldata slot)
+  function deleteReservationImpl(bytes32 projectId, ArmadaNode memory nodeCopy, ArmadaSlot calldata slot)
   internal virtual {
     uint256 lastPrice = 0;
     uint256 nextPrice = 0;
     if (slot.last) {
-      lastPrice = nodeCopy.prices[lastEpoch];
-      nextPrice = nodeCopy.prices[nextEpoch];
-      require(nodeCopy.projectIds[lastEpoch] == projectId, "node not reserved");
-      _registry.getNodes().setNodePriceImpl(nodeCopy.id, lastEpoch, nextPrice);
-      _registry.getNodes().setNodeProjectImpl(nodeCopy.id, lastEpoch, 0);
+      lastPrice = nodeCopy.prices[ARMADA_LAST_EPOCH];
+      nextPrice = nodeCopy.prices[ARMADA_NEXT_EPOCH];
+      require(nodeCopy.projectIds[ARMADA_LAST_EPOCH] == projectId, "node not reserved");
+      _registry.getNodes().setNodePriceImpl(nodeCopy.id, ARMADA_LAST_EPOCH, nextPrice);
+      _registry.getNodes().setNodeProjectImpl(nodeCopy.id, ARMADA_LAST_EPOCH, 0);
       _registry.getProjects().setProjectReserveImpl(projectId, lastPrice, 0);
-      if (nodeCopy.projectIds[nextEpoch] != projectId) {
+      if (nodeCopy.projectIds[ARMADA_NEXT_EPOCH] != projectId) {
         assert(_projectNodeIds[projectId].remove(nodeCopy.id));
       }
     }
     if (slot.next) {
-      nextPrice = nodeCopy.prices[nextEpoch];
-      require(nodeCopy.projectIds[nextEpoch] == projectId, "node not reserved");
-      _registry.getNodes().setNodeProjectImpl(nodeCopy.id, nextEpoch, 0);
+      nextPrice = nodeCopy.prices[ARMADA_NEXT_EPOCH];
+      require(nodeCopy.projectIds[ARMADA_NEXT_EPOCH] == projectId, "node not reserved");
+      _registry.getNodes().setNodeProjectImpl(nodeCopy.id, ARMADA_NEXT_EPOCH, 0);
       _registry.getProjects().setProjectReserveImpl(projectId, nextPrice, 0);
-      if (nodeCopy.projectIds[lastEpoch] != projectId) {
+      if (nodeCopy.projectIds[ARMADA_LAST_EPOCH] != projectId) {
         assert(_projectNodeIds[projectId].remove(nodeCopy.id));
       }
     }

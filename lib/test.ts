@@ -124,7 +124,6 @@ export async function fixtures(hre: HardhatRuntimeEnvironment): Promise<{
     lastEpochLength: 100,
     nextEpochLength: 100,
     gracePeriod: 0,
-    epochSlot: 0,
     token: token.address,
     billing: billing.address,
     nodes: nodes.address,

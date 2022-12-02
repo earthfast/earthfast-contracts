@@ -74,7 +74,7 @@ export interface ArmadaReservationsInterface extends utils.Interface {
     "DEFAULT_ADMIN_ROLE()": FunctionFragment;
     "IMPORTER_ROLE()": FunctionFragment;
     "createReservations(bytes32,bytes32[],uint256[],(bool,bool))": FunctionFragment;
-    "deleteReservationImpl(bytes32,bytes32,uint256,uint256,(bool,bool))": FunctionFragment;
+    "deleteReservationImpl(bytes32,bytes32,(bool,bool))": FunctionFragment;
     "deleteReservations(bytes32,bytes32[],(bool,bool))": FunctionFragment;
     "getRegistry()": FunctionFragment;
     "getReservationCount(bytes32)": FunctionFragment;
@@ -147,8 +147,6 @@ export interface ArmadaReservationsInterface extends utils.Interface {
     values: [
       PromiseOrValue<BytesLike>,
       PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
       ArmadaSlotStruct
     ]
   ): string;
@@ -496,8 +494,6 @@ export interface ArmadaReservations extends BaseContract {
     deleteReservationImpl(
       projectId: PromiseOrValue<BytesLike>,
       nodeId: PromiseOrValue<BytesLike>,
-      lastEpoch: PromiseOrValue<BigNumberish>,
-      nextEpoch: PromiseOrValue<BigNumberish>,
       slot: ArmadaSlotStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -622,8 +618,6 @@ export interface ArmadaReservations extends BaseContract {
   deleteReservationImpl(
     projectId: PromiseOrValue<BytesLike>,
     nodeId: PromiseOrValue<BytesLike>,
-    lastEpoch: PromiseOrValue<BigNumberish>,
-    nextEpoch: PromiseOrValue<BigNumberish>,
     slot: ArmadaSlotStruct,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -746,8 +740,6 @@ export interface ArmadaReservations extends BaseContract {
     deleteReservationImpl(
       projectId: PromiseOrValue<BytesLike>,
       nodeId: PromiseOrValue<BytesLike>,
-      lastEpoch: PromiseOrValue<BigNumberish>,
-      nextEpoch: PromiseOrValue<BigNumberish>,
       slot: ArmadaSlotStruct,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -968,8 +960,6 @@ export interface ArmadaReservations extends BaseContract {
     deleteReservationImpl(
       projectId: PromiseOrValue<BytesLike>,
       nodeId: PromiseOrValue<BytesLike>,
-      lastEpoch: PromiseOrValue<BigNumberish>,
-      nextEpoch: PromiseOrValue<BigNumberish>,
       slot: ArmadaSlotStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -1095,8 +1085,6 @@ export interface ArmadaReservations extends BaseContract {
     deleteReservationImpl(
       projectId: PromiseOrValue<BytesLike>,
       nodeId: PromiseOrValue<BytesLike>,
-      lastEpoch: PromiseOrValue<BigNumberish>,
-      nextEpoch: PromiseOrValue<BigNumberish>,
       slot: ArmadaSlotStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;

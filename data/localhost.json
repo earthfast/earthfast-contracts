@@ -21,8 +21,7 @@
     "lastEpochLength": "604800",
     "nextEpochLength": "604800",
     "cuedEpochLength": "604800",
-    "gracePeriod": "86400",
-    "epochSlot": "0"
+    "gracePeriod": "86400"
   },
   "ArmadaNodes": {
     "topologyCreators": [

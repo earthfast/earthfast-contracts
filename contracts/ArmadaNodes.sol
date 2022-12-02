@@ -160,12 +160,10 @@ contract ArmadaNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUpgra
     ArmadaNode storage node = _nodes[nodeId];
     require(node.id != 0, "unknown node");
     require(!node.topology, "topology node");
-    uint256 lastEpoch = _registry.lastEpochSlot();
-    uint256 nextEpoch = _registry.nextEpochSlot();
-    if (node.projectIds[lastEpoch] != node.projectIds[nextEpoch])
-      node.projectIds[lastEpoch] = node.projectIds[nextEpoch];
-    if (node.prices[lastEpoch] != node.prices[nextEpoch])
-      node.prices[lastEpoch] = node.prices[nextEpoch];
+    if (node.projectIds[ARMADA_LAST_EPOCH] != node.projectIds[ARMADA_NEXT_EPOCH])
+      node.projectIds[ARMADA_LAST_EPOCH] = node.projectIds[ARMADA_NEXT_EPOCH];
+    if (node.prices[ARMADA_LAST_EPOCH] != node.prices[ARMADA_NEXT_EPOCH])
+      node.prices[ARMADA_LAST_EPOCH] = node.prices[ARMADA_NEXT_EPOCH];
   }
 
   /// @notice Registers new nodes on the network and locks operator stake. Reverts if stake is insufficient.
@@ -205,20 +203,19 @@ contract ArmadaNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUpgra
   function deleteNodes(bytes32 operatorId, bool topology, bytes32[] memory nodeIds)
   public virtual onlyOperator(operatorId) whenNotReconciling whenNotPaused {
     require(!topology || hasRole(TOPOLOGY_CREATOR_ROLE, msg.sender), "not topology creator");
-    uint256 lastEpoch = _registry.lastEpochSlot();
-    uint256 nextEpoch = _registry.nextEpochSlot();
     for (uint256 i = 0; i < nodeIds.length; i++) {
       bytes32 nodeId = nodeIds[i];
       ArmadaNode memory nodeCopy = _nodes[nodeId];
       require(nodeCopy.id != 0, "unknown node");
       require(nodeCopy.operatorId == operatorId, "operator mismatch");
       require(nodeCopy.topology == topology, "topology mismatch");
-      require(nodeCopy.projectIds[lastEpoch] == 0 && nodeCopy.projectIds[nextEpoch] == 0, "node reserved");
+      require(nodeCopy.projectIds[ARMADA_LAST_EPOCH] == 0 &&
+        nodeCopy.projectIds[ARMADA_NEXT_EPOCH] == 0, "node reserved");
       delete _nodes[nodeId];
       assert(getNodeIdsRef(nodeCopy.topology).remove(nodeId));
       assert(getOperatorNodeIdsRef(nodeCopy.topology)[operatorId].remove(nodeId));
       emit NodeDeleted(nodeId, nodeCopy.operatorId, nodeCopy.host, nodeCopy.region, nodeCopy.topology,
-        nodeCopy.disabled, nodeCopy.prices[nextEpoch]);
+        nodeCopy.disabled, nodeCopy.prices[ARMADA_NEXT_EPOCH]);
     }
   }
 
@@ -227,7 +224,7 @@ contract ArmadaNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUpgra
   function setNodeHosts(bytes32 operatorId, bytes32[] memory nodeIds, string[] memory hosts, string[] memory regions)
   public virtual onlyAdminOrOperator(operatorId) whenNotReconciling whenNotPaused {
     bool admin = hasRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    ArmadaNodesImpl.setNodeHostsImpl(_registry, _nodes, admin, operatorId, nodeIds, hosts, regions);
+    ArmadaNodesImpl.setNodeHostsImpl(_nodes, admin, operatorId, nodeIds, hosts, regions);
   }
 
   /// @notice Changes content node prices: spot price (current epoch only), renewal price (starting from next epoch).

@@ -91,8 +91,6 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
   public virtual onlyAdminOrTopologyNode(topologyNodeId) whenReconciling whenNotPaused {
     ArmadaNodes allNodes = _registry.getNodes();
     ArmadaProjects projects = _registry.getProjects();
-    uint256 lastEpoch = _registry.lastEpochSlot();
-    uint256 nextEpoch = _registry.nextEpochSlot();
     require(_renewalNodeIndex == 0, "renewal in progress");
     require(_billingNodeIndex < allNodes.getNodeCount(0, false), "billing finished");
     for (uint256 i = 0; i < nodeIds.length; i++) {
@@ -100,15 +98,15 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
       ArmadaNode memory nodeCopy = allNodes.getNode(nodeIds[i]);
       require(nodeCopy.id == nodeCopy0[0].id, "order mismatch");
       require(uptimeBips[i] <= 10000, "invalid uptime");
-      if (nodeCopy.projectIds[lastEpoch] != 0) {
-        bytes32 projectId = nodeCopy.projectIds[lastEpoch];
-        uint256 payout = nodeCopy.prices[lastEpoch] * uptimeBips[i] / 10000;
+      if (nodeCopy.projectIds[ARMADA_LAST_EPOCH] != 0) {
+        bytes32 projectId = nodeCopy.projectIds[ARMADA_LAST_EPOCH];
+        uint256 payout = nodeCopy.prices[ARMADA_LAST_EPOCH] * uptimeBips[i] / 10000;
         projects.setProjectEscrowImpl(projectId, payout, 0);
-        projects.setProjectReserveImpl(projectId, nodeCopy.prices[lastEpoch], 0);
+        projects.setProjectReserveImpl(projectId, nodeCopy.prices[ARMADA_LAST_EPOCH], 0);
         _registry.getOperators().setOperatorStakeImpl(nodeCopy.operatorId, 0, payout);
-        emit ReservationResolved(nodeCopy.id, nodeCopy.operatorId, projectId, nodeCopy.prices[lastEpoch],
+        emit ReservationResolved(nodeCopy.id, nodeCopy.operatorId, projectId, nodeCopy.prices[ARMADA_LAST_EPOCH],
           uptimeBips[i], payout, _registry.getLastEpochStart());
-        if (nodeCopy.projectIds[nextEpoch] != projectId) {
+        if (nodeCopy.projectIds[ARMADA_NEXT_EPOCH] != projectId) {
           assert(_registry.getReservations().removeProjectNodeIdImpl(projectId, nodeCopy.id));
         }
       }
@@ -124,8 +122,6 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
   public virtual onlyAdminOrTopologyNode(topologyNodeId) whenReconciling whenNotPaused {
     ArmadaNodes allNodes = _registry.getNodes();
     ArmadaProjects projects = _registry.getProjects();
-    uint256 lastEpoch = _registry.lastEpochSlot();
-    uint256 nextEpoch = _registry.nextEpochSlot();
     require(_billingNodeIndex == allNodes.getNodeCount(0, false), "billing in progress");
     require(_renewalNodeIndex < allNodes.getNodeCount(0, false), "renewal finished");
     bool epochLengthChanged = _registry.getNextEpochLength() != _registry.getCuedEpochLength();
@@ -134,20 +130,20 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
       ArmadaNode[] memory nodeCopy0 = allNodes.getNodes(0, false, _renewalNodeIndex++, 1);
       ArmadaNode memory nodeCopy = allNodes.getNode(nodeIds[i]);
       require(nodeCopy.id == nodeCopy0[0].id, "order mismatch");
-      if (nodeCopy.projectIds[nextEpoch] != 0) {
-        bytes32 projectId = nodeCopy.projectIds[nextEpoch];
-        uint256 nextPrice = nodeCopy.prices[nextEpoch];
+      if (nodeCopy.projectIds[ARMADA_NEXT_EPOCH] != 0) {
+        bytes32 projectId = nodeCopy.projectIds[ARMADA_NEXT_EPOCH];
+        uint256 nextPrice = nodeCopy.prices[ARMADA_NEXT_EPOCH];
         if (epochLengthChanged) {
           nextPrice /= _registry.getNextEpochLength();
           nextPrice *= _registry.getCuedEpochLength();
-          allNodes.setNodePriceImpl(nodeCopy.id, nextEpoch, nextPrice);
+          allNodes.setNodePriceImpl(nodeCopy.id, ARMADA_NEXT_EPOCH, nextPrice);
         }
         projects.setProjectReserveImpl(projectId, 0, nextPrice);
         ArmadaProject memory projectCopy = projects.getProject(projectId);
         if (projectCopy.escrow < projectCopy.reserve) {
-          allNodes.setNodeProjectImpl(nodeCopy.id, nextEpoch, 0);
+          allNodes.setNodeProjectImpl(nodeCopy.id, ARMADA_NEXT_EPOCH, 0);
           projects.setProjectReserveImpl(projectId, nextPrice, 0);
-          emit ReservationCanceled(nodeCopy.id, nodeCopy.operatorId, projectId, nodeCopy.prices[lastEpoch]);
+          emit ReservationCanceled(nodeCopy.id, nodeCopy.operatorId, projectId, nodeCopy.prices[ARMADA_LAST_EPOCH]);
         }
       }
     }

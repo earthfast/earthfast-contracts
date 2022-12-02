@@ -204,10 +204,6 @@ describe("ArmadaNodes", function () {
     const { nodeId: nodeId1 } = createNodes1Result as Result;
     expect(nodeId1).to.not.equal(HashZero);
 
-    // Check last epoch slot
-    const lastEpochSlot = await registry.lastEpochSlot();
-    const nextEpochSlot = await registry.nextEpochSlot();
-
     // Create project
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
@@ -217,8 +213,8 @@ describe("ArmadaNodes", function () {
     expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), ...projectsPermit)).to.be.ok;
 
     // Set last or next project of node to have a project to simulate "node is reserved" state
-    await nodes.connect(operatorsSigner).setNodeProjectImpl(nodeId1, lastEpochSlot, projectId1, { gasPrice: 0 });
-    await nodes.connect(operatorsSigner).setNodeProjectImpl(nodeId1, nextEpochSlot, projectId1, { gasPrice: 0 });
+    await nodes.connect(operatorsSigner).setNodeProjectImpl(nodeId1, 0, projectId1, { gasPrice: 0 });
+    await nodes.connect(operatorsSigner).setNodeProjectImpl(nodeId1, 1, projectId1, { gasPrice: 0 });
 
     // Delete reserved node
     await expect(nodes.connect(operator).deleteNodes(operatorId, false, [nodeId1])).to.be.revertedWith("node reserved");
@@ -483,7 +479,7 @@ describe("ArmadaNodes", function () {
     expect(setNodePrices2Result).to.be.ok;
 
     // set price should fail if node is reserved (e.g. last project is set)
-    await nodes.connect(operatorsSigner).setNodeProjectImpl(nodeId, await registry.lastEpochSlot(), projectId1, { gasPrice: 0 });
+    await nodes.connect(operatorsSigner).setNodeProjectImpl(nodeId, 0, projectId1, { gasPrice: 0 });
     await expect(nodes.connect(operator).setNodePrices(operatorId, [nodeId], [parseTokens("2")], { last: true, next: true })).to.be.revertedWith("node reserved");
   });
 
@@ -511,7 +507,7 @@ describe("ArmadaNodes", function () {
     const projectsPermit = await approve(hre, token, admin.address, projects.address, parseTokens("100"));
     expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), ...projectsPermit)).to.be.ok;
 
-    await nodes.connect(operatorsSigner).setNodeProjectImpl(nodeId, await registry.nextEpochSlot(), projectId1, { gasPrice: 0 });
+    await nodes.connect(operatorsSigner).setNodeProjectImpl(nodeId, 1, projectId1, { gasPrice: 0 });
     await nodes.connect(operator).setNodePrices(operatorId, [nodeId], [parseTokens("1")], { last: false, next: true });
   });
 

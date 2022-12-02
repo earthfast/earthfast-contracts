@@ -35,7 +35,6 @@ export type ArmadaRegistryInitializeDataStruct = {
   lastEpochLength: PromiseOrValue<BigNumberish>;
   nextEpochLength: PromiseOrValue<BigNumberish>;
   gracePeriod: PromiseOrValue<BigNumberish>;
-  epochSlot: PromiseOrValue<BigNumberish>;
   token: PromiseOrValue<string>;
   billing: PromiseOrValue<string>;
   nodes: PromiseOrValue<string>;
@@ -46,7 +45,6 @@ export type ArmadaRegistryInitializeDataStruct = {
 
 export type ArmadaRegistryInitializeDataStructOutput = [
   string,
-  BigNumber,
   BigNumber,
   BigNumber,
   BigNumber,
@@ -65,7 +63,6 @@ export type ArmadaRegistryInitializeDataStructOutput = [
   lastEpochLength: BigNumber;
   nextEpochLength: BigNumber;
   gracePeriod: BigNumber;
-  epochSlot: BigNumber;
   token: string;
   billing: string;
   nodes: string;
@@ -95,10 +92,8 @@ export interface ArmadaRegistryInterface extends utils.Interface {
     "getVersion()": FunctionFragment;
     "grantRole(bytes32,address)": FunctionFragment;
     "hasRole(bytes32,address)": FunctionFragment;
-    "initialize(address[],(string,uint256,uint256,uint256,uint256,uint256,uint256,address,address,address,address,address,address))": FunctionFragment;
-    "lastEpochSlot()": FunctionFragment;
+    "initialize(address[],(string,uint256,uint256,uint256,uint256,uint256,address,address,address,address,address,address))": FunctionFragment;
     "newNonceImpl()": FunctionFragment;
-    "nextEpochSlot()": FunctionFragment;
     "pause()": FunctionFragment;
     "paused()": FunctionFragment;
     "proxiableUUID()": FunctionFragment;
@@ -146,9 +141,7 @@ export interface ArmadaRegistryInterface extends utils.Interface {
       | "grantRole"
       | "hasRole"
       | "initialize"
-      | "lastEpochSlot"
       | "newNonceImpl"
-      | "nextEpochSlot"
       | "pause"
       | "paused"
       | "proxiableUUID"
@@ -246,15 +239,7 @@ export interface ArmadaRegistryInterface extends utils.Interface {
     values: [PromiseOrValue<string>[], ArmadaRegistryInitializeDataStruct]
   ): string;
   encodeFunctionData(
-    functionFragment: "lastEpochSlot",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "newNonceImpl",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "nextEpochSlot",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "pause", values?: undefined): string;
@@ -398,15 +383,7 @@ export interface ArmadaRegistryInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "lastEpochSlot",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "newNonceImpl",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "nextEpochSlot",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "pause", data: BytesLike): Result;
@@ -690,13 +667,9 @@ export interface ArmadaRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    lastEpochSlot(overrides?: CallOverrides): Promise<[BigNumber]>;
-
     newNonceImpl(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
-
-    nextEpochSlot(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     pause(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -865,13 +838,9 @@ export interface ArmadaRegistry extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  lastEpochSlot(overrides?: CallOverrides): Promise<BigNumber>;
-
   newNonceImpl(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
-
-  nextEpochSlot(overrides?: CallOverrides): Promise<BigNumber>;
 
   pause(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1040,11 +1009,7 @@ export interface ArmadaRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    lastEpochSlot(overrides?: CallOverrides): Promise<BigNumber>;
-
     newNonceImpl(overrides?: CallOverrides): Promise<BigNumber>;
-
-    nextEpochSlot(overrides?: CallOverrides): Promise<BigNumber>;
 
     pause(overrides?: CallOverrides): Promise<void>;
 
@@ -1274,13 +1239,9 @@ export interface ArmadaRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    lastEpochSlot(overrides?: CallOverrides): Promise<BigNumber>;
-
     newNonceImpl(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
-
-    nextEpochSlot(overrides?: CallOverrides): Promise<BigNumber>;
 
     pause(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1458,13 +1419,9 @@ export interface ArmadaRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    lastEpochSlot(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     newNonceImpl(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
-
-    nextEpochSlot(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     pause(
       overrides?: Overrides & { from?: PromiseOrValue<string> }

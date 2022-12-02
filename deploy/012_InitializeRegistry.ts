@@ -54,7 +54,6 @@ async function main() {
       lastEpochLength,
       nextEpochLength,
       gracePeriod: data?.ArmadaRegistry?.gracePeriod ?? "86400", // 1 day
-      epochSlot: data?.ArmadaRegistry?.epochSlot ?? "0",
       token: token.address,
       billing: billing.address,
       nodes: nodes.address,

@@ -281,7 +281,6 @@ describe("ArmadaRegistry", function () {
       lastEpochLength: 100,
       nextEpochLength: 100,
       gracePeriod: 0,
-      epochSlot: 0,
       token: token.address,
       billing: billing.address,
       nodes: nodes.address,
@@ -304,11 +303,6 @@ describe("ArmadaRegistry", function () {
     newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });
     newRegistryArgs = { ...registryArgs, nextEpochLength: 0 };
     await expect(newRegistry.connect(admin).initialize([admin.address], newRegistryArgs)).to.be.revertedWith("zero next epoch length");
-
-    // epoch slot
-    newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });
-    newRegistryArgs = { ...registryArgs, epochSlot: 100 };
-    await expect(newRegistry.connect(admin).initialize([admin.address], newRegistryArgs)).to.be.revertedWith("epoch slot");
 
     // no admins provided
     newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });

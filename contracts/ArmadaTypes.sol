@@ -15,6 +15,10 @@ uint256 constant ARMADA_MAX_NAME_BYTES = 256;
 uint256 constant ARMADA_MAX_EMAIL_BYTES = 256;
 uint256 constant ARMADA_MAX_CONTENT_BYTES = 2048;
 
+// Indexes of epoch slots
+uint256 constant ARMADA_LAST_EPOCH = 0;
+uint256 constant ARMADA_NEXT_EPOCH = 1;
+
 // Specifies an epoch slot
 struct ArmadaSlot {
   bool last; // Starting and ending with the current epoch
@@ -59,8 +63,7 @@ struct ArmadaNode {
   bool topology;      // Whether this is a topology or content node
   bool disabled;      // Disabled node won't take new reservations, and won't renew when current epoch ends
 
-  // Content nodes only. Ring buffers that hold corresponding values for the last and the next epoch.
-  // This allows efficiently advancing epoch in time by simply changing the index into these buffers.
+  // Content nodes only. Slots that hold corresponding values for the last and the next epoch.
   uint256[2] prices;     // Full-epoch price if node is not reserved, or prorated price if node is reserved
   bytes32[2] projectIds; // Project that reserved this node for the respective epoch, or zero if not reserved
 }
@@ -82,7 +85,7 @@ struct ArmadaRegistryInitializeData {
   uint256 lastEpochLength;
   uint256 nextEpochLength;
   uint256 gracePeriod;
-  uint256 epochSlot;
+
   ArmadaToken token;
   ArmadaBilling billing;
   ArmadaNodes nodes;
