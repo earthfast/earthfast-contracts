@@ -40,6 +40,7 @@ library ArmadaNodesImpl {
     bytes32 operatorId, bytes32[] memory nodeIds, uint256[] memory prices, ArmadaSlot calldata slot)
   public {
     require(nodeIds.length == prices.length, "length mismatch");
+    ArmadaNodes allNodes = _registry.getNodes();
     ArmadaProjects projects = _registry.getProjects();
     ArmadaReservations reservations = _registry.getReservations();
     for (uint256 i = 0; i < nodeIds.length; i++) {
@@ -62,7 +63,7 @@ library ArmadaNodesImpl {
           if (projectCopy.escrow < projectCopy.reserve) {
             _registry.requireNotGracePeriod();
             ArmadaSlot memory slot_ = ArmadaSlot({ last: false, next: true });
-            reservations.deleteReservationImpl(projectId, node.id, slot_);
+            reservations.deleteReservationImpl(allNodes, projects, projectId, node.id, slot_);
           }
         }
       }
@@ -75,6 +76,8 @@ library ArmadaNodesImpl {
     bytes32 operatorId, bytes32[] memory nodeIds, bool[] memory disabled)
   public {
     require(nodeIds.length == disabled.length, "length mismatch");
+    ArmadaNodes allNodes = _registry.getNodes();
+    ArmadaProjects projects = _registry.getProjects();
     ArmadaReservations reservations = _registry.getReservations();
     for (uint256 i = 0; i < nodeIds.length; i++) {
       ArmadaNode storage node = _nodes[nodeIds[i]];
@@ -86,7 +89,7 @@ library ArmadaNodesImpl {
       if (projectId != 0) {
         _registry.requireNotGracePeriod();
         ArmadaSlot memory slot_ = ArmadaSlot({ last: false, next: true });
-        reservations.deleteReservationImpl(projectId, node.id, slot_);
+        reservations.deleteReservationImpl(allNodes, projects, projectId, node.id, slot_);
       }
       emit NodeDisabledChanged(node.id, oldDisabled, disabled[i]);
     }

@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "./ArmadaNodes.sol";
 import "./ArmadaProjects.sol";
 import "./ArmadaRegistry.sol";
+import "./ArmadaReservations.sol";
 import "./ArmadaTypes.sol";
 
 /// @title Entry point for managing node reservations by projects
@@ -91,8 +92,10 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
   public virtual onlyAdminOrTopologyNode(topologyNodeId) whenReconciling whenNotPaused {
     ArmadaNodes allNodes = _registry.getNodes();
     ArmadaProjects projects = _registry.getProjects();
+    ArmadaOperators operators = _registry.getOperators();
     require(_renewalNodeIndex == 0, "renewal in progress");
     require(_billingNodeIndex < allNodes.getNodeCount(0, false), "billing finished");
+    uint256 lastEpochStart = _registry.getLastEpochStart();
     for (uint256 i = 0; i < nodeIds.length; i++) {
       ArmadaNode[] memory nodeCopy0 = allNodes.getNodes(0, false, _billingNodeIndex++, 1);
       ArmadaNode memory nodeCopy = allNodes.getNode(nodeIds[i]);
@@ -103,9 +106,9 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
         uint256 payout = nodeCopy.prices[ARMADA_LAST_EPOCH] * uptimeBips[i] / 10000;
         projects.setProjectEscrowImpl(projectId, payout, 0);
         projects.setProjectReserveImpl(projectId, nodeCopy.prices[ARMADA_LAST_EPOCH], 0);
-        _registry.getOperators().setOperatorStakeImpl(nodeCopy.operatorId, 0, payout);
+        operators.setOperatorStakeImpl(nodeCopy.operatorId, 0, payout);
         emit ReservationResolved(nodeCopy.id, nodeCopy.operatorId, projectId, nodeCopy.prices[ARMADA_LAST_EPOCH],
-          uptimeBips[i], payout, _registry.getLastEpochStart());
+          uptimeBips[i], payout, lastEpochStart);
         if (nodeCopy.projectIds[ARMADA_NEXT_EPOCH] != projectId) {
           assert(_registry.getReservations().removeProjectNodeIdImpl(projectId, nodeCopy.id));
         }

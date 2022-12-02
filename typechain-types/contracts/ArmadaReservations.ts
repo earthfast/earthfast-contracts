@@ -74,7 +74,7 @@ export interface ArmadaReservationsInterface extends utils.Interface {
     "DEFAULT_ADMIN_ROLE()": FunctionFragment;
     "IMPORTER_ROLE()": FunctionFragment;
     "createReservations(bytes32,bytes32[],uint256[],(bool,bool))": FunctionFragment;
-    "deleteReservationImpl(bytes32,bytes32,(bool,bool))": FunctionFragment;
+    "deleteReservationImpl(address,address,bytes32,bytes32,(bool,bool))": FunctionFragment;
     "deleteReservations(bytes32,bytes32[],(bool,bool))": FunctionFragment;
     "getRegistry()": FunctionFragment;
     "getReservationCount(bytes32)": FunctionFragment;
@@ -145,6 +145,8 @@ export interface ArmadaReservationsInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "deleteReservationImpl",
     values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
       PromiseOrValue<BytesLike>,
       PromiseOrValue<BytesLike>,
       ArmadaSlotStruct
@@ -492,6 +494,8 @@ export interface ArmadaReservations extends BaseContract {
     ): Promise<ContractTransaction>;
 
     deleteReservationImpl(
+      allNodes: PromiseOrValue<string>,
+      projects: PromiseOrValue<string>,
       projectId: PromiseOrValue<BytesLike>,
       nodeId: PromiseOrValue<BytesLike>,
       slot: ArmadaSlotStruct,
@@ -616,6 +620,8 @@ export interface ArmadaReservations extends BaseContract {
   ): Promise<ContractTransaction>;
 
   deleteReservationImpl(
+    allNodes: PromiseOrValue<string>,
+    projects: PromiseOrValue<string>,
     projectId: PromiseOrValue<BytesLike>,
     nodeId: PromiseOrValue<BytesLike>,
     slot: ArmadaSlotStruct,
@@ -738,6 +744,8 @@ export interface ArmadaReservations extends BaseContract {
     ): Promise<void>;
 
     deleteReservationImpl(
+      allNodes: PromiseOrValue<string>,
+      projects: PromiseOrValue<string>,
       projectId: PromiseOrValue<BytesLike>,
       nodeId: PromiseOrValue<BytesLike>,
       slot: ArmadaSlotStruct,
@@ -958,6 +966,8 @@ export interface ArmadaReservations extends BaseContract {
     ): Promise<BigNumber>;
 
     deleteReservationImpl(
+      allNodes: PromiseOrValue<string>,
+      projects: PromiseOrValue<string>,
       projectId: PromiseOrValue<BytesLike>,
       nodeId: PromiseOrValue<BytesLike>,
       slot: ArmadaSlotStruct,
@@ -1083,6 +1093,8 @@ export interface ArmadaReservations extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     deleteReservationImpl(
+      allNodes: PromiseOrValue<string>,
+      projects: PromiseOrValue<string>,
       projectId: PromiseOrValue<BytesLike>,
       nodeId: PromiseOrValue<BytesLike>,
       slot: ArmadaSlotStruct,
