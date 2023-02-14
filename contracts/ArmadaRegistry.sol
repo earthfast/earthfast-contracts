@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 
 import "./ArmadaBilling.sol";
 import "./ArmadaNodes.sol";
@@ -23,8 +24,8 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
   uint256 private _nextEpochLength; // Duration of the next epoch in seconds
   uint256 private _cuedEpochLength; // Pending change of the epoch duration, becomes effective after the next epoch
   uint256 private _gracePeriod;     // Period in seconds at the end of the epoch when node prices can't change
-  uint256 private _reserved;        // Unused, guaranteed to be zero on all deployments and can be reused in the future
 
+  ERC20Permit private _usdc;
   ArmadaToken private _token;
   ArmadaBilling private _billing;
   ArmadaNodes private _nodes;
@@ -86,6 +87,7 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
     _cuedEpochLength = data.nextEpochLength;
     _gracePeriod = data.gracePeriod;
 
+    _usdc = data.usdc;
     _token = data.token;
     _billing = data.billing;
     _nodes = data.nodes;
@@ -99,14 +101,30 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
       _grantRole(DEFAULT_ADMIN_ROLE, admins[i]);
     }
 
-    if (address(_operators) != address(0))
+    if (address(_operators) != address(0)) {
+      _usdc.approve(address(_operators), type(uint256).max);
       _token.approve(address(_operators), type(uint256).max);
-    if (address(_projects) != address(0))
-      _token.approve(address(_projects), type(uint256).max);
+    }
+    if (address(_projects) != address(0)) {
+      _usdc.approve(address(_projects), type(uint256).max);
+    }
   }
 
   /// @dev Reverts if proxy upgrade of this contract by msg.sender is not allowed
   function _authorizeUpgrade(address) internal virtual override onlyAdmin {}
+
+  /// @dev CAUTION: This can break data consistency. Used for proxy-less upgrades.
+  function unsafeSetUSDC(ERC20Permit usdc) public virtual onlyAdmin {
+    if (address(_operators) != address(0)) {
+      _usdc.approve(address(_operators), 0);
+      usdc.approve(address(_operators), type(uint256).max);
+    }
+    if (address(_projects) != address(0)) {
+      _usdc.approve(address(_projects), 0);
+      usdc.approve(address(_projects), type(uint256).max);
+    }
+    _usdc = usdc;
+  }
 
   /// @dev CAUTION: This can break data consistency. Used for proxy-less upgrades.
   function unsafeSetToken(ArmadaToken token) public virtual onlyAdmin {
@@ -114,28 +132,30 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
       _token.approve(address(_operators), 0);
       token.approve(address(_operators), type(uint256).max);
     }
-    if (address(_projects) != address(0)) {
-      _token.approve(address(_projects), 0);
-      token.approve(address(_projects), type(uint256).max);
-    }
     _token = token;
   }
 
   /// @dev CAUTION: This can break data consistency. Used for proxy-less upgrades.
   function unsafeSetOperators(ArmadaOperators operators) public virtual onlyAdmin {
-    if (address(_operators) != address(0))
+    if (address(_operators) != address(0)) {
+      _usdc.approve(address(_operators), 0);
       _token.approve(address(_operators), 0);
-    if (address(operators) != address(0))
+    }
+    if (address(operators) != address(0)) {
+      _usdc.approve(address(operators), type(uint256).max);
       _token.approve(address(operators), type(uint256).max);
+    }
     _operators = operators;
   }
 
   /// @dev CAUTION: This can break data consistency. Used for proxy-less upgrades.
   function unsafeSetProjects(ArmadaProjects projects) public virtual onlyAdmin {
-    if (address(_projects) != address(0))
-      _token.approve(address(_projects), 0);
-    if (address(projects) != address(0))
-      _token.approve(address(projects), type(uint256).max);
+    if (address(_projects) != address(0)) {
+      _usdc.approve(address(_projects), 0);
+    }
+    if (address(projects) != address(0)) {
+      _usdc.approve(address(projects), type(uint256).max);
+    }
     _projects = projects;
   }
 
@@ -145,8 +165,9 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
   function unsafeSetReservations(ArmadaReservations reservations) public virtual onlyAdmin { _reservations = reservations; }
 
   /// @dev CAUTION: This can break data consistency. Used for proxy-less upgrades.
-  /// @dev Admin can deposit funds to this contract directly by token.transfer().
-  function unsafeWithdraw(address to, uint256 amount) public onlyAdmin { _token.transfer(to, amount); }
+  /// @dev One can unsafe-deposit funds to this contract directly by token.transfer().
+  function unsafeWithdrawUSDC(address to, uint256 amount) public onlyAdmin { _usdc.transfer(to, amount); }
+  function unsafeWithdrawToken(address to, uint256 amount) public onlyAdmin { _token.transfer(to, amount); }
 
   function pause() public virtual onlyAdmin { _pause(); }
   function unpause() public virtual onlyAdmin { _unpause(); }
@@ -157,6 +178,7 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
   function getNonce() public virtual view returns (uint256) { return _nonce; }
   function newNonceImpl() public virtual onlyImpl returns (uint256) { return _nonce++; }
 
+  function getUSDC() public virtual view returns (ERC20Permit) { return _usdc; }
   function getToken() public virtual view returns (ArmadaToken) { return _token; }
   function getBilling() public virtual view returns (ArmadaBilling) { return _billing; }
   function getNodes() public virtual view returns (ArmadaNodes) { return _nodes; }

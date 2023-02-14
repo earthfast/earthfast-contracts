@@ -6,7 +6,7 @@ import { BigNumber } from "ethers";
 import { Result } from "ethers/lib/utils";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine, mineWith } from "../lib/test";
-import { approve, formatTokens, parseTokens, signers } from "../lib/util";
+import { approve, formatUSDC, parseTokens, parseUSDC, signers } from "../lib/util";
 import { ArmadaBilling } from "../typechain-types/contracts/ArmadaBilling";
 import { ArmadaCreateNodeDataStruct, ArmadaNodes } from "../typechain-types/contracts/ArmadaNodes";
 import { ArmadaOperators, ArmadaOperatorStruct } from "../typechain-types/contracts/ArmadaOperators";
@@ -14,6 +14,7 @@ import { ArmadaCreateProjectDataStruct, ArmadaProjects } from "../typechain-type
 import { ArmadaRegistry } from "../typechain-types/contracts/ArmadaRegistry";
 import { ArmadaReservations } from "../typechain-types/contracts/ArmadaReservations";
 import { ArmadaToken } from "../typechain-types/contracts/ArmadaToken";
+import { USDC } from "../typechain-types/contracts/test/USDC";
 
 chai.use(shallowDeepEqual);
 
@@ -22,6 +23,7 @@ describe("ArmadaBilling", function () {
   let operator: SignerWithAddress;
   let project: SignerWithAddress;
 
+  let usdc: USDC;
   let token: ArmadaToken;
   let registry: ArmadaRegistry;
   let billing: ArmadaBilling;
@@ -36,7 +38,7 @@ describe("ArmadaBilling", function () {
   let projectId1: string;
   let operatorId1: string;
 
-  const price = parseTokens("1");
+  const price = parseUSDC("1");
 
   let pricePerSec: BigNumber;
   let epochLength: number;
@@ -56,14 +58,14 @@ describe("ArmadaBilling", function () {
 
   async function fixture() {
     ({ admin, operator, project } = await signers(hre));
-    ({ token, billing, nodes, operators, projects, reservations, registry } = await fixtures(hre));
+    ({ usdc, token, billing, nodes, operators, projects, reservations, registry } = await fixtures(hre));
 
     epochLength = (await registry.getLastEpochLength()).toNumber();
     gracePeriod = (await registry.getGracePeriod()).toNumber();
     pricePerSec = price.div(epochLength); // Node price per second
 
     // Create operator
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0 };
+    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     [operatorId1] = await expectEvent(createOperator1, operators, "OperatorCreated");
     const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
@@ -71,7 +73,7 @@ describe("ArmadaBilling", function () {
 
     // Create topology node
     expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
-    const n0: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r0", price: parseTokens("0") };
+    const n0: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r0", price: parseUSDC("0") };
     const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(operatorId1, true, [n0]));
     const createNodes0Result = await expectEvent(createNodes0, nodes, "NodeCreated");
     ({ nodeId: nodeId0 } = createNodes0Result as Result);
@@ -88,8 +90,8 @@ describe("ArmadaBilling", function () {
     const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    const projectsPermit = await approve(hre, token, admin.address, projects.address, parseTokens("100"));
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), ...projectsPermit)).to.be.ok;
+    const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));
+    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
 
     // Jump to the next epoch start and mark the previous epoch as reconciled,
     // and force align epoch start to a multiple of epochLength for convenience.
@@ -138,10 +140,10 @@ describe("ArmadaBilling", function () {
 
   it("Should auto-release non-renew nodes", async function () {
     const proratedPrice = pricePerSec.mul(await epochRemainder());
-    expect(Number.parseFloat(formatTokens(proratedPrice))).to.be.equal(1);
+    expect(Number.parseFloat(formatUSDC(proratedPrice))).to.be.equal(1);
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
-    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100));
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(100));
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice.mul(2));
 
@@ -151,7 +153,8 @@ describe("ArmadaBilling", function () {
     if (hre.network.tags.ganache) await mine(hre, 1);
     expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
     expect(await reservations.getReservationCount(projectId1)).to.equal(0);
-    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100).add(proratedPrice.mul(2)));
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
+    expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice.mul(2));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(100).sub(proratedPrice.mul(2)));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(0));
   });
@@ -200,7 +203,7 @@ describe("ArmadaBilling", function () {
 
   it("Should auto-release nodes that were disabled by operator", async function () {
     const proratedPrice = pricePerSec.mul(await epochRemainder());
-    expect(Number.parseFloat(formatTokens(proratedPrice))).to.be.equal(1);
+    expect(Number.parseFloat(formatUSDC(proratedPrice))).to.be.equal(1);
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok);
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice.add(price).mul(2));
@@ -208,7 +211,7 @@ describe("ArmadaBilling", function () {
     await expect(nodes.connect(operator).setNodeDisabled(operatorId1, [nodeId1, nodeId2], [true, true])).to.be.revertedWith("grace period");
     expect(await registry.connect(admin).setGracePeriod(gracePeriod)).to.be.ok;
     expect(await nodes.connect(operator).setNodeDisabled(operatorId1, [nodeId1, nodeId2], [true, true])).to.be.ok;
-    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100));
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(100));
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice.mul(2));
 
@@ -217,14 +220,15 @@ describe("ArmadaBilling", function () {
     expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
     expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
     expect(await reservations.getReservationCount(projectId1)).to.equal(0);
-    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100).add(proratedPrice.mul(2)));
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
+    expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice.mul(2));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(100).sub(proratedPrice.mul(2)));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(0));
   });
 
   it("Should auto-release nodes that were repriced by operator", async function () {
     const proratedPrice = pricePerSec.mul(await epochRemainder());
-    expect(Number.parseFloat(formatTokens(proratedPrice))).to.be.equal(1);
+    expect(Number.parseFloat(formatUSDC(proratedPrice))).to.be.equal(1);
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok);
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice.add(price).mul(2));
@@ -232,7 +236,7 @@ describe("ArmadaBilling", function () {
     await expect(nodes.connect(operator).setNodePrices(operatorId1, [nodeId1, nodeId2], [price.mul(100), price.mul(100)], { last: false, next: true })).to.be.revertedWith("grace period");
     expect(await registry.connect(admin).setGracePeriod(gracePeriod)).to.be.ok;
     expect(await nodes.connect(operator).setNodePrices(operatorId1, [nodeId1, nodeId2], [price.mul(100), price.mul(100)], { last: false, next: true })).to.be.ok;
-    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100));
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(100));
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice.mul(2));
 
@@ -241,7 +245,8 @@ describe("ArmadaBilling", function () {
     expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
     expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
     expect(await reservations.getReservationCount(projectId1)).to.equal(0);
-    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100).add(proratedPrice.mul(2)));
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
+    expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice.mul(2));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(100).sub(proratedPrice.mul(2)));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(0));
   });
@@ -250,7 +255,7 @@ describe("ArmadaBilling", function () {
     await mineWith(hre, async () => expect(await projects.connect(project).withdrawProjectEscrow(projectId1, price.mul(94), project.address)).to.be.ok);
 
     const proratedPrice = pricePerSec.mul(await epochRemainder());
-    expect(Number.parseFloat(formatTokens(proratedPrice))).to.be.equal(0.99);
+    expect(Number.parseFloat(formatUSDC(proratedPrice))).to.be.equal(0.99);
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok);
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
     expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(6));
@@ -285,7 +290,7 @@ describe("ArmadaBilling", function () {
     await mineWith(hre, async () => expect(await registry.connect(admin).setCuedEpochLength(epochLength * 2)).to.be.ok);
 
     const proratedPrice = pricePerSec.mul(await epochRemainder());
-    expect(Number.parseFloat(formatTokens(proratedPrice))).to.be.equal(0.99);
+    expect(Number.parseFloat(formatUSDC(proratedPrice))).to.be.equal(0.99);
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok);
     expect(await registry.getLastEpochLength()).to.equal(100);
     expect(await registry.getNextEpochLength()).to.equal(100);
@@ -299,7 +304,7 @@ describe("ArmadaBilling", function () {
     expect((await nodes.getNode(nodeId2)).projectIds[0]).to.equal(projectId1);
     expect((await nodes.getNode(nodeId1)).projectIds[1]).to.equal(projectId1);
     expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(projectId1);
-    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100));
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(100));
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice.add(price).mul(2));
 
@@ -320,7 +325,8 @@ describe("ArmadaBilling", function () {
     expect((await nodes.getNode(nodeId2)).projectIds[0]).to.equal(projectId1);
     expect((await nodes.getNode(nodeId1)).projectIds[1]).to.equal(projectId1);
     expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(projectId1);
-    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100).add(proratedPrice.mul(2)));
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
+    expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice.mul(2));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(100).sub(proratedPrice.mul(2)));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(6));
 
@@ -341,7 +347,8 @@ describe("ArmadaBilling", function () {
     expect((await nodes.getNode(nodeId2)).projectIds[0]).to.equal(projectId1);
     expect((await nodes.getNode(nodeId1)).projectIds[1]).to.equal(projectId1);
     expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(projectId1);
-    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(102).add(proratedPrice.mul(2)));
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
+    expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice.add(price).mul(2));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(98).sub(proratedPrice.mul(2)));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(8));
 
@@ -362,17 +369,18 @@ describe("ArmadaBilling", function () {
     expect((await nodes.getNode(nodeId2)).projectIds[0]).to.equal(projectId1);
     expect((await nodes.getNode(nodeId1)).projectIds[1]).to.equal(projectId1);
     expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(projectId1);
-    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(106).add(proratedPrice.mul(2)));
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
+    expect((await operators.getOperator(operatorId1)).balance).to.equal(price.mul(6).add(proratedPrice.mul(2)));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(94).sub(proratedPrice.mul(2)));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(8));
   });
 
   it("Should decrease epoch duration", async function () {
-    expect(await projects.connect(project).withdrawProjectEscrow(projectId1, parseTokens("95.5"), project.address)).to.be.ok;
+    expect(await projects.connect(project).withdrawProjectEscrow(projectId1, parseUSDC("95.5"), project.address)).to.be.ok;
     await mineWith(hre, async () => expect(await registry.connect(admin).setCuedEpochLength(epochLength / 2)).to.be.ok);
 
     const proratedPrice = pricePerSec.mul(await epochRemainder());
-    expect(Number.parseFloat(formatTokens(proratedPrice))).to.be.equal(0.98);
+    expect(Number.parseFloat(formatUSDC(proratedPrice))).to.be.equal(0.98);
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok);
     expect(await registry.getLastEpochLength()).to.equal(100);
     expect(await registry.getNextEpochLength()).to.equal(100);
@@ -386,9 +394,9 @@ describe("ArmadaBilling", function () {
     expect((await nodes.getNode(nodeId2)).projectIds[0]).to.equal(projectId1);
     expect((await nodes.getNode(nodeId1)).projectIds[1]).to.equal(projectId1);
     expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(projectId1);
-    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(parseTokens("4.5"));
-    expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice.add(parseTokens("1")).mul(2));
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("4.5"));
+    expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice.add(parseUSDC("1")).mul(2));
 
     // Reconcile last epoch - node #2 gets loses renewal
     await mine(hre, epochLength);
@@ -407,9 +415,10 @@ describe("ArmadaBilling", function () {
     expect((await nodes.getNode(nodeId2)).projectIds[0]).to.equal(projectId1);
     expect((await nodes.getNode(nodeId1)).projectIds[1]).to.equal(projectId1);
     expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(HashZero);
-    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100).add(proratedPrice.mul(2)));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(parseTokens("4.5").sub(proratedPrice.mul(2))); // 2.54
-    expect((await projects.getProject(projectId1)).reserve).to.equal(parseTokens("1").mul(2).add(parseTokens("0.5")));
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
+    expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice.mul(2));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("4.5").sub(proratedPrice.mul(2))); // 2.54
+    expect((await projects.getProject(projectId1)).reserve).to.equal(parseUSDC("1").mul(2).add(parseUSDC("0.5")));
 
     // Reconcile next epoch - node #1 loses renewal, node #2 gets released
     await mine(hre, epochLength);
@@ -428,9 +437,10 @@ describe("ArmadaBilling", function () {
     expect((await nodes.getNode(nodeId2)).projectIds[0]).to.equal(HashZero);
     expect((await nodes.getNode(nodeId1)).projectIds[1]).to.equal(HashZero);
     expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(HashZero);
-    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100).add(proratedPrice.add(price).mul(2)));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(parseTokens("4.5").sub(proratedPrice.add(price).mul(2))); // 0.54
-    expect((await projects.getProject(projectId1)).reserve).to.equal(parseTokens("0.5"));
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
+    expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice.add(price).mul(2));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("4.5").sub(proratedPrice.add(price).mul(2))); // 0.54
+    expect((await projects.getProject(projectId1)).reserve).to.equal(parseUSDC("0.5"));
 
     // Reconcile cued epoch - node #1 gets released
     await mine(hre, epochLength / 2);
@@ -449,8 +459,9 @@ describe("ArmadaBilling", function () {
     expect((await nodes.getNode(nodeId2)).projectIds[0]).to.equal(HashZero);
     expect((await nodes.getNode(nodeId1)).projectIds[1]).to.equal(HashZero);
     expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(HashZero);
-    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100).add(proratedPrice.add(price).mul(2).add(price.div(2))));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(parseTokens("4.5").sub(proratedPrice.add(price).mul(2).add(price.div(2)))); // 0.04
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
+    expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice.add(price).mul(2).add(price.div(2)));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("4.5").sub(proratedPrice.add(price).mul(2).add(price.div(2)))); // 0.04
     expect((await projects.getProject(projectId1)).reserve).to.equal(0);
   });
 

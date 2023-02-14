@@ -1,6 +1,6 @@
 import hre from "hardhat";
 import { deployProxy } from "../lib/deploy";
-import { attach, confirm, loadData, parseTokens, signers, stringify, wait } from "../lib/util";
+import { attach, confirm, loadData, parseTokens, parseUSDC, signers, stringify, wait } from "../lib/util";
 
 // @ts-ignore Type created during hardhat compile
 type ArmadaOperators = import("../typechain-types").ArmadaOperators;
@@ -20,6 +20,9 @@ async function main() {
   for (const operator of operatorsData) {
     if (operator?.stake !== undefined) {
       operator.stake = parseTokens(operator.stake).toString();
+    }
+    if (operator?.balance !== undefined) {
+      operator.balance = parseUSDC(operator.balance).toString();
     }
   }
   const importArgs = [operatorsData, true] as const;

@@ -110,6 +110,7 @@ export interface ArmadaProjectsInterface extends utils.Interface {
     "supportsInterface(bytes4)": FunctionFragment;
     "unpause()": FunctionFragment;
     "unsafeImportData((bytes32,address,string,string,uint256,uint256,string,bytes32)[],address[],bool)": FunctionFragment;
+    "unsafeSetEscrows(uint256,uint256,uint256,uint256)": FunctionFragment;
     "unsafeSetRegistry(address)": FunctionFragment;
     "upgradeTo(address)": FunctionFragment;
     "upgradeToAndCall(address,bytes)": FunctionFragment;
@@ -145,6 +146,7 @@ export interface ArmadaProjectsInterface extends utils.Interface {
       | "supportsInterface"
       | "unpause"
       | "unsafeImportData"
+      | "unsafeSetEscrows"
       | "unsafeSetRegistry"
       | "upgradeTo"
       | "upgradeToAndCall"
@@ -282,6 +284,15 @@ export interface ArmadaProjectsInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "unsafeSetEscrows",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "unsafeSetRegistry",
     values: [PromiseOrValue<string>]
   ): string;
@@ -384,6 +395,10 @@ export interface ArmadaProjectsInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "unpause", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "unsafeImportData",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "unsafeSetEscrows",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -771,6 +786,14 @@ export interface ArmadaProjects extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    unsafeSetEscrows(
+      skip: PromiseOrValue<BigNumberish>,
+      size: PromiseOrValue<BigNumberish>,
+      mul: PromiseOrValue<BigNumberish>,
+      div: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     unsafeSetRegistry(
       registry: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -930,6 +953,14 @@ export interface ArmadaProjects extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  unsafeSetEscrows(
+    skip: PromiseOrValue<BigNumberish>,
+    size: PromiseOrValue<BigNumberish>,
+    mul: PromiseOrValue<BigNumberish>,
+    div: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   unsafeSetRegistry(
     registry: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1082,6 +1113,14 @@ export interface ArmadaProjects extends BaseContract {
       projects: ArmadaProjectStruct[],
       creators: PromiseOrValue<string>[],
       revokeImporterRole: PromiseOrValue<boolean>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    unsafeSetEscrows(
+      skip: PromiseOrValue<BigNumberish>,
+      size: PromiseOrValue<BigNumberish>,
+      mul: PromiseOrValue<BigNumberish>,
+      div: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1398,6 +1437,14 @@ export interface ArmadaProjects extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    unsafeSetEscrows(
+      skip: PromiseOrValue<BigNumberish>,
+      size: PromiseOrValue<BigNumberish>,
+      mul: PromiseOrValue<BigNumberish>,
+      div: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     unsafeSetRegistry(
       registry: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1559,6 +1606,14 @@ export interface ArmadaProjects extends BaseContract {
       projects: ArmadaProjectStruct[],
       creators: PromiseOrValue<string>[],
       revokeImporterRole: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    unsafeSetEscrows(
+      skip: PromiseOrValue<BigNumberish>,
+      size: PromiseOrValue<BigNumberish>,
+      mul: PromiseOrValue<BigNumberish>,
+      div: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

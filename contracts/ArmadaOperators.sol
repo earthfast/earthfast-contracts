@@ -31,6 +31,7 @@ contract ArmadaOperators is AccessControlUpgradeable, PausableUpgradeable, Reent
   event OperatorOwnerChanged(bytes32 indexed operatorId, address indexed oldOwner, address indexed newOwner);
   event OperatorPropsChanged(bytes32 indexed operatorId, string oldName, string oldEmail, string newName, string newEmail);
   event OperatorStakeChanged(bytes32 indexed operatorId, uint256 oldStake, uint256 newStake);
+  event OperatorBalanceChanged(bytes32 indexed operatorId, uint256 oldBalance, uint256 newBalance);
 
   modifier onlyImpl {
     require(
@@ -127,6 +128,19 @@ contract ArmadaOperators is AccessControlUpgradeable, PausableUpgradeable, Reent
     }
   }
 
+  /// @dev Adjusts multiple operators balances relative to their current values.
+  /// @dev CAUTION: This can break data consistency. Used for proxy-less upgrades.
+  function unsafeSetBalances(uint256 skip, uint256 size, uint256 mul, uint256 div)
+  public virtual onlyAdmin {
+    require(mul != 0, "zero mul");
+    uint256 length = _operatorIds.length();
+    uint256 n = Math.min(size, length > skip ? length - skip : 0);
+    for (uint256 i = 0; i < n; i++) {
+      ArmadaOperator storage operator = _operators[_operatorIds.at(skip + i)];
+      operator.balance = operator.balance * mul / div;
+    }
+  }
+
   function pause() public virtual onlyAdmin { _pause(); }
   function unpause() public virtual onlyAdmin { _unpause(); }
 
@@ -134,12 +148,12 @@ contract ArmadaOperators is AccessControlUpgradeable, PausableUpgradeable, Reent
   function getStakePerNode() public virtual view returns (uint256) { return _stakePerNode; }
   function setStakePerNode(uint256 stake) public virtual onlyAdmin { _stakePerNode = stake; }
 
-  function setOperatorStakeImpl(bytes32 operatorId, uint256 decrease, uint256 increase)
+  function setOperatorBalanceImpl(bytes32 operatorId, uint256 decrease, uint256 increase)
   public virtual onlyImpl whenNotPaused {
     ArmadaOperator storage operator = _operators[operatorId];
     require(operator.id != 0, "unknown operator");
-    operator.stake -= decrease;
-    operator.stake += increase;
+    operator.balance -= decrease;
+    operator.balance += increase;
   }
 
   /// @notice Registers a new network operator. Only admin can do this.
@@ -150,7 +164,7 @@ contract ArmadaOperators is AccessControlUpgradeable, PausableUpgradeable, Reent
     require(bytes(name).length <= ARMADA_MAX_NAME_BYTES, "name too long");
     require(bytes(email).length <= ARMADA_MAX_EMAIL_BYTES, "email too long");
     operatorId = keccak256(abi.encodePacked(_registry.newNonceImpl()));
-    _operators[operatorId] = ArmadaOperator({id: operatorId, owner: owner, name: name, email: email, stake: 0});
+    _operators[operatorId] = ArmadaOperator({id: operatorId, owner: owner, name: name, email: email, stake: 0, balance: 0});
     assert(_operatorIds.add(operatorId));
     emit OperatorCreated(operatorId, owner, name, email);
   }
@@ -164,6 +178,7 @@ contract ArmadaOperators is AccessControlUpgradeable, PausableUpgradeable, Reent
     require(nodes.getNodeCount(operatorId, true) == 0, "operator has nodes");
     require(nodes.getNodeCount(operatorId, false) == 0, "operator has nodes");
     require(operatorCopy.stake == 0, "operator has stake");
+    require(operatorCopy.balance == 0, "operator has balance");
     delete _operators[operatorId];
     assert(_operatorIds.remove(operatorId));
     emit OperatorDeleted(operatorId, operatorCopy.owner, operatorCopy.name, operatorCopy.email);
@@ -195,7 +210,6 @@ contract ArmadaOperators is AccessControlUpgradeable, PausableUpgradeable, Reent
   }
 
   /// @notice Transfers tokens into the contract and applies them toward given operator stake.
-  /// @dev Requires token allowance for the corresponding amount from msg.sender to ArmadaOperators.
   /// @dev CAUTION: To avoid loss of funds, do NOT deposit to this contract by token.transfer().
   function depositOperatorStake(bytes32 operatorId, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
   public virtual whenNotPaused {
@@ -220,6 +234,31 @@ contract ArmadaOperators is AccessControlUpgradeable, PausableUpgradeable, Reent
     operator.stake -= amount;
     _registry.getToken().transferFrom(address(_registry), to, amount);
     emit OperatorStakeChanged(operatorId, oldStake, operator.stake);
+  }
+
+  /// @notice Transfers USDC into the contract and applies them toward given operator balance.
+  /// @dev CAUTION: To avoid loss of funds, do NOT deposit to this contract by token.transfer().
+  function depositOperatorBalance(bytes32 operatorId, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
+  public virtual whenNotPaused {
+    ArmadaOperator storage operator = _operators[operatorId];
+    require(operator.id != 0, "unknown operator");
+    uint256 oldBalance = operator.balance;
+    operator.balance += amount;
+    _registry.getUSDC().permit(msg.sender, address(this), amount, deadline, v, r, s);
+    _registry.getUSDC().transferFrom(msg.sender, address(_registry), amount);
+    emit OperatorBalanceChanged(operatorId, oldBalance, operator.balance);
+  }
+
+  /// @notice Transfers earned USDC from contract to given recipient.
+  function withdrawOperatorBalance(bytes32 operatorId, uint256 amount, address to)
+  public virtual nonReentrant onlyOperator(operatorId) whenNotReconciling whenNotPaused {
+    ArmadaOperator storage operator = _operators[operatorId];
+    assert(operator.id != 0); // Impossible because of onlyOperator
+    require(operator.balance >= amount, "not enough balance");
+    uint256 oldBalance = operator.balance;
+    operator.balance -= amount;
+    _registry.getUSDC().transferFrom(address(_registry), to, amount);
+    emit OperatorBalanceChanged(operatorId, oldBalance, operator.balance);
   }
 
   /// @dev Reverts if the id is unknown
