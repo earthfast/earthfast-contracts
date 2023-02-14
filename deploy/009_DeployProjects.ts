@@ -1,6 +1,6 @@
 import hre from "hardhat";
 import { deployProxy } from "../lib/deploy";
-import { attach, confirm, loadData, parseTokens, signers, stringify, wait } from "../lib/util";
+import { attach, confirm, loadData, parseUSDC, signers, stringify, wait } from "../lib/util";
 
 // @ts-ignore Type created during hardhat compile
 type ArmadaProjects = import("../typechain-types").ArmadaProjects;
@@ -17,8 +17,8 @@ async function main() {
   const projects = <ArmadaProjects>await attach(hre, "ArmadaProjects");
   const projectsData = data?.ArmadaProjects?.projects ?? [];
   for (const project of projectsData) {
-    if (project?.escrow !== undefined) project.escrow = parseTokens(project.escrow).toString();
-    if (project?.reserve !== undefined) project.reserve = parseTokens(project.reserve).toString();
+    if (project?.escrow !== undefined) project.escrow = parseUSDC(project.escrow).toString();
+    if (project?.reserve !== undefined) project.reserve = parseUSDC(project.reserve).toString();
   }
   const creators = data?.ArmadaProjects?.projectCreators ?? [];
   const importArgs = [projectsData, creators, true] as const;

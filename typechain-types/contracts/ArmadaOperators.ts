@@ -34,6 +34,7 @@ export type ArmadaOperatorStruct = {
   name: PromiseOrValue<string>;
   email: PromiseOrValue<string>;
   stake: PromiseOrValue<BigNumberish>;
+  balance: PromiseOrValue<BigNumberish>;
 };
 
 export type ArmadaOperatorStructOutput = [
@@ -41,6 +42,7 @@ export type ArmadaOperatorStructOutput = [
   string,
   string,
   string,
+  BigNumber,
   BigNumber
 ] & {
   id: string;
@@ -48,6 +50,7 @@ export type ArmadaOperatorStructOutput = [
   name: string;
   email: string;
   stake: BigNumber;
+  balance: BigNumber;
 };
 
 export interface ArmadaOperatorsInterface extends utils.Interface {
@@ -56,6 +59,7 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
     "IMPORTER_ROLE()": FunctionFragment;
     "createOperator(address,string,string)": FunctionFragment;
     "deleteOperator(bytes32)": FunctionFragment;
+    "depositOperatorBalance(bytes32,uint256,uint256,uint8,bytes32,bytes32)": FunctionFragment;
     "depositOperatorStake(bytes32,uint256,uint256,uint8,bytes32,bytes32)": FunctionFragment;
     "getOperator(bytes32)": FunctionFragment;
     "getOperatorCount()": FunctionFragment;
@@ -72,16 +76,18 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
     "renounceRole(bytes32,address)": FunctionFragment;
     "requireTopologyNode(bytes32,address)": FunctionFragment;
     "revokeRole(bytes32,address)": FunctionFragment;
+    "setOperatorBalanceImpl(bytes32,uint256,uint256)": FunctionFragment;
     "setOperatorOwner(bytes32,address)": FunctionFragment;
     "setOperatorProps(bytes32,string,string)": FunctionFragment;
-    "setOperatorStakeImpl(bytes32,uint256,uint256)": FunctionFragment;
     "setStakePerNode(uint256)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "unpause()": FunctionFragment;
-    "unsafeImportData((bytes32,address,string,string,uint256)[],bool)": FunctionFragment;
+    "unsafeImportData((bytes32,address,string,string,uint256,uint256)[],bool)": FunctionFragment;
+    "unsafeSetBalances(uint256,uint256,uint256,uint256)": FunctionFragment;
     "unsafeSetRegistry(address)": FunctionFragment;
     "upgradeTo(address)": FunctionFragment;
     "upgradeToAndCall(address,bytes)": FunctionFragment;
+    "withdrawOperatorBalance(bytes32,uint256,address)": FunctionFragment;
     "withdrawOperatorStake(bytes32,uint256,address)": FunctionFragment;
   };
 
@@ -91,6 +97,7 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
       | "IMPORTER_ROLE"
       | "createOperator"
       | "deleteOperator"
+      | "depositOperatorBalance"
       | "depositOperatorStake"
       | "getOperator"
       | "getOperatorCount"
@@ -107,16 +114,18 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
       | "renounceRole"
       | "requireTopologyNode"
       | "revokeRole"
+      | "setOperatorBalanceImpl"
       | "setOperatorOwner"
       | "setOperatorProps"
-      | "setOperatorStakeImpl"
       | "setStakePerNode"
       | "supportsInterface"
       | "unpause"
       | "unsafeImportData"
+      | "unsafeSetBalances"
       | "unsafeSetRegistry"
       | "upgradeTo"
       | "upgradeToAndCall"
+      | "withdrawOperatorBalance"
       | "withdrawOperatorStake"
   ): FunctionFragment;
 
@@ -139,6 +148,17 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "deleteOperator",
     values: [PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "depositOperatorBalance",
+    values: [
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BytesLike>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "depositOperatorStake",
@@ -211,6 +231,14 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
+    functionFragment: "setOperatorBalanceImpl",
+    values: [
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setOperatorOwner",
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
   ): string;
@@ -220,14 +248,6 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
       PromiseOrValue<BytesLike>,
       PromiseOrValue<string>,
       PromiseOrValue<string>
-    ]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setOperatorStakeImpl",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
     ]
   ): string;
   encodeFunctionData(
@@ -244,6 +264,15 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
     values: [ArmadaOperatorStruct[], PromiseOrValue<boolean>]
   ): string;
   encodeFunctionData(
+    functionFragment: "unsafeSetBalances",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "unsafeSetRegistry",
     values: [PromiseOrValue<string>]
   ): string;
@@ -254,6 +283,14 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "upgradeToAndCall",
     values: [PromiseOrValue<string>, PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "withdrawOperatorBalance",
+    values: [
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawOperatorStake",
@@ -278,6 +315,10 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "deleteOperator",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "depositOperatorBalance",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -327,15 +368,15 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "revokeRole", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "setOperatorBalanceImpl",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "setOperatorOwner",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "setOperatorProps",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setOperatorStakeImpl",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -352,12 +393,20 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "unsafeSetBalances",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "unsafeSetRegistry",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "upgradeTo", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "upgradeToAndCall",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "withdrawOperatorBalance",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -369,6 +418,7 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
     "AdminChanged(address,address)": EventFragment;
     "BeaconUpgraded(address)": EventFragment;
     "Initialized(uint8)": EventFragment;
+    "OperatorBalanceChanged(bytes32,uint256,uint256)": EventFragment;
     "OperatorCreated(bytes32,address,string,string)": EventFragment;
     "OperatorDeleted(bytes32,address,string,string)": EventFragment;
     "OperatorOwnerChanged(bytes32,address,address)": EventFragment;
@@ -385,6 +435,7 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "AdminChanged"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "BeaconUpgraded"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "OperatorBalanceChanged"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OperatorCreated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OperatorDeleted"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OperatorOwnerChanged"): EventFragment;
@@ -425,6 +476,19 @@ export interface InitializedEventObject {
 export type InitializedEvent = TypedEvent<[number], InitializedEventObject>;
 
 export type InitializedEventFilter = TypedEventFilter<InitializedEvent>;
+
+export interface OperatorBalanceChangedEventObject {
+  operatorId: string;
+  oldBalance: BigNumber;
+  newBalance: BigNumber;
+}
+export type OperatorBalanceChangedEvent = TypedEvent<
+  [string, BigNumber, BigNumber],
+  OperatorBalanceChangedEventObject
+>;
+
+export type OperatorBalanceChangedEventFilter =
+  TypedEventFilter<OperatorBalanceChangedEvent>;
 
 export interface OperatorCreatedEventObject {
   operatorId: string;
@@ -594,6 +658,16 @@ export interface ArmadaOperators extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    depositOperatorBalance(
+      operatorId: PromiseOrValue<BytesLike>,
+      amount: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     depositOperatorStake(
       operatorId: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
@@ -674,6 +748,13 @@ export interface ArmadaOperators extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    setOperatorBalanceImpl(
+      operatorId: PromiseOrValue<BytesLike>,
+      decrease: PromiseOrValue<BigNumberish>,
+      increase: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     setOperatorOwner(
       operatorId: PromiseOrValue<BytesLike>,
       owner: PromiseOrValue<string>,
@@ -684,13 +765,6 @@ export interface ArmadaOperators extends BaseContract {
       operatorId: PromiseOrValue<BytesLike>,
       name: PromiseOrValue<string>,
       email: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    setOperatorStakeImpl(
-      operatorId: PromiseOrValue<BytesLike>,
-      decrease: PromiseOrValue<BigNumberish>,
-      increase: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -714,6 +788,14 @@ export interface ArmadaOperators extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    unsafeSetBalances(
+      skip: PromiseOrValue<BigNumberish>,
+      size: PromiseOrValue<BigNumberish>,
+      mul: PromiseOrValue<BigNumberish>,
+      div: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     unsafeSetRegistry(
       registry: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -728,6 +810,13 @@ export interface ArmadaOperators extends BaseContract {
       newImplementation: PromiseOrValue<string>,
       data: PromiseOrValue<BytesLike>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    withdrawOperatorBalance(
+      operatorId: PromiseOrValue<BytesLike>,
+      amount: PromiseOrValue<BigNumberish>,
+      to: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     withdrawOperatorStake(
@@ -751,6 +840,16 @@ export interface ArmadaOperators extends BaseContract {
 
   deleteOperator(
     operatorId: PromiseOrValue<BytesLike>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  depositOperatorBalance(
+    operatorId: PromiseOrValue<BytesLike>,
+    amount: PromiseOrValue<BigNumberish>,
+    deadline: PromiseOrValue<BigNumberish>,
+    v: PromiseOrValue<BigNumberish>,
+    r: PromiseOrValue<BytesLike>,
+    s: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -832,6 +931,13 @@ export interface ArmadaOperators extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  setOperatorBalanceImpl(
+    operatorId: PromiseOrValue<BytesLike>,
+    decrease: PromiseOrValue<BigNumberish>,
+    increase: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   setOperatorOwner(
     operatorId: PromiseOrValue<BytesLike>,
     owner: PromiseOrValue<string>,
@@ -842,13 +948,6 @@ export interface ArmadaOperators extends BaseContract {
     operatorId: PromiseOrValue<BytesLike>,
     name: PromiseOrValue<string>,
     email: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setOperatorStakeImpl(
-    operatorId: PromiseOrValue<BytesLike>,
-    decrease: PromiseOrValue<BigNumberish>,
-    increase: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -872,6 +971,14 @@ export interface ArmadaOperators extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  unsafeSetBalances(
+    skip: PromiseOrValue<BigNumberish>,
+    size: PromiseOrValue<BigNumberish>,
+    mul: PromiseOrValue<BigNumberish>,
+    div: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   unsafeSetRegistry(
     registry: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -886,6 +993,13 @@ export interface ArmadaOperators extends BaseContract {
     newImplementation: PromiseOrValue<string>,
     data: PromiseOrValue<BytesLike>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  withdrawOperatorBalance(
+    operatorId: PromiseOrValue<BytesLike>,
+    amount: PromiseOrValue<BigNumberish>,
+    to: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   withdrawOperatorStake(
@@ -909,6 +1023,16 @@ export interface ArmadaOperators extends BaseContract {
 
     deleteOperator(
       operatorId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    depositOperatorBalance(
+      operatorId: PromiseOrValue<BytesLike>,
+      amount: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -988,6 +1112,13 @@ export interface ArmadaOperators extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    setOperatorBalanceImpl(
+      operatorId: PromiseOrValue<BytesLike>,
+      decrease: PromiseOrValue<BigNumberish>,
+      increase: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     setOperatorOwner(
       operatorId: PromiseOrValue<BytesLike>,
       owner: PromiseOrValue<string>,
@@ -998,13 +1129,6 @@ export interface ArmadaOperators extends BaseContract {
       operatorId: PromiseOrValue<BytesLike>,
       name: PromiseOrValue<string>,
       email: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setOperatorStakeImpl(
-      operatorId: PromiseOrValue<BytesLike>,
-      decrease: PromiseOrValue<BigNumberish>,
-      increase: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1026,6 +1150,14 @@ export interface ArmadaOperators extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    unsafeSetBalances(
+      skip: PromiseOrValue<BigNumberish>,
+      size: PromiseOrValue<BigNumberish>,
+      mul: PromiseOrValue<BigNumberish>,
+      div: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     unsafeSetRegistry(
       registry: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -1039,6 +1171,13 @@ export interface ArmadaOperators extends BaseContract {
     upgradeToAndCall(
       newImplementation: PromiseOrValue<string>,
       data: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    withdrawOperatorBalance(
+      operatorId: PromiseOrValue<BytesLike>,
+      amount: PromiseOrValue<BigNumberish>,
+      to: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1069,6 +1208,17 @@ export interface ArmadaOperators extends BaseContract {
 
     "Initialized(uint8)"(version?: null): InitializedEventFilter;
     Initialized(version?: null): InitializedEventFilter;
+
+    "OperatorBalanceChanged(bytes32,uint256,uint256)"(
+      operatorId?: PromiseOrValue<BytesLike> | null,
+      oldBalance?: null,
+      newBalance?: null
+    ): OperatorBalanceChangedEventFilter;
+    OperatorBalanceChanged(
+      operatorId?: PromiseOrValue<BytesLike> | null,
+      oldBalance?: null,
+      newBalance?: null
+    ): OperatorBalanceChangedEventFilter;
 
     "OperatorCreated(bytes32,address,string,string)"(
       operatorId?: PromiseOrValue<BytesLike> | null,
@@ -1197,6 +1347,16 @@ export interface ArmadaOperators extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    depositOperatorBalance(
+      operatorId: PromiseOrValue<BytesLike>,
+      amount: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     depositOperatorStake(
       operatorId: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
@@ -1275,6 +1435,13 @@ export interface ArmadaOperators extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    setOperatorBalanceImpl(
+      operatorId: PromiseOrValue<BytesLike>,
+      decrease: PromiseOrValue<BigNumberish>,
+      increase: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     setOperatorOwner(
       operatorId: PromiseOrValue<BytesLike>,
       owner: PromiseOrValue<string>,
@@ -1285,13 +1452,6 @@ export interface ArmadaOperators extends BaseContract {
       operatorId: PromiseOrValue<BytesLike>,
       name: PromiseOrValue<string>,
       email: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setOperatorStakeImpl(
-      operatorId: PromiseOrValue<BytesLike>,
-      decrease: PromiseOrValue<BigNumberish>,
-      increase: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1315,6 +1475,14 @@ export interface ArmadaOperators extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    unsafeSetBalances(
+      skip: PromiseOrValue<BigNumberish>,
+      size: PromiseOrValue<BigNumberish>,
+      mul: PromiseOrValue<BigNumberish>,
+      div: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     unsafeSetRegistry(
       registry: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1329,6 +1497,13 @@ export interface ArmadaOperators extends BaseContract {
       newImplementation: PromiseOrValue<string>,
       data: PromiseOrValue<BytesLike>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    withdrawOperatorBalance(
+      operatorId: PromiseOrValue<BytesLike>,
+      amount: PromiseOrValue<BigNumberish>,
+      to: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     withdrawOperatorStake(
@@ -1355,6 +1530,16 @@ export interface ArmadaOperators extends BaseContract {
 
     deleteOperator(
       operatorId: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    depositOperatorBalance(
+      operatorId: PromiseOrValue<BytesLike>,
+      amount: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1436,6 +1621,13 @@ export interface ArmadaOperators extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    setOperatorBalanceImpl(
+      operatorId: PromiseOrValue<BytesLike>,
+      decrease: PromiseOrValue<BigNumberish>,
+      increase: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     setOperatorOwner(
       operatorId: PromiseOrValue<BytesLike>,
       owner: PromiseOrValue<string>,
@@ -1446,13 +1638,6 @@ export interface ArmadaOperators extends BaseContract {
       operatorId: PromiseOrValue<BytesLike>,
       name: PromiseOrValue<string>,
       email: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setOperatorStakeImpl(
-      operatorId: PromiseOrValue<BytesLike>,
-      decrease: PromiseOrValue<BigNumberish>,
-      increase: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1476,6 +1661,14 @@ export interface ArmadaOperators extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    unsafeSetBalances(
+      skip: PromiseOrValue<BigNumberish>,
+      size: PromiseOrValue<BigNumberish>,
+      mul: PromiseOrValue<BigNumberish>,
+      div: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     unsafeSetRegistry(
       registry: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1490,6 +1683,13 @@ export interface ArmadaOperators extends BaseContract {
       newImplementation: PromiseOrValue<string>,
       data: PromiseOrValue<BytesLike>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    withdrawOperatorBalance(
+      operatorId: PromiseOrValue<BytesLike>,
+      amount: PromiseOrValue<BigNumberish>,
+      to: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     withdrawOperatorStake(

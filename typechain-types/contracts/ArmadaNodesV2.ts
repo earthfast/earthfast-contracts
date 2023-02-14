@@ -122,6 +122,7 @@ export interface ArmadaNodesV2Interface extends utils.Interface {
     "supportsInterface(bytes4)": FunctionFragment;
     "unpause()": FunctionFragment;
     "unsafeImportData((bytes32,bytes32,string,string,bool,bool,uint256[2],bytes32[2])[],address[],bool)": FunctionFragment;
+    "unsafeSetPrices(uint256,uint256,uint256,uint256)": FunctionFragment;
     "unsafeSetRegistry(address)": FunctionFragment;
     "upgradeTo(address)": FunctionFragment;
     "upgradeToAndCall(address,bytes)": FunctionFragment;
@@ -158,6 +159,7 @@ export interface ArmadaNodesV2Interface extends utils.Interface {
       | "supportsInterface"
       | "unpause"
       | "unsafeImportData"
+      | "unsafeSetPrices"
       | "unsafeSetRegistry"
       | "upgradeTo"
       | "upgradeToAndCall"
@@ -311,6 +313,15 @@ export interface ArmadaNodesV2Interface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "unsafeSetPrices",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "unsafeSetRegistry",
     values: [PromiseOrValue<string>]
   ): string;
@@ -404,6 +415,10 @@ export interface ArmadaNodesV2Interface extends utils.Interface {
   decodeFunctionResult(functionFragment: "unpause", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "unsafeImportData",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "unsafeSetPrices",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -788,6 +803,14 @@ export interface ArmadaNodesV2 extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    unsafeSetPrices(
+      skip: PromiseOrValue<BigNumberish>,
+      size: PromiseOrValue<BigNumberish>,
+      mul: PromiseOrValue<BigNumberish>,
+      div: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     unsafeSetRegistry(
       registry: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -955,6 +978,14 @@ export interface ArmadaNodesV2 extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  unsafeSetPrices(
+    skip: PromiseOrValue<BigNumberish>,
+    size: PromiseOrValue<BigNumberish>,
+    mul: PromiseOrValue<BigNumberish>,
+    div: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   unsafeSetRegistry(
     registry: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1115,6 +1146,14 @@ export interface ArmadaNodesV2 extends BaseContract {
       nodes: ArmadaNodeStruct[],
       topologyCreators: PromiseOrValue<string>[],
       revokeImporterRole: PromiseOrValue<boolean>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    unsafeSetPrices(
+      skip: PromiseOrValue<BigNumberish>,
+      size: PromiseOrValue<BigNumberish>,
+      mul: PromiseOrValue<BigNumberish>,
+      div: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1432,6 +1471,14 @@ export interface ArmadaNodesV2 extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    unsafeSetPrices(
+      skip: PromiseOrValue<BigNumberish>,
+      size: PromiseOrValue<BigNumberish>,
+      mul: PromiseOrValue<BigNumberish>,
+      div: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     unsafeSetRegistry(
       registry: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1601,6 +1648,14 @@ export interface ArmadaNodesV2 extends BaseContract {
       nodes: ArmadaNodeStruct[],
       topologyCreators: PromiseOrValue<string>[],
       revokeImporterRole: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    unsafeSetPrices(
+      skip: PromiseOrValue<BigNumberish>,
+      size: PromiseOrValue<BigNumberish>,
+      mul: PromiseOrValue<BigNumberish>,
+      div: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

@@ -4,7 +4,7 @@ import { expect } from "chai";
 import { Result } from "ethers/lib/utils";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine } from "../lib/test";
-import { approve, parseTokens, signers } from "../lib/util";
+import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
 import { ArmadaBilling } from "../typechain-types/contracts/ArmadaBilling";
 import { ArmadaCreateNodeDataStruct, ArmadaNodes } from "../typechain-types/contracts/ArmadaNodes";
 import { ArmadaOperators } from "../typechain-types/contracts/ArmadaOperators";
@@ -12,12 +12,14 @@ import { ArmadaCreateProjectDataStruct, ArmadaProjects } from "../typechain-type
 import { ArmadaRegistry } from "../typechain-types/contracts/ArmadaRegistry";
 import { ArmadaReservations } from "../typechain-types/contracts/ArmadaReservations";
 import { ArmadaToken } from "../typechain-types/contracts/ArmadaToken";
+import { USDC } from "../typechain-types/contracts/test/USDC";
 
 describe("Benchmark", function () {
   let admin: SignerWithAddress;
   let operator: SignerWithAddress;
   let project: SignerWithAddress;
 
+  let usdc: USDC;
   let token: ArmadaToken;
   let registry: ArmadaRegistry;
   let billing: ArmadaBilling;
@@ -31,7 +33,7 @@ describe("Benchmark", function () {
 
   async function fixture() {
     ({ admin, operator, project } = await signers(hre));
-    ({ token, operators, projects, reservations, nodes, billing, registry } = await fixtures(hre));
+    ({ usdc, token, operators, projects, reservations, nodes, billing, registry } = await fixtures(hre));
 
     epochLength = (await registry.getLastEpochLength()).toNumber();
   }
@@ -55,7 +57,7 @@ describe("Benchmark", function () {
 
     // Create topology node
     expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
-    const n0: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r0", price: parseTokens("0") };
+    const n0: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r0", price: parseUSDC("0") };
     const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, true, [n0]));
     const createNodes0Result = await expectEvent(createNodes0, nodes, "NodeCreated");
     const { nodeId: nodeId0 } = createNodes0Result as Result;
@@ -71,8 +73,8 @@ describe("Benchmark", function () {
     const p: ArmadaCreateProjectDataStruct = { name: "p", owner: project.address, email: "e", content: "c", checksum: HashZero };
     const createProject = await expectReceipt(projects.connect(project).createProject(p));
     const [projectId] = await expectEvent(createProject, projects, "ProjectCreated");
-    const projectsPermit = await approve(hre, token, admin.address, projects.address, parseTokens("1"));
-    expect(await projects.connect(admin).depositProjectEscrow(projectId, parseTokens("1"), ...projectsPermit)).to.be.ok;
+    const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("1"));
+    expect(await projects.connect(admin).depositProjectEscrow(projectId, parseUSDC("1"), ...projectsPermit)).to.be.ok;
 
     // Create reservations
     const prices = (nodeIds as []).map(() => 1);

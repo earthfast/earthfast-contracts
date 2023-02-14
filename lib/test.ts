@@ -14,6 +14,7 @@ import { ArmadaRegistry } from "../typechain-types/contracts/ArmadaRegistry";
 import { ArmadaReservations } from "../typechain-types/contracts/ArmadaReservations";
 import { ArmadaTimelock } from "../typechain-types/contracts/ArmadaTimelock";
 import { ArmadaToken } from "../typechain-types/contracts/ArmadaToken";
+import { USDC } from "../typechain-types/contracts/test/USDC";
 import { decodeEvent, parseTokens, signers, toHexString } from "./util";
 
 export const newId = (): string => hexZeroPad(randomBytes(32), 32);
@@ -55,6 +56,7 @@ export async function automine(hre: HardhatRuntimeEnvironment, automine: boolean
 
 // Deploys test contracts and uploads test data
 export async function fixtures(hre: HardhatRuntimeEnvironment): Promise<{
+  usdc: USDC;
   token: ArmadaToken;
   registry: ArmadaRegistry;
   billing: ArmadaBilling;
@@ -66,6 +68,10 @@ export async function fixtures(hre: HardhatRuntimeEnvironment): Promise<{
   governor: ArmadaGovernor;
 }> {
   const { admin, deployer } = await signers(hre);
+
+  const usdcFactory = await hre.ethers.getContractFactory("USDC");
+  const usdcArgs = [admin.address];
+  const usdc = <USDC>await usdcFactory.deploy(...usdcArgs);
 
   const initialSupply = parseTokens("1000000000");
   const tokenFactory = await hre.ethers.getContractFactory("ArmadaToken");
@@ -124,6 +130,7 @@ export async function fixtures(hre: HardhatRuntimeEnvironment): Promise<{
     lastEpochLength: 100,
     nextEpochLength: 100,
     gracePeriod: 0,
+    usdc: usdc.address,
     token: token.address,
     billing: billing.address,
     nodes: nodes.address,
@@ -140,7 +147,7 @@ export async function fixtures(hre: HardhatRuntimeEnvironment): Promise<{
   });
   const nodesV2 = <ArmadaNodesV2>await hre.upgrades.upgradeProxy(nodes.address, nodesV2Factory);
 
-  return { token, registry, nodes: nodesV2, operators, projects, reservations, timelock, governor, billing };
+  return { usdc, token, registry, nodes: nodesV2, operators, projects, reservations, timelock, governor, billing };
 }
 
 export async function expectReceipt(txPromise: Promise<TransactionResponse>): Promise<TransactionReceipt> {

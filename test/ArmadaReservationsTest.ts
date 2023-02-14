@@ -6,7 +6,7 @@ import { BigNumber } from "ethers";
 import { Result } from "ethers/lib/utils";
 import hre from "hardhat";
 import { automine, expectEvent, expectReceipt, fixtures, mine, mineWith, newId } from "../lib/test";
-import { approve, parseTokens, signers } from "../lib/util";
+import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
 import { ArmadaBilling } from "../typechain-types/contracts/ArmadaBilling";
 import { ArmadaCreateNodeDataStruct, ArmadaNodes } from "../typechain-types/contracts/ArmadaNodes";
 import { ArmadaOperators, ArmadaOperatorStruct } from "../typechain-types/contracts/ArmadaOperators";
@@ -14,6 +14,7 @@ import { ArmadaCreateProjectDataStruct, ArmadaProjects } from "../typechain-type
 import { ArmadaRegistry } from "../typechain-types/contracts/ArmadaRegistry";
 import { ArmadaReservations } from "../typechain-types/contracts/ArmadaReservations";
 import { ArmadaToken } from "../typechain-types/contracts/ArmadaToken";
+import { USDC } from "../typechain-types/contracts/test/USDC";
 
 chai.use(shallowDeepEqual);
 
@@ -23,6 +24,7 @@ describe("ArmadaReservations", function () {
   let project: SignerWithAddress;
   let deployer: SignerWithAddress;
 
+  let usdc: USDC;
   let token: ArmadaToken;
   let registry: ArmadaRegistry;
   let billing: ArmadaBilling;
@@ -37,7 +39,7 @@ describe("ArmadaReservations", function () {
   let projectId1: string;
   let operatorId1: string;
 
-  const price = parseTokens("1");
+  const price = parseUSDC("1");
 
   let pricePerSec: BigNumber;
   let epochLength: number;
@@ -56,13 +58,13 @@ describe("ArmadaReservations", function () {
 
   async function fixture() {
     ({ admin, operator, project, deployer } = await signers(hre));
-    ({ token, billing, nodes, operators, projects, reservations, registry } = await fixtures(hre));
+    ({ usdc, token, billing, nodes, operators, projects, reservations, registry } = await fixtures(hre));
 
     epochLength = (await registry.getLastEpochLength()).toNumber();
     pricePerSec = price.div(epochLength); // Node price per second
 
     // Create operator
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0 };
+    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     [operatorId1] = await expectEvent(createOperator1, operators, "OperatorCreated");
     const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
@@ -70,7 +72,7 @@ describe("ArmadaReservations", function () {
 
     // Create topology node
     expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
-    const n0: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r0", price: parseTokens("0") };
+    const n0: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r0", price: parseUSDC("0") };
     const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(operatorId1, true, [n0]));
     const createNodes0Result = await expectEvent(createNodes0, nodes, "NodeCreated");
     ({ nodeId: nodeId0 } = createNodes0Result as Result);
@@ -87,8 +89,8 @@ describe("ArmadaReservations", function () {
     const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    const projectsPermit = await approve(hre, token, admin.address, projects.address, parseTokens("100"));
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), ...projectsPermit)).to.be.ok;
+    const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));
+    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
 
     // Jump to the next epoch start and mark the previous epoch as reconciled,
     // and force align epoch start to a multiple of epochLength for convenience.
@@ -231,7 +233,7 @@ describe("ArmadaReservations", function () {
 
     const proratedPrice = price;
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
-    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100));
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(100));
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice.mul(2));
 
@@ -240,7 +242,8 @@ describe("ArmadaReservations", function () {
     expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
     expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
     expect(await reservations.getReservationCount(projectId1)).to.equal(0);
-    expect((await operators.getOperator(operatorId1)).stake).to.equal(price.mul(100).add(proratedPrice.mul(2)));
+    expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
+    expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice.mul(2));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(100).sub(proratedPrice.mul(2)));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(0));
   });

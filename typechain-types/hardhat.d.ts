@@ -200,6 +200,10 @@ declare module "hardhat/types/runtime" {
       name: "ArmadaToken",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ArmadaToken__factory>;
+    getContractFactory(
+      name: "USDC",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.USDC__factory>;
 
     getContractAt(
       name: "AccessControlUpgradeable",
@@ -436,6 +440,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.ArmadaToken>;
+    getContractAt(
+      name: "USDC",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.USDC>;
 
     // default types
     getContractFactory(

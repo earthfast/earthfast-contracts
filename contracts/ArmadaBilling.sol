@@ -106,7 +106,7 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
         uint256 payout = nodeCopy.prices[ARMADA_LAST_EPOCH] * uptimeBips[i] / 10000;
         projects.setProjectEscrowImpl(projectId, payout, 0);
         projects.setProjectReserveImpl(projectId, nodeCopy.prices[ARMADA_LAST_EPOCH], 0);
-        operators.setOperatorStakeImpl(nodeCopy.operatorId, 0, payout);
+        operators.setOperatorBalanceImpl(nodeCopy.operatorId, 0, payout);
         emit ReservationResolved(nodeCopy.id, nodeCopy.operatorId, projectId, nodeCopy.prices[ARMADA_LAST_EPOCH],
           uptimeBips[i], payout, lastEpochStart);
         if (nodeCopy.projectIds[ARMADA_NEXT_EPOCH] != projectId) {

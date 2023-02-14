@@ -4,7 +4,7 @@ import { expect } from "chai";
 import { Result } from "ethers/lib/utils";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine } from "../lib/test";
-import { approve, parseTokens, signers } from "../lib/util";
+import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
 import { ArmadaBilling } from "../typechain-types/contracts/ArmadaBilling";
 import { ArmadaCreateNodeDataStruct, ArmadaNodes } from "../typechain-types/contracts/ArmadaNodes";
 import { ArmadaOperators, ArmadaOperatorStruct } from "../typechain-types/contracts/ArmadaOperators";
@@ -12,12 +12,14 @@ import { ArmadaProjects } from "../typechain-types/contracts/ArmadaProjects";
 import { ArmadaRegistry } from "../typechain-types/contracts/ArmadaRegistry";
 import { ArmadaReservations } from "../typechain-types/contracts/ArmadaReservations";
 import { ArmadaToken } from "../typechain-types/contracts/ArmadaToken";
+import { USDC } from "../typechain-types/contracts/test/USDC";
 
 describe("ArmadaRegistry", function () {
   let admin: SignerWithAddress;
   let deployer: SignerWithAddress;
   let operator: SignerWithAddress;
 
+  let usdc: USDC;
   let token: ArmadaToken;
   let registry: ArmadaRegistry;
   let billing: ArmadaBilling;
@@ -31,7 +33,7 @@ describe("ArmadaRegistry", function () {
 
   async function fixture() {
     ({ admin, deployer, operator } = await signers(hre));
-    ({ token, operators, projects, reservations, nodes, billing, registry } = await fixtures(hre));
+    ({ usdc, token, operators, projects, reservations, nodes, billing, registry } = await fixtures(hre));
 
     epochLength = (await registry.getLastEpochLength()).toNumber();
   }
@@ -51,7 +53,7 @@ describe("ArmadaRegistry", function () {
     expect(await registry.getNextEpochLength()).to.equal(100);
   });
 
-  it("Should emergency deposit/withdraw", async function () {
+  it("Should emergency deposit/withdraw tokens", async function () {
     const tokens = parseTokens("100");
 
     // Deposit
@@ -64,21 +66,46 @@ describe("ArmadaRegistry", function () {
     expect(await token.connect(deployer).balanceOf(registry.address)).to.equal(tokens.mul(2));
 
     // Withdraw
-    await expect(registry.connect(deployer).unsafeWithdraw(admin.address, tokens)).to.be.revertedWith("not admin");
+    await expect(registry.connect(deployer).unsafeWithdrawToken(admin.address, tokens)).to.be.revertedWith("not admin");
 
     // Withdraw
-    expect(await registry.connect(admin).unsafeWithdraw(admin.address, tokens)).to.be.ok;
+    expect(await registry.connect(admin).unsafeWithdrawToken(admin.address, tokens)).to.be.ok;
     expect(await token.connect(admin).balanceOf(registry.address)).to.equal(tokens.mul(1));
 
     // Withdraw
-    expect(await registry.connect(admin).unsafeWithdraw(admin.address, tokens)).to.be.ok;
+    expect(await registry.connect(admin).unsafeWithdrawToken(admin.address, tokens)).to.be.ok;
     expect(await token.connect(admin).balanceOf(registry.address)).to.equal(tokens.mul(0));
-    await expect(registry.connect(admin).unsafeWithdraw(admin.address, tokens)).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+    await expect(registry.connect(admin).unsafeWithdrawToken(admin.address, tokens)).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+  });
+
+  it("Should emergency deposit/withdraw USDC", async function () {
+    const amount = parseUSDC("100");
+
+    // Deposit
+    expect(await usdc.connect(admin).transfer(registry.address, amount)).to.be.ok;
+    expect(await usdc.connect(admin).balanceOf(registry.address)).to.equal(amount);
+
+    // Deposit
+    expect(await usdc.connect(admin).transfer(deployer.address, amount)).to.be.ok;
+    expect(await usdc.connect(deployer).transfer(registry.address, amount)).to.be.ok;
+    expect(await usdc.connect(deployer).balanceOf(registry.address)).to.equal(amount.mul(2));
+
+    // Withdraw
+    await expect(registry.connect(deployer).unsafeWithdrawUSDC(admin.address, amount)).to.be.revertedWith("not admin");
+
+    // Withdraw
+    expect(await registry.connect(admin).unsafeWithdrawUSDC(admin.address, amount)).to.be.ok;
+    expect(await usdc.connect(admin).balanceOf(registry.address)).to.equal(amount.mul(1));
+
+    // Withdraw
+    expect(await registry.connect(admin).unsafeWithdrawUSDC(admin.address, amount)).to.be.ok;
+    expect(await usdc.connect(admin).balanceOf(registry.address)).to.equal(amount.mul(0));
+    await expect(registry.connect(admin).unsafeWithdrawUSDC(admin.address, amount)).to.be.revertedWith("ERC20: transfer amount exceeds balance");
   });
 
   it("Should respect reconciliation order", async function () {
     // Create operator
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0 };
+    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     const [operatorId1] = await expectEvent(createOperator1, operators, "OperatorCreated");
     const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
@@ -86,14 +113,14 @@ describe("ArmadaRegistry", function () {
 
     // Create topology node
     expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
-    const n0: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r0", price: parseTokens("0") };
+    const n0: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r0", price: parseUSDC("0") };
     const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(operatorId1, true, [n0]));
     const createNodes0Result = await expectEvent(createNodes0, nodes, "NodeCreated");
     const { nodeId: nodeId0 } = createNodes0Result as Result;
 
     // Create content nodes
-    const n1: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseTokens("1") };
-    const n2: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h2", region: "r1", price: parseTokens("1") };
+    const n1: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseUSDC("1") };
+    const n2: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h2", region: "r1", price: parseUSDC("1") };
     const createNodes12 = await expectReceipt(nodes.connect(operator).createNodes(operatorId1, false, [n1, n2]));
     const createNodes12Result = await expectEvent(createNodes12, nodes, "NodeCreated");
     const [{ nodeId: nodeId1 }, { nodeId: nodeId2 }] = createNodes12Result;
@@ -125,7 +152,7 @@ describe("ArmadaRegistry", function () {
     await expect(registry.connect(operator).advanceEpoch(nodeId0)).to.be.revertedWith("not reconciling");
   });
 
-  it("Should allow admin to unsafeSetProjects, unsafeSetToken & unsafeSetOperators", async function () {
+  it("Should allow admin to unsafeSet{USDC|Token|Projects|Operators}", async function () {
     // Get projects address
     expect(await registry.connect(operator).getProjects()).to.be.deep.equal(projects.address);
 
@@ -135,10 +162,15 @@ describe("ArmadaRegistry", function () {
     // Get token address
     expect(await registry.connect(operator).getToken()).to.be.deep.equal(token.address);
 
+    // Get USDC address
+    expect(await registry.connect(operator).getUSDC()).to.be.deep.equal(usdc.address);
+
     // Should skip token approval if new projects is zero address
     expect(await registry.connect(admin).unsafeSetProjects(AddressZero)).to.be.ok;
     expect(await token.allowance(registry.address, AddressZero)).to.be.deep.equal(0);
+    expect(await usdc.allowance(registry.address, AddressZero)).to.be.deep.equal(0);
     expect(await registry.connect(admin).unsafeSetToken(token.address)).to.be.ok;
+    expect(await registry.connect(admin).unsafeSetUSDC(usdc.address)).to.be.ok;
 
     // Set projects address to real address should pass
     const projectsFactory = await hre.ethers.getContractFactory("ArmadaProjects");
@@ -150,7 +182,9 @@ describe("ArmadaRegistry", function () {
     // Should skip token approval if new operators is zero address
     expect(await registry.connect(admin).unsafeSetOperators(AddressZero)).to.be.ok;
     expect(await token.allowance(registry.address, AddressZero)).to.be.deep.equal(0);
+    expect(await usdc.allowance(registry.address, AddressZero)).to.be.deep.equal(0);
     expect(await registry.connect(admin).unsafeSetToken(token.address)).to.be.ok;
+    expect(await registry.connect(admin).unsafeSetUSDC(usdc.address)).to.be.ok;
 
     // Set operators address
     const stakePerNode = parseTokens("1");
@@ -195,7 +229,7 @@ describe("ArmadaRegistry", function () {
 
   it("Should be able to get nonce", async function () {
     // Check nonce
-    expect(await registry.getNonce()).to.eq(parseTokens("0"));
+    expect(await registry.getNonce()).to.eq(0);
 
     // Verify non-onlyImpl cannot call newNonceImpl
     await expect(registry.newNonceImpl()).to.be.revertedWith("not impl");
@@ -281,6 +315,7 @@ describe("ArmadaRegistry", function () {
       lastEpochLength: 100,
       nextEpochLength: 100,
       gracePeriod: 0,
+      usdc: usdc.address,
       token: token.address,
       billing: billing.address,
       nodes: nodes.address,
@@ -317,11 +352,13 @@ describe("ArmadaRegistry", function () {
     newRegistryArgs = { ...registryArgs, operators: AddressZero };
     expect(await newRegistry.connect(admin).initialize([admin.address], newRegistryArgs)).to.be.ok;
     expect(await token.allowance(newRegistry.address, AddressZero)).to.be.equal(0);
+    expect(await usdc.allowance(newRegistry.address, AddressZero)).to.be.equal(0);
 
     // projects address is zero then token approval stays at 0
     newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });
     newRegistryArgs = { ...registryArgs, projects: AddressZero };
     expect(await newRegistry.connect(admin).initialize([admin.address], newRegistryArgs)).to.be.ok;
     expect(await token.allowance(newRegistry.address, AddressZero)).to.be.equal(0);
+    expect(await usdc.allowance(newRegistry.address, AddressZero)).to.be.equal(0);
   });
 });

@@ -124,6 +124,20 @@ contract ArmadaNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUpgra
     }
   }
 
+  /// @dev Adjusts multiple content nodes prices relative to their current values.
+  /// @dev CAUTION: This can break data consistency. Used for proxy-less upgrades.
+  function unsafeSetPrices(uint256 skip, uint256 size, uint256 mul, uint256 div)
+  public virtual onlyAdmin {
+    require(mul != 0, "zero mul");
+    uint256 length = _contentNodeIds.length();
+    uint256 n = Math.min(size, length > skip ? length - skip : 0);
+    for (uint256 i = 0; i < n; i++) {
+      ArmadaNode storage node = _nodes[_contentNodeIds.at(skip + i)];
+      node.prices[ARMADA_LAST_EPOCH] = node.prices[ARMADA_LAST_EPOCH] * mul / div;
+      node.prices[ARMADA_NEXT_EPOCH] = node.prices[ARMADA_NEXT_EPOCH] * mul / div;
+    }
+  }
+
   function pause() public virtual onlyAdmin { _pause(); }
   function unpause() public virtual onlyAdmin { _unpause(); }
 

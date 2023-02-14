@@ -100,3 +100,5 @@ export type { ArmadaTimelock } from "./contracts/ArmadaTimelock";
 export { ArmadaTimelock__factory } from "./factories/contracts/ArmadaTimelock__factory";
 export type { ArmadaToken } from "./contracts/ArmadaToken";
 export { ArmadaToken__factory } from "./factories/contracts/ArmadaToken__factory";
+export type { USDC } from "./contracts/test/USDC";
+export { USDC__factory } from "./factories/contracts/test/USDC__factory";

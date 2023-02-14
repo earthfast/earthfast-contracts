@@ -5,13 +5,14 @@ import shallowDeepEqual from "chai-shallow-deep-equal";
 import { Result } from "ethers/lib/utils";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, newId } from "../lib/test";
-import { approve, parseTokens, signers } from "../lib/util";
+import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
 import { ArmadaCreateNodeDataStruct, ArmadaNodes } from "../typechain-types/contracts/ArmadaNodes";
 import { ArmadaOperators, ArmadaOperatorStruct } from "../typechain-types/contracts/ArmadaOperators";
 import { ArmadaCreateProjectDataStruct, ArmadaProjects } from "../typechain-types/contracts/ArmadaProjects";
 import { ArmadaRegistry } from "../typechain-types/contracts/ArmadaRegistry";
 import { ArmadaReservations } from "../typechain-types/contracts/ArmadaReservations";
 import { ArmadaToken } from "../typechain-types/contracts/ArmadaToken";
+import { USDC } from "../typechain-types/contracts/test/USDC";
 
 chai.use(shallowDeepEqual);
 
@@ -21,6 +22,7 @@ describe("ArmadaProjects", function () {
   let project: SignerWithAddress;
   let deployer: SignerWithAddress;
 
+  let usdc: USDC;
   let token: ArmadaToken;
   let registry: ArmadaRegistry;
   let nodes: ArmadaNodes;
@@ -32,7 +34,7 @@ describe("ArmadaProjects", function () {
 
   async function fixture() {
     ({ admin, operator, project, deployer } = await signers(hre));
-    ({ token, operators, projects, reservations, nodes, registry } = await fixtures(hre));
+    ({ usdc, token, operators, projects, reservations, nodes, registry } = await fixtures(hre));
   }
 
   before(async function () {
@@ -186,17 +188,39 @@ describe("ArmadaProjects", function () {
     expect(await projects.hasRole(projects.IMPORTER_ROLE(), deployer.address)).to.be.false;
   });
 
+  it("Should allow admin to adjust escrows", async function () {
+    // Create project
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
+    expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
+    const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
+    const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
+    expect(projectId1).to.not.eq(HashZero);
+
+    // Deposit escrow
+    const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));
+    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
+    expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("100"));
+    expect((await projects.getProject(projectId1)).reserve).to.equal(parseUSDC("0"));
+
+    // Adjust escrow
+    await expect(projects.connect(project).unsafeSetEscrows(0, 1, 3, 2)).to.be.revertedWith("not admin");
+    await expect(projects.connect(admin).unsafeSetEscrows(0, 1, 0, 1)).to.be.revertedWith("zero mul");
+    expect(await projects.connect(admin).unsafeSetEscrows(0, 1, 3, 2)).to.be.ok;
+    expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("150"));
+    expect((await projects.getProject(projectId1)).reserve).to.equal(parseUSDC("0"));
+  });
+
   it("Should deposit/withdraw escrow", async function () {
-    const price = parseTokens("1");
+    const price = parseUSDC("1");
 
     // Create operator, deposit stake, create nodes
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0 };
+    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     [o1.id] = await expectEvent(createOperator1, operators, "OperatorCreated");
     const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), ...operatorsPermit)).to.be.ok;
     expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
-    const n0: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r1", price: parseTokens("0") };
+    const n0: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r1", price: parseUSDC("0") };
     const n1: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price };
     const n2: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h2", region: "r1", price };
     const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(o1.id, true, [n0]));
@@ -220,12 +244,14 @@ describe("ArmadaProjects", function () {
     await expect(reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.revertedWith("not enough escrow");
 
     // Deposit escrow
-    const projectsPermit = await approve(hre, token, admin.address, projects.address, parseTokens("100"));
-    await expect(projects.connect(admin).depositProjectEscrow(HashZero, parseTokens("100"), ...projectsPermit)).to.be.revertedWith("unknown project");
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), ...projectsPermit)).to.be.ok;
+    const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));
+    await expect(projects.connect(admin).depositProjectEscrow(HashZero, parseUSDC("100"), ...projectsPermit)).to.be.revertedWith("unknown project");
+    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
+    expect(await usdc.connect(admin).balanceOf(project.address)).to.equal(parseUSDC("0"));
     expect(await token.connect(admin).balanceOf(project.address)).to.equal(parseTokens("0"));
-    expect(await token.connect(admin).balanceOf(registry.address)).to.equal(parseTokens("200"));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(parseTokens("100"));
+    expect(await usdc.connect(admin).balanceOf(registry.address)).to.equal(parseUSDC("100"));
+    expect(await token.connect(admin).balanceOf(registry.address)).to.equal(parseTokens("100"));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("100"));
 
     // Reserve content nodes
     expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: false, next: true })).to.be.ok;
@@ -234,12 +260,14 @@ describe("ArmadaProjects", function () {
     await expect(projects.connect(project).deleteProject(projectId1)).to.be.revertedWith("project has reservations");
 
     // Withdraw escrow with reservations
-    await expect(projects.connect(project).withdrawProjectEscrow(projectId1, parseTokens("100"), project.address)).to.be.revertedWith("not enough escrow");
-    expect(await projects.connect(project).withdrawProjectEscrow(projectId1, parseTokens("98"), project.address)).to.be.ok;
-    expect(await token.connect(admin).balanceOf(project.address)).to.equal(parseTokens("98"));
-    expect(await token.connect(admin).balanceOf(registry.address)).to.equal(parseTokens("102"));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(parseTokens("2"));
-    await expect(projects.connect(project).withdrawProjectEscrow(projectId1, parseTokens("2"), project.address)).to.be.revertedWith("not enough escrow");
+    await expect(projects.connect(project).withdrawProjectEscrow(projectId1, parseUSDC("100"), project.address)).to.be.revertedWith("not enough escrow");
+    expect(await projects.connect(project).withdrawProjectEscrow(projectId1, parseUSDC("98"), project.address)).to.be.ok;
+    expect(await usdc.connect(admin).balanceOf(project.address)).to.equal(parseUSDC("98"));
+    expect(await token.connect(admin).balanceOf(project.address)).to.equal(parseTokens("0"));
+    expect(await usdc.connect(admin).balanceOf(registry.address)).to.equal(parseUSDC("2"));
+    expect(await token.connect(admin).balanceOf(registry.address)).to.equal(parseTokens("100"));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("2"));
+    await expect(projects.connect(project).withdrawProjectEscrow(projectId1, parseUSDC("2"), project.address)).to.be.revertedWith("not enough escrow");
 
     // Release content nodes
     await expect(reservations.connect(project).deleteReservations(projectId1, [nodeId0], { last: false, next: true })).to.be.revertedWith("node not reserved");
@@ -249,10 +277,12 @@ describe("ArmadaProjects", function () {
     await expect(projects.connect(project).deleteProject(projectId1)).to.be.revertedWith("project has escrow");
 
     // Withdraw escrow
-    expect(await projects.connect(project).withdrawProjectEscrow(projectId1, parseTokens("2"), project.address)).to.be.ok;
-    expect(await token.connect(admin).balanceOf(project.address)).to.equal(parseTokens("100"));
+    expect(await projects.connect(project).withdrawProjectEscrow(projectId1, parseUSDC("2"), project.address)).to.be.ok;
+    expect(await usdc.connect(admin).balanceOf(project.address)).to.equal(parseUSDC("100"));
+    expect(await token.connect(admin).balanceOf(project.address)).to.equal(parseTokens("0"));
+    expect(await usdc.connect(admin).balanceOf(registry.address)).to.equal(parseUSDC("0"));
     expect(await token.connect(admin).balanceOf(registry.address)).to.equal(parseTokens("100"));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(parseTokens("0"));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("0"));
 
     // Delete project
     expect(await projects.connect(project).deleteProject(projectId1)).to.be.ok;
