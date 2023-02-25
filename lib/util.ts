@@ -14,7 +14,9 @@ import { keyIn } from "readline-sync";
 type ERC20Permit = import("../typechain-types").ERC20Permit;
 
 export const stringify = (value: any): string => JSON.stringify(value, null, 2);
+export const parseUSDC = (value: string): BigNumber => parseUnits(value, 6);
 export const parseTokens = (value: string): BigNumber => parseUnits(value, 18);
+export const formatUSDC = (value: BigNumberish): string => formatUnits(value, 6);
 export const formatTokens = (value: BigNumberish): string => formatUnits(value, 18);
 export const toHexString = (value: number): string => `0x${value.toString(16)}`;
 export const coverage = (hre: HardhatRuntimeEnvironment): boolean => (hre as any).__SOLIDITY_COVERAGE_RUNNING === true;

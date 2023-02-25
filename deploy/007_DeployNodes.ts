@@ -1,6 +1,6 @@
 import hre from "hardhat";
 import { deployProxy } from "../lib/deploy";
-import { attach, confirm, loadData, parseTokens, signers, stringify, wait } from "../lib/util";
+import { attach, confirm, loadData, parseUSDC, signers, stringify, wait } from "../lib/util";
 
 // @ts-ignore Type created during hardhat compile
 type ArmadaNodes = import("../typechain-types").ArmadaNodes;
@@ -17,8 +17,8 @@ async function main() {
   const nodes = <ArmadaNodes>await attach(hre, "ArmadaNodes");
   const nodesData = data?.ArmadaNodes?.nodes ?? [];
   for (const node of nodesData) {
-    if (node?.prices?.[0] !== undefined) node.prices[0] = parseTokens(node.prices[0]).toString();
-    if (node?.prices?.[1] !== undefined) node.prices[1] = parseTokens(node.prices[1]).toString();
+    if (node?.prices?.[0] !== undefined) node.prices[0] = parseUSDC(node.prices[0]).toString();
+    if (node?.prices?.[1] !== undefined) node.prices[1] = parseUSDC(node.prices[1]).toString();
   }
   const creators = data?.ArmadaNodes?.topologyCreators ?? [];
   const importArgs = [nodesData, creators, true] as const;

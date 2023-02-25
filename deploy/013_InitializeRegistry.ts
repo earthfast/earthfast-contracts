@@ -5,6 +5,9 @@ import { attach, confirm, loadData, signers, stringify, wait } from "../lib/util
 // @ts-ignore Type created during hardhat compile
 type ArmadaRegistry = import("../typechain-types").ArmadaRegistry;
 
+const USDC_GOERLI_ADDRESS = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
+const USDC_MAINNET_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+
 export default main;
 async function main() {
   const { guardian } = await signers(hre);
@@ -45,6 +48,17 @@ async function main() {
     throw Error("Mismatched cuedEpochStart");
   }
 
+  let usdc;
+  if (hre.network.name === "goerli") {
+    usdc = await hre.ethers.getContractAt([], USDC_GOERLI_ADDRESS);
+  } else if (hre.network.name === "mainnet") {
+    usdc = await hre.ethers.getContractAt([], USDC_MAINNET_ADDRESS);
+  } else if (hre.network.name === "hardhat") {
+    usdc = await attach(hre, "USDC");
+  } else {
+    throw Error("Unexpected network");
+  }
+
   const args = [
     admins,
     {
@@ -54,6 +68,7 @@ async function main() {
       lastEpochLength,
       nextEpochLength,
       gracePeriod: data?.ArmadaRegistry?.gracePeriod ?? "86400", // 1 day
+      usdc: usdc.address,
       token: token.address,
       billing: billing.address,
       nodes: nodes.address,

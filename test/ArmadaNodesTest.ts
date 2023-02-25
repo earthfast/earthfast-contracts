@@ -5,12 +5,13 @@ import shallowDeepEqual from "chai-shallow-deep-equal";
 import { Result } from "ethers/lib/utils";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, newId } from "../lib/test";
-import { approve, parseTokens, signers } from "../lib/util";
+import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
 import { ArmadaCreateNodeDataStruct, ArmadaNodes, ArmadaNodeStruct } from "../typechain-types/contracts/ArmadaNodes";
 import { ArmadaOperators, ArmadaOperatorStruct } from "../typechain-types/contracts/ArmadaOperators";
 import { ArmadaCreateProjectDataStruct, ArmadaProjects } from "../typechain-types/contracts/ArmadaProjects";
 import { ArmadaRegistry } from "../typechain-types/contracts/ArmadaRegistry";
 import { ArmadaToken } from "../typechain-types/contracts/ArmadaToken";
+import { USDC } from "../typechain-types/contracts/test/USDC";
 
 chai.use(shallowDeepEqual);
 
@@ -20,6 +21,7 @@ describe("ArmadaNodes", function () {
   let operator: SignerWithAddress;
   let project: SignerWithAddress;
 
+  let usdc: USDC;
   let token: ArmadaToken;
   let nodes: ArmadaNodes;
   let operators: ArmadaOperators;
@@ -30,7 +32,7 @@ describe("ArmadaNodes", function () {
 
   async function fixture() {
     ({ admin, deployer, operator, project } = await signers(hre));
-    ({ token, nodes, operators, registry, projects } = await fixtures(hre));
+    ({ usdc, token, nodes, operators, registry, projects } = await fixtures(hre));
   }
 
   before(async function () {
@@ -85,7 +87,7 @@ describe("ArmadaNodes", function () {
     const operatorsPermit2 = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId2, parseTokens("100"), ...operatorsPermit2)).to.be.ok;
 
-    const price = parseTokens("1");
+    const price = parseUSDC("1");
     const node1: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price };
     const node2: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price };
     const node3: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price };
@@ -177,7 +179,7 @@ describe("ArmadaNodes", function () {
     const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
-    const node3: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h1", region: "r1", price: parseTokens("1") };
+    const node3: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h1", region: "r1", price: parseUSDC("1") };
 
     // grant topology creator role
     expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
@@ -196,7 +198,7 @@ describe("ArmadaNodes", function () {
     const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
-    const node3: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseTokens("1") };
+    const node3: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseUSDC("1") };
 
     // Create node
     const createNodes1 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [node3]));
@@ -209,8 +211,8 @@ describe("ArmadaNodes", function () {
     const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    const projectsPermit = await approve(hre, token, admin.address, projects.address, parseTokens("100"));
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), ...projectsPermit)).to.be.ok;
+    const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));
+    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
 
     // Set last or next project of node to have a project to simulate "node is reserved" state
     await nodes.connect(operatorsSigner).setNodeProjectImpl(nodeId1, 0, projectId1, { gasPrice: 0 });
@@ -229,7 +231,7 @@ describe("ArmadaNodes", function () {
     const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
-    const price = parseTokens("1");
+    const price = parseUSDC("1");
     const node1: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price };
     const node2: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price };
 
@@ -267,6 +269,28 @@ describe("ArmadaNodes", function () {
     await expect(nodes.connect(deployer).unsafeImportData(nodesToImport as ArmadaNodeStruct[], [operator.address], false)).to.be.revertedWith("duplicate id");
   });
 
+  it("Should allow admin to adjust prices", async function () {
+    // Create operator
+    const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
+    const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
+    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
+
+    // Create node
+    const node1: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseUSDC("1") };
+    const createNodes1 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [node1]));
+    const createNodes1Result = await expectEvent(createNodes1, nodes, "NodeCreated");
+    const { nodeId: nodeId1 } = createNodes1Result as Result;
+    expect(nodeId1).to.not.equal(HashZero);
+
+    // Adjust price
+    await expect(nodes.connect(operator).unsafeSetPrices(0, 1, 3, 2)).to.be.revertedWith("not admin");
+    await expect(nodes.connect(admin).unsafeSetPrices(0, 1, 0, 1)).to.be.revertedWith("zero mul");
+    expect(await nodes.connect(admin).unsafeSetPrices(0, 1, 3, 2)).to.be.ok;
+    expect((await nodes.getNode(nodeId1)).prices[0]).to.equal(parseUSDC("1.5"));
+    expect((await nodes.getNode(nodeId1)).prices[1]).to.equal(parseUSDC("1.5"));
+  });
+
   it("Should get nodes in range", async function () {
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
     const [operatorId1] = await expectEvent(createOperator1, operators, "OperatorCreated");
@@ -279,11 +303,11 @@ describe("ArmadaNodes", function () {
     expect(await operators.connect(admin).depositOperatorStake(operatorId2, parseTokens("100"), ...operatorsPermit2)).to.be.ok;
     expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
 
-    const node1: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h1", region: "r1", price: parseTokens("0") };
-    const node2: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h2", region: "r1", price: parseTokens("0") };
-    const node3: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h3", region: "r1", price: parseTokens("1") };
-    const node4: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h4", region: "r1", price: parseTokens("1") };
-    const node5: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h5", region: "r1", price: parseTokens("0") };
+    const node1: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h1", region: "r1", price: parseUSDC("0") };
+    const node2: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h2", region: "r1", price: parseUSDC("0") };
+    const node3: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h3", region: "r1", price: parseUSDC("1") };
+    const node4: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h4", region: "r1", price: parseUSDC("1") };
+    const node5: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h5", region: "r1", price: parseUSDC("0") };
 
     // Create
     const createNodes1 = await expectReceipt(nodes.connect(operator).createNodes(operatorId1, true, [node1]));
@@ -398,7 +422,7 @@ describe("ArmadaNodes", function () {
     const operatorsPermit2 = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId2, parseTokens("100"), ...operatorsPermit2)).to.be.ok;
 
-    const node: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseTokens("1") };
+    const node: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseUSDC("1") };
     const createNodes = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [node]));
     const createNodesResult = await expectEvent(createNodes, nodes, "NodeCreated");
     const { nodeId } = createNodesResult as Result;
@@ -439,7 +463,7 @@ describe("ArmadaNodes", function () {
     expect(await operators.connect(admin).depositOperatorStake(operatorId2, parseTokens("100"), ...operatorsPermit2)).to.be.ok;
 
     // create a content node
-    const node: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseTokens("1") };
+    const node: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseUSDC("1") };
     const createNodes = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [node]));
     const createNodesResult = await expectEvent(createNodes, nodes, "NodeCreated");
     const { nodeId } = createNodesResult as Result;
@@ -447,7 +471,7 @@ describe("ArmadaNodes", function () {
     expect(await nodes.getNodes(operatorId, false, 0, 10)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId } });
 
     // create a topology node
-    const n0: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r1", price: parseTokens("0") };
+    const n0: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r1", price: parseUSDC("0") };
     expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
     const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, true, [n0]));
     const createNodes0Result = await expectEvent(createNodes0, nodes, "NodeCreated");
@@ -459,28 +483,28 @@ describe("ArmadaNodes", function () {
     const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    const projectsPermit = await approve(hre, token, admin.address, projects.address, parseTokens("100"));
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), ...projectsPermit)).to.be.ok;
+    const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));
+    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
 
     // check inputs
     await expect(nodes.connect(operator).setNodePrices(operatorId, [nodeId], [], { last: true, next: true })).to.be.revertedWith("length mismatch");
-    await expect(nodes.connect(operator).setNodePrices(operatorId, [HashZero], [parseTokens("2")], { last: true, next: true })).to.be.revertedWith("unknown node");
-    await expect(nodes.connect(operator).setNodePrices(operatorId2, [nodeId], [parseTokens("2")], { last: true, next: true })).to.be.revertedWith("operator mismatch");
-    await expect(nodes.connect(operator).setNodePrices(operatorId, [nodeId0], [parseTokens("2")], { last: true, next: true })).to.be.revertedWith("topology node");
+    await expect(nodes.connect(operator).setNodePrices(operatorId, [HashZero], [parseUSDC("2")], { last: true, next: true })).to.be.revertedWith("unknown node");
+    await expect(nodes.connect(operator).setNodePrices(operatorId2, [nodeId], [parseUSDC("2")], { last: true, next: true })).to.be.revertedWith("operator mismatch");
+    await expect(nodes.connect(operator).setNodePrices(operatorId, [nodeId0], [parseUSDC("2")], { last: true, next: true })).to.be.revertedWith("topology node");
 
     // set price should work
-    const setNodePrices = await expectReceipt(nodes.connect(operator).setNodePrices(operatorId, [nodeId], [parseTokens("2")], { last: true, next: true }));
+    const setNodePrices = await expectReceipt(nodes.connect(operator).setNodePrices(operatorId, [nodeId], [parseUSDC("2")], { last: true, next: true }));
     const setNodePricesResult = await expectEvent(setNodePrices, nodes, "NodePriceChanged");
     expect(setNodePricesResult).to.be.ok;
 
     // set price should work
-    const setNodePrices2 = await expectReceipt(nodes.connect(operator).setNodePrices(operatorId, [nodeId], [parseTokens("2")], { last: true, next: false }));
+    const setNodePrices2 = await expectReceipt(nodes.connect(operator).setNodePrices(operatorId, [nodeId], [parseUSDC("2")], { last: true, next: false }));
     const setNodePrices2Result = await expectEvent(setNodePrices2, nodes, "NodePriceChanged");
     expect(setNodePrices2Result).to.be.ok;
 
     // set price should fail if node is reserved (e.g. last project is set)
     await nodes.connect(operatorsSigner).setNodeProjectImpl(nodeId, 0, projectId1, { gasPrice: 0 });
-    await expect(nodes.connect(operator).setNodePrices(operatorId, [nodeId], [parseTokens("2")], { last: true, next: true })).to.be.revertedWith("node reserved");
+    await expect(nodes.connect(operator).setNodePrices(operatorId, [nodeId], [parseUSDC("2")], { last: true, next: true })).to.be.revertedWith("node reserved");
   });
 
   it("Should keep reservation if has enough escrow when raising price", async function () {
@@ -492,7 +516,7 @@ describe("ArmadaNodes", function () {
     const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
-    const node: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseTokens("0") };
+    const node: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseUSDC("0") };
     const createNodes = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [node]));
     const createNodesResult = await expectEvent(createNodes, nodes, "NodeCreated");
     const { nodeId } = createNodesResult as Result;
@@ -504,11 +528,11 @@ describe("ArmadaNodes", function () {
     const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    const projectsPermit = await approve(hre, token, admin.address, projects.address, parseTokens("100"));
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), ...projectsPermit)).to.be.ok;
+    const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));
+    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
 
     await nodes.connect(operatorsSigner).setNodeProjectImpl(nodeId, 1, projectId1, { gasPrice: 0 });
-    await nodes.connect(operator).setNodePrices(operatorId, [nodeId], [parseTokens("1")], { last: false, next: true });
+    await nodes.connect(operator).setNodePrices(operatorId, [nodeId], [parseUSDC("1")], { last: false, next: true });
   });
 
   it("Should change node disabled status", async function () {
@@ -523,7 +547,7 @@ describe("ArmadaNodes", function () {
     const operatorsPermit2 = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId2, parseTokens("100"), ...operatorsPermit2)).to.be.ok;
 
-    const node: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseTokens("1") };
+    const node: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseUSDC("1") };
     const createNodes = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [node]));
     const createNodesResult = await expectEvent(createNodes, nodes, "NodeCreated");
     const { nodeId } = createNodesResult as Result;
@@ -592,14 +616,14 @@ describe("ArmadaNodes", function () {
     const operatorsSigner = await hre.ethers.getSigner(operators.address);
 
     // create operator
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0 };
+    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     [o1.id] = await expectEvent(createOperator1, operators, "OperatorCreated");
     expect(o1.id !== HashZero);
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: o1 });
 
     // create topology node
-    const n0: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r1", price: parseTokens("0") };
+    const n0: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r1", price: parseUSDC("0") };
     expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
     const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(o1.id, true, [n0]));
     const createNodes0Result = await expectEvent(createNodes0, nodes, "NodeCreated");
@@ -611,8 +635,8 @@ describe("ArmadaNodes", function () {
     const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    const projectsPermit = await approve(hre, token, admin.address, projects.address, parseTokens("100"));
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), ...projectsPermit)).to.be.ok;
+    const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));
+    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
 
     // ensure the node id is valid
     await expect(nodes.connect(operatorsSigner).setNodePriceImpl(newId(), 0, 0, { gasPrice: 0 })).to.be.revertedWith("unknown node");

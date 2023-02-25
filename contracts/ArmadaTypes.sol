@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+
 import "./ArmadaBilling.sol";
 import "./ArmadaNodes.sol";
 import "./ArmadaOperators.sol";
@@ -27,11 +29,12 @@ struct ArmadaSlot {
 
 // On-chain operator entity
 struct ArmadaOperator {
-  bytes32 id;    // Hash of nonce
-  address owner; // Who can change operator settings or withdraw stake
-  string name;   // A human-friendly name for the operator
-  string email;  // Used for administrative notifications
-  uint256 stake; // Token amount deposited by the operator, determines how many nodes this operator can create
+  bytes32 id;      // Hash of nonce
+  address owner;   // Who can change operator settings or withdraw stake
+  string name;     // A human-friendly name for the operator
+  string email;    // Used for administrative notifications
+  uint256 stake;   // Token amount staked by the operator, determines how many nodes this operator can create
+  uint256 balance; // USDC amount received through payments from projects
 }
 
 // On-chain project entity
@@ -40,7 +43,7 @@ struct ArmadaProject {
   address owner;    // Who can change project settings, publish content or withdraw escrow, e.g governance DAO
   string name;      // A human-friendly name for the project
   string email;     // Used for administrative notifications
-  uint256 escrow;   // Token amount deposited by the project, used to reserve and pay for content nodes
+  uint256 escrow;   // USDC amount deposited by the project, used to reserve and pay for content nodes
   uint256 reserve;  // Part of escrow that is locked to fulfill payment obligations for the last and next epoch
   string content;   // What to serve by content nodes as interpreted by the node software, e.g. tarball URL
   bytes32 checksum; // Checksum of the content field above as interpreted by the node software, e.g. SHA-256
@@ -64,7 +67,7 @@ struct ArmadaNode {
   bool disabled;      // Disabled node won't take new reservations, and won't renew when current epoch ends
 
   // Content nodes only. Slots that hold corresponding values for the last and the next epoch.
-  uint256[2] prices;     // Full-epoch price if node is not reserved, or prorated price if node is reserved
+  uint256[2] prices;     // Full-epoch price in USDC if node is not reserved, or prorated price if node is reserved
   bytes32[2] projectIds; // Project that reserved this node for the respective epoch, or zero if not reserved
 }
 
@@ -75,7 +78,7 @@ struct ArmadaCreateNodeData {
   bool disabled;
 
   // Content nodes only
-  uint256 price;
+  uint256 price; // USDC amount to reserve this node for one epoch
 }
 
 struct ArmadaRegistryInitializeData {
@@ -86,6 +89,7 @@ struct ArmadaRegistryInitializeData {
   uint256 nextEpochLength;
   uint256 gracePeriod;
 
+  ERC20Permit usdc;
   ArmadaToken token;
   ArmadaBilling billing;
   ArmadaNodes nodes;

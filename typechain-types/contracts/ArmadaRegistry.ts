@@ -35,6 +35,7 @@ export type ArmadaRegistryInitializeDataStruct = {
   lastEpochLength: PromiseOrValue<BigNumberish>;
   nextEpochLength: PromiseOrValue<BigNumberish>;
   gracePeriod: PromiseOrValue<BigNumberish>;
+  usdc: PromiseOrValue<string>;
   token: PromiseOrValue<string>;
   billing: PromiseOrValue<string>;
   nodes: PromiseOrValue<string>;
@@ -55,6 +56,7 @@ export type ArmadaRegistryInitializeDataStructOutput = [
   string,
   string,
   string,
+  string,
   string
 ] & {
   version: string;
@@ -63,6 +65,7 @@ export type ArmadaRegistryInitializeDataStructOutput = [
   lastEpochLength: BigNumber;
   nextEpochLength: BigNumber;
   gracePeriod: BigNumber;
+  usdc: string;
   token: string;
   billing: string;
   nodes: string;
@@ -89,10 +92,11 @@ export interface ArmadaRegistryInterface extends utils.Interface {
     "getReservations()": FunctionFragment;
     "getRoleAdmin(bytes32)": FunctionFragment;
     "getToken()": FunctionFragment;
+    "getUSDC()": FunctionFragment;
     "getVersion()": FunctionFragment;
     "grantRole(bytes32,address)": FunctionFragment;
     "hasRole(bytes32,address)": FunctionFragment;
-    "initialize(address[],(string,uint256,uint256,uint256,uint256,uint256,address,address,address,address,address,address))": FunctionFragment;
+    "initialize(address[],(string,uint256,uint256,uint256,uint256,uint256,address,address,address,address,address,address,address))": FunctionFragment;
     "newNonceImpl()": FunctionFragment;
     "pause()": FunctionFragment;
     "paused()": FunctionFragment;
@@ -114,7 +118,9 @@ export interface ArmadaRegistryInterface extends utils.Interface {
     "unsafeSetProjects(address)": FunctionFragment;
     "unsafeSetReservations(address)": FunctionFragment;
     "unsafeSetToken(address)": FunctionFragment;
-    "unsafeWithdraw(address,uint256)": FunctionFragment;
+    "unsafeSetUSDC(address)": FunctionFragment;
+    "unsafeWithdrawToken(address,uint256)": FunctionFragment;
+    "unsafeWithdrawUSDC(address,uint256)": FunctionFragment;
     "upgradeTo(address)": FunctionFragment;
     "upgradeToAndCall(address,bytes)": FunctionFragment;
   };
@@ -137,6 +143,7 @@ export interface ArmadaRegistryInterface extends utils.Interface {
       | "getReservations"
       | "getRoleAdmin"
       | "getToken"
+      | "getUSDC"
       | "getVersion"
       | "grantRole"
       | "hasRole"
@@ -162,7 +169,9 @@ export interface ArmadaRegistryInterface extends utils.Interface {
       | "unsafeSetProjects"
       | "unsafeSetReservations"
       | "unsafeSetToken"
-      | "unsafeWithdraw"
+      | "unsafeSetUSDC"
+      | "unsafeWithdrawToken"
+      | "unsafeWithdrawUSDC"
       | "upgradeTo"
       | "upgradeToAndCall"
   ): FunctionFragment;
@@ -222,6 +231,7 @@ export interface ArmadaRegistryInterface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(functionFragment: "getToken", values?: undefined): string;
+  encodeFunctionData(functionFragment: "getUSDC", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "getVersion",
     values?: undefined
@@ -314,7 +324,15 @@ export interface ArmadaRegistryInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "unsafeWithdraw",
+    functionFragment: "unsafeSetUSDC",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "unsafeWithdrawToken",
+    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "unsafeWithdrawUSDC",
     values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
@@ -378,6 +396,7 @@ export interface ArmadaRegistryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getToken", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "getUSDC", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "getVersion", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "grantRole", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
@@ -452,7 +471,15 @@ export interface ArmadaRegistryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "unsafeWithdraw",
+    functionFragment: "unsafeSetUSDC",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "unsafeWithdrawToken",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "unsafeWithdrawUSDC",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "upgradeTo", data: BytesLike): Result;
@@ -647,6 +674,8 @@ export interface ArmadaRegistry extends BaseContract {
 
     getToken(overrides?: CallOverrides): Promise<[string]>;
 
+    getUSDC(overrides?: CallOverrides): Promise<[string]>;
+
     getVersion(overrides?: CallOverrides): Promise<[string]>;
 
     grantRole(
@@ -762,7 +791,18 @@ export interface ArmadaRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    unsafeWithdraw(
+    unsafeSetUSDC(
+      usdc: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    unsafeWithdrawToken(
+      to: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    unsafeWithdrawUSDC(
       to: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -817,6 +857,8 @@ export interface ArmadaRegistry extends BaseContract {
   ): Promise<string>;
 
   getToken(overrides?: CallOverrides): Promise<string>;
+
+  getUSDC(overrides?: CallOverrides): Promise<string>;
 
   getVersion(overrides?: CallOverrides): Promise<string>;
 
@@ -933,7 +975,18 @@ export interface ArmadaRegistry extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  unsafeWithdraw(
+  unsafeSetUSDC(
+    usdc: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  unsafeWithdrawToken(
+    to: PromiseOrValue<string>,
+    amount: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  unsafeWithdrawUSDC(
     to: PromiseOrValue<string>,
     amount: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -988,6 +1041,8 @@ export interface ArmadaRegistry extends BaseContract {
     ): Promise<string>;
 
     getToken(overrides?: CallOverrides): Promise<string>;
+
+    getUSDC(overrides?: CallOverrides): Promise<string>;
 
     getVersion(overrides?: CallOverrides): Promise<string>;
 
@@ -1092,7 +1147,18 @@ export interface ArmadaRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    unsafeWithdraw(
+    unsafeSetUSDC(
+      usdc: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    unsafeWithdrawToken(
+      to: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    unsafeWithdrawUSDC(
       to: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1219,6 +1285,8 @@ export interface ArmadaRegistry extends BaseContract {
 
     getToken(overrides?: CallOverrides): Promise<BigNumber>;
 
+    getUSDC(overrides?: CallOverrides): Promise<BigNumber>;
+
     getVersion(overrides?: CallOverrides): Promise<BigNumber>;
 
     grantRole(
@@ -1334,7 +1402,18 @@ export interface ArmadaRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    unsafeWithdraw(
+    unsafeSetUSDC(
+      usdc: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    unsafeWithdrawToken(
+      to: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    unsafeWithdrawUSDC(
       to: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1398,6 +1477,8 @@ export interface ArmadaRegistry extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getUSDC(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getVersion(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -1514,7 +1595,18 @@ export interface ArmadaRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    unsafeWithdraw(
+    unsafeSetUSDC(
+      usdc: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    unsafeWithdrawToken(
+      to: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    unsafeWithdrawUSDC(
       to: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }

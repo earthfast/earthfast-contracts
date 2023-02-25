@@ -1,6 +1,6 @@
 import { HashZero } from "@ethersproject/constants";
 import { task } from "hardhat/config";
-import { approve, attach, decodeEvent, parseTokens, signers, wait } from "../lib/util";
+import { approve, attach, decodeEvent, parseTokens, parseUSDC, signers, wait } from "../lib/util";
 
 // @ts-ignore Type created during hardhat compile
 type ArmadaToken = import("../typechain-types").Token;
@@ -20,6 +20,8 @@ type ArmadaReservations = import("../typechain-types").ArmadaReservations;
 type ArmadaCreateNodeDataStruct = import("../typechain-types").ArmadaCreateNodeDataStruct;
 // @ts-ignore Type created during hardhat compile
 type ArmadaCreateProjectDataStruct = import("../typechain-types").ArmadaCreateProjectDataStruct;
+// @ts-ignore Type created during hardhat compile
+type USDC = import("../typechain-types").USDC;
 
 task("seed", "Uploads dummy programmatic contract data").setAction(async (_args, hre) => {
   if (!hre.network.tags.dev) {
@@ -28,6 +30,7 @@ task("seed", "Uploads dummy programmatic contract data").setAction(async (_args,
 
   const { admin, operator, project } = await signers(hre);
 
+  const usdc = <USDC>await attach(hre, "USDC");
   const token = <ArmadaToken>await attach(hre, "ArmadaToken");
   const registry = <ArmadaRegistry>await attach(hre, "ArmadaRegistry");
   const nodes = <ArmadaNodes>await attach(hre, "ArmadaNodes");
@@ -39,8 +42,8 @@ task("seed", "Uploads dummy programmatic contract data").setAction(async (_args,
     throw Error("Contracts already have data");
   }
 
-  const price0 = parseTokens("0");
-  const price1 = parseTokens("1");
+  const price0 = parseUSDC("0");
+  const price1 = parseUSDC("1");
 
   // Create operator
   const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "", stake: 0 };
@@ -62,8 +65,8 @@ task("seed", "Uploads dummy programmatic contract data").setAction(async (_args,
   const p1: ArmadaCreateProjectDataStruct = { owner: project.address, name: "p1", email: "", content: "", checksum: HashZero }; // prettier-ignore
   const createProject1 = await wait(projects.connect(project).createProject(p1));
   const [projectId1] = await decodeEvent(createProject1, projects, "ProjectCreated");
-  const projectsPermit = await approve(hre, token, admin.address, projects.address, parseTokens("100"));
-  await wait(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), ...projectsPermit));
+  const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));
+  await wait(projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit));
 
   // Create reservation
   await wait(reservations.connect(project).createReservations(projectId1, [nodeId2], [price1], { last: false, next: true })); // prettier-ignore

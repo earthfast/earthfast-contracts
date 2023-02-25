@@ -129,6 +129,20 @@ contract ArmadaProjects is AccessControlUpgradeable, PausableUpgradeable, Reentr
     }
   }
 
+  /// @dev Adjusts multiple projects escrows relative to their current values.
+  /// @dev CAUTION: This can break data consistency. Used for proxy-less upgrades.
+  function unsafeSetEscrows(uint256 skip, uint256 size, uint256 mul, uint256 div)
+  public virtual onlyAdmin {
+    require(mul != 0, "zero mul");
+    uint256 length = _projectIds.length();
+    uint256 n = Math.min(size, length > skip ? length - skip : 0);
+    for (uint256 i = 0; i < n; i++) {
+      ArmadaProject storage project = _projects[_projectIds.at(skip + i)];
+      project.escrow = project.escrow * mul / div;
+      project.reserve = project.reserve * mul / div;
+    }
+  }
+
   function pause() public virtual onlyAdmin { _pause(); }
   function unpause() public virtual onlyAdmin { _unpause(); }
 
@@ -218,8 +232,7 @@ contract ArmadaProjects is AccessControlUpgradeable, PausableUpgradeable, Reentr
     emit ProjectContentChanged(projectId, oldContent, oldChecksum, content, checksum);
   }
 
-  /// @notice Transfers tokens into the contract and applies them toward given operator stake.
-  /// @dev Requires token allowance for the corresponding amount from msg.sender to ArmadaProjects.
+  /// @notice Transfers USDC into the contract and applies them toward given operator stake.
   /// @dev CAUTION: To avoid loss of funds, do NOT deposit to this contract by token.transfer().
   function depositProjectEscrow(bytes32 projectId, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
   public virtual whenNotPaused {
@@ -227,8 +240,8 @@ contract ArmadaProjects is AccessControlUpgradeable, PausableUpgradeable, Reentr
     require(project.id != 0, "unknown project");
     uint256 oldEscrow = project.escrow;
     project.escrow += amount;
-    _registry.getToken().permit(msg.sender, address(this), amount, deadline, v, r, s);
-    _registry.getToken().transferFrom(msg.sender, address(_registry), amount);
+    _registry.getUSDC().permit(msg.sender, address(this), amount, deadline, v, r, s);
+    _registry.getUSDC().transferFrom(msg.sender, address(_registry), amount);
     emit ProjectEscrowChanged(projectId, oldEscrow, project.escrow);
   }
 
@@ -240,7 +253,7 @@ contract ArmadaProjects is AccessControlUpgradeable, PausableUpgradeable, Reentr
     require(project.escrow >= project.reserve + amount, "not enough escrow");
     uint256 oldEscrow = project.escrow;
     project.escrow -= amount;
-    _registry.getToken().transferFrom(address(_registry), to, amount);
+    _registry.getUSDC().transferFrom(address(_registry), to, amount);
     emit ProjectEscrowChanged(projectId, oldEscrow, project.escrow);
   }
 
