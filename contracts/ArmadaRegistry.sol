@@ -17,6 +17,9 @@ import "./ArmadaToken.sol";
 
 /// @title Main entry point for the core contracts and functionality
 contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeable {
+  // Controls who in addition to topology nodes can reconcile the network
+  bytes32 public constant RECONCILER_ROLE = keccak256("RECONCILER_ROLE");
+
   string private _version;          // Interpreted by the node software, used for automatic upgrading of the nodes
   uint256 private _nonce;           // Auto-incremented value used for generating unique ids
   uint256 private _lastEpochStart;  // Timestamp of the last epoch start in seconds since 1/1/1970 midnight UTC
@@ -50,9 +53,9 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
     _;
   }
 
-  modifier onlyAdminOrTopologyNode(bytes32 nodeIdOrZero) {
+  modifier onlyReconcilerOrTopologyNode(bytes32 nodeIdOrZero) {
     if (nodeIdOrZero == 0) {
-      require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "not admin");
+      require(hasRole(RECONCILER_ROLE, msg.sender), "not reconciler");
     } else {
       _operators.requireTopologyNode(nodeIdOrZero, msg.sender);
     }
@@ -215,7 +218,7 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
   }
 
   /// @notice Called by the leader topology node to finish epoch reconciliation and unfreeze the network state.
-  /// @param topologyNodeId The topology node calling this function (zero is OK if admin)
+  /// @param topologyNodeId The topology node calling this function (zero is OK if caller has reconciler role)
   ///
   /// The core contracts automatically enter reconciliation mode when the last epoch ends. During reconciliation,
   /// the operations that change contract state, such as node pricing or reservations, are disallowed and will revert.
@@ -223,7 +226,7 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
   /// order, to execute reconcilication. Calling advanceEpoch() completes reconciliation and unfreezes the contracts.
   /// The reconciliation process should normally only take a few blocks.
   function advanceEpoch(bytes32 topologyNodeId)
-  public virtual onlyAdminOrTopologyNode(topologyNodeId) whenReconciling whenNotPaused {
+  public virtual onlyReconcilerOrTopologyNode(topologyNodeId) whenReconciling whenNotPaused {
     uint256 nodeCount = _nodes.getNodeCount(0, false);
     require(_billing.getBillingNodeIndex() == nodeCount, "billing in progress");
     require(_billing.getRenewalNodeIndex() == nodeCount, "renewal in progress");

@@ -16,6 +16,9 @@ import "./ArmadaTypes.sol";
 contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpgradeable {
   using EnumerableSet for EnumerableSet.Bytes32Set;
 
+  // Controls who in addition to topology nodes can reconcile the network
+  bytes32 public constant RECONCILER_ROLE = keccak256("RECONCILER_ROLE");
+
   ArmadaRegistry private _registry;
 
   uint256 private _billingNodeIndex; // Ensures consistency during incremental reconciliation
@@ -35,9 +38,9 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
     _;
   }
 
-  modifier onlyAdminOrTopologyNode(bytes32 nodeIdOrZero) {
+  modifier onlyReconcilerOrTopologyNode(bytes32 nodeIdOrZero) {
     if (nodeIdOrZero == 0) {
-      require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "not admin");
+      require(hasRole(RECONCILER_ROLE, msg.sender), "not reconciler");
     } else {
       _registry.getOperators().requireTopologyNode(nodeIdOrZero, msg.sender);
     }
@@ -85,11 +88,11 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
   /// @notice Called by the leader topology node to disburse escrow payments to operators.
   /// @dev This must be called sequentially and fully, for all the nodes in the network.
   /// @dev See ArmadaRegistry.advanceEpoch() for more details about reconciliation process.
-  /// @param topologyNodeId The topology node calling this function (zero is OK if admin)
+  /// @param topologyNodeId The topology node calling this function (zero is OK if caller has reconciler role)
   /// @param nodeIds Content nodes being reported
   /// @param uptimeBips Uptime of corresponding content node in basis points (1 is 0.01%)
   function processBilling(bytes32 topologyNodeId, bytes32[] memory nodeIds, uint256[] memory uptimeBips)
-  public virtual onlyAdminOrTopologyNode(topologyNodeId) whenReconciling whenNotPaused {
+  public virtual onlyReconcilerOrTopologyNode(topologyNodeId) whenReconciling whenNotPaused {
     ArmadaNodes allNodes = _registry.getNodes();
     ArmadaProjects projects = _registry.getProjects();
     ArmadaOperators operators = _registry.getOperators();
@@ -119,10 +122,10 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
   /// @notice Called by the leader topology node to roll over reservations between epochs.
   /// @dev This must be called sequentially and fully, for all the nodes in the network.
   /// @dev See ArmadaRegistry.advanceEpoch() for more details about reconciliation process.
-  /// @param topologyNodeId The topology node calling this function (zero is OK if admin)
+  /// @param topologyNodeId The topology node calling this function (zero is OK if caller has reconciler role)
   /// @param nodeIds Content nodes being reported
   function processRenewal(bytes32 topologyNodeId, bytes32[] memory nodeIds)
-  public virtual onlyAdminOrTopologyNode(topologyNodeId) whenReconciling whenNotPaused {
+  public virtual onlyReconcilerOrTopologyNode(topologyNodeId) whenReconciling whenNotPaused {
     ArmadaNodes allNodes = _registry.getNodes();
     ArmadaProjects projects = _registry.getProjects();
     require(_billingNodeIndex == allNodes.getNodeCount(0, false), "billing in progress");
