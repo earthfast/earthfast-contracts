@@ -159,14 +159,17 @@ describe("ArmadaBilling", function () {
     expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(0));
   });
 
-  it("Should not allow non-admin to reconcile without topology node", async function () {
-    await expect(billing.connect(project).processBilling(HashZero, [nodeId1, nodeId2], [10000, 10000])).to.be.revertedWith("not admin");
-    await expect(billing.connect(project).processRenewal(HashZero, [nodeId1, nodeId2])).to.be.revertedWith("not admin");
+  it("Should not allow non-reconciler to reconcile without topology node", async function () {
+    await expect(billing.connect(project).processBilling(HashZero, [nodeId1, nodeId2], [10000, 10000])).to.be.revertedWith("not reconciler");
+    await expect(billing.connect(project).processRenewal(HashZero, [nodeId1, nodeId2])).to.be.revertedWith("not reconciler");
+    await expect(billing.connect(admin).processBilling(HashZero, [nodeId1, nodeId2], [10000, 10000])).to.be.revertedWith("not reconciler");
+    await expect(billing.connect(admin).processRenewal(HashZero, [nodeId1, nodeId2])).to.be.revertedWith("not reconciler");
   });
 
-  it("Should allow admin to reconcile without topology node", async function () {
+  it("Should allow reconciler to reconcile without topology node", async function () {
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
     await mine(hre, epochLength);
+    expect(await billing.connect(admin).grantRole(billing.RECONCILER_ROLE(), admin.address)).to.be.ok;
     expect(await billing.connect(admin).processBilling(HashZero, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
     expect(await billing.connect(admin).processRenewal(HashZero, [nodeId1, nodeId2])).to.be.ok;
   });
@@ -174,6 +177,7 @@ describe("ArmadaBilling", function () {
   it("Should check node reconcilication order", async function () {
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
     await mine(hre, epochLength);
+    expect(await billing.connect(admin).grantRole(billing.RECONCILER_ROLE(), admin.address)).to.be.ok;
     await expect(billing.connect(admin).processBilling(HashZero, [nodeId2, nodeId1], [10000, 10000])).to.be.revertedWith("order mismatch");
     expect(await billing.connect(admin).processBilling(HashZero, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
     await expect(billing.connect(admin).processRenewal(HashZero, [nodeId2, nodeId1])).to.be.revertedWith("order mismatch");
@@ -182,6 +186,7 @@ describe("ArmadaBilling", function () {
   it("Should check node uptime bounds", async function () {
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
     await mine(hre, epochLength);
+    expect(await billing.connect(admin).grantRole(billing.RECONCILER_ROLE(), admin.address)).to.be.ok;
     await expect(billing.connect(admin).processBilling(HashZero, [nodeId1, nodeId2], [10001, 10001])).to.be.revertedWith("invalid uptime");
     expect(await billing.connect(admin).processBilling(HashZero, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
   });

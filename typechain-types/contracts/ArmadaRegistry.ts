@@ -77,6 +77,7 @@ export type ArmadaRegistryInitializeDataStructOutput = [
 export interface ArmadaRegistryInterface extends utils.Interface {
   functions: {
     "DEFAULT_ADMIN_ROLE()": FunctionFragment;
+    "RECONCILER_ROLE()": FunctionFragment;
     "advanceEpoch(bytes32)": FunctionFragment;
     "getBilling()": FunctionFragment;
     "getCuedEpochLength()": FunctionFragment;
@@ -128,6 +129,7 @@ export interface ArmadaRegistryInterface extends utils.Interface {
   getFunction(
     nameOrSignatureOrTopic:
       | "DEFAULT_ADMIN_ROLE"
+      | "RECONCILER_ROLE"
       | "advanceEpoch"
       | "getBilling"
       | "getCuedEpochLength"
@@ -178,6 +180,10 @@ export interface ArmadaRegistryInterface extends utils.Interface {
 
   encodeFunctionData(
     functionFragment: "DEFAULT_ADMIN_ROLE",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "RECONCILER_ROLE",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -346,6 +352,10 @@ export interface ArmadaRegistryInterface extends utils.Interface {
 
   decodeFunctionResult(
     functionFragment: "DEFAULT_ADMIN_ROLE",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "RECONCILER_ROLE",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -638,6 +648,8 @@ export interface ArmadaRegistry extends BaseContract {
   functions: {
     DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<[string]>;
 
+    RECONCILER_ROLE(overrides?: CallOverrides): Promise<[string]>;
+
     advanceEpoch(
       topologyNodeId: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -822,6 +834,8 @@ export interface ArmadaRegistry extends BaseContract {
 
   DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
 
+  RECONCILER_ROLE(overrides?: CallOverrides): Promise<string>;
+
   advanceEpoch(
     topologyNodeId: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1005,6 +1019,8 @@ export interface ArmadaRegistry extends BaseContract {
 
   callStatic: {
     DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
+
+    RECONCILER_ROLE(overrides?: CallOverrides): Promise<string>;
 
     advanceEpoch(
       topologyNodeId: PromiseOrValue<BytesLike>,
@@ -1249,6 +1265,8 @@ export interface ArmadaRegistry extends BaseContract {
   estimateGas: {
     DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
 
+    RECONCILER_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
+
     advanceEpoch(
       topologyNodeId: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1435,6 +1453,8 @@ export interface ArmadaRegistry extends BaseContract {
     DEFAULT_ADMIN_ROLE(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
+
+    RECONCILER_ROLE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     advanceEpoch(
       topologyNodeId: PromiseOrValue<BytesLike>,

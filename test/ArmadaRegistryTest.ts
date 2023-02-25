@@ -295,12 +295,13 @@ describe("ArmadaRegistry", function () {
     expect(await hre.upgrades.upgradeProxy(proxy, registryFactory)).to.be.ok;
   });
 
-  it("Should not allow non-admin to advance epoch without topology node", async function () {
-    // non-admin call should revert
-    await expect(registry.advanceEpoch(HashZero)).to.be.revertedWith("not admin");
+  it("Should not allow non-reconciler to advance epoch without topology node", async function () {
+    // non-reconciler call should revert
+    await expect(registry.advanceEpoch(HashZero)).to.be.revertedWith("not reconciler");
+    await expect(registry.connect(admin).advanceEpoch(HashZero)).to.be.revertedWith("not reconciler");
 
-    // admin call should pass "not admin" check
-    // and fail "not reconciling" check
+    // reconciler call should pass "not reconciler" check and fail "not reconciling" check
+    expect(await registry.connect(admin).grantRole(registry.RECONCILER_ROLE(), admin.address)).to.be.ok;
     await expect(registry.connect(admin).advanceEpoch(HashZero)).to.be.revertedWith("not reconciling");
   });
 
