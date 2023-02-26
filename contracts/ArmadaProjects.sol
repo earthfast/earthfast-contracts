@@ -234,6 +234,7 @@ contract ArmadaProjects is AccessControlUpgradeable, PausableUpgradeable, Reentr
   }
 
   /// @notice Transfers USDC into the contract and applies them toward given operator stake.
+  /// @dev Needs either a token allowance from msg.sender, or a gasless approval (v/r/s != 0).
   /// @dev CAUTION: To avoid loss of funds, do NOT deposit to this contract by token.transfer().
   function depositProjectEscrow(bytes32 projectId, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
   public virtual whenNotPaused {
@@ -241,7 +242,11 @@ contract ArmadaProjects is AccessControlUpgradeable, PausableUpgradeable, Reentr
     require(project.id != 0, "unknown project");
     uint256 oldEscrow = project.escrow;
     project.escrow += amount;
-    _registry.getUSDC().permit(msg.sender, address(this), amount, deadline, v, r, s);
+    if (s != 0) {
+      _registry.getUSDC().permit(msg.sender, address(this), amount, deadline, v, r, s);
+    } else {
+      require(deadline == 0 && v == 0 && r == 0, "invalid permit");
+    }
     _registry.getUSDC().transferFrom(msg.sender, address(_registry), amount);
     emit ProjectEscrowChanged(projectId, oldEscrow, project.escrow);
   }
