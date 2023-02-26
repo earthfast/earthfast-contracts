@@ -289,7 +289,27 @@ describe("ArmadaProjects", function () {
     expect(await projects.connect(project).deleteProject(projectId1)).to.be.ok;
   });
 
-  // allow admin to unsafeSetRegistry
+  it("Should deposit escrow with token allowance", async function () {
+    // Create project
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
+    expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
+    const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
+    const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
+    expect(projectId1 !== HashZero);
+
+    // Check invalid permits
+    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 1, 0, HashZero, HashZero)).to.be.revertedWith("invalid permit");
+    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 1, HashZero, HashZero)).to.be.revertedWith("invalid permit");
+    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 0, projectId1, HashZero)).to.be.revertedWith("invalid permit");
+
+    // Deposit with allowance
+    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 0, HashZero, HashZero)).to.be.revertedWith("ERC20: insufficient allowance");
+    expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 1, 0: p1 });
+    expect(await usdc.connect(admin).approve(projects.address, parseTokens("100"))).to.be.ok;
+    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 0, HashZero, HashZero)).to.be.ok;
+    expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 1, 0: { ...p1, escrow: parseTokens("100") } });
+  });
+
   it("Should allow admin to update registry address in projects", async () => {
     // check old registry
     expect(await projects.getRegistry()).to.equal(registry.address);

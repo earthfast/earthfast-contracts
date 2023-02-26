@@ -254,6 +254,26 @@ describe("ArmadaOperators", function () {
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 0 });
   });
 
+  it("Should deposit stake with token allowance", async function () {
+    // Create operator
+    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
+    const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
+    [o1.id] = await expectEvent(createOperator1, operators, "OperatorCreated");
+    expect(o1.id !== HashZero);
+
+    // Check invalid permits
+    await expect(operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), 1, 0, HashZero, HashZero)).to.be.revertedWith("invalid permit");
+    await expect(operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), 0, 1, HashZero, HashZero)).to.be.revertedWith("invalid permit");
+    await expect(operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), 0, 0, o1.id, HashZero)).to.be.revertedWith("invalid permit");
+
+    // Deposit with allowance
+    await expect(operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), 0, 0, HashZero, HashZero)).to.be.revertedWith("ERC20: insufficient allowance");
+    expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: o1 });
+    expect(await token.connect(admin).approve(operators.address, parseTokens("100"))).to.be.ok;
+    expect(await operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), 0, 0, HashZero, HashZero)).to.be.ok;
+    expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: { ...o1, stake: parseTokens("100") } });
+  });
+
   it("Should deposit/withdraw balance", async function () {
     // Create operators
     const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
@@ -290,6 +310,26 @@ describe("ArmadaOperators", function () {
     expect(await operators.connect(admin).deleteOperator(o1.id)).to.be.ok;
     expect(await operators.connect(admin).deleteOperator(o2.id)).to.be.ok;
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 0 });
+  });
+
+  it("Should deposit stake with token allowance", async function () {
+    // Create operator
+    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
+    const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
+    [o1.id] = await expectEvent(createOperator1, operators, "OperatorCreated");
+    expect(o1.id !== HashZero);
+
+    // Check invalid permits
+    await expect(operators.connect(admin).depositOperatorBalance(o1.id, parseTokens("100"), 1, 0, HashZero, HashZero)).to.be.revertedWith("invalid permit");
+    await expect(operators.connect(admin).depositOperatorBalance(o1.id, parseTokens("100"), 0, 1, HashZero, HashZero)).to.be.revertedWith("invalid permit");
+    await expect(operators.connect(admin).depositOperatorBalance(o1.id, parseTokens("100"), 0, 0, o1.id, HashZero)).to.be.revertedWith("invalid permit");
+
+    // Deposit with allowance
+    await expect(operators.connect(admin).depositOperatorBalance(o1.id, parseTokens("100"), 0, 0, HashZero, HashZero)).to.be.revertedWith("ERC20: insufficient allowance");
+    expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: o1 });
+    expect(await usdc.connect(admin).approve(operators.address, parseTokens("100"))).to.be.ok;
+    expect(await operators.connect(admin).depositOperatorBalance(o1.id, parseTokens("100"), 0, 0, HashZero, HashZero)).to.be.ok;
+    expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: { ...o1, balance: parseTokens("100") } });
   });
 
   it("Should allow importer to unsafeImportData", async function () {

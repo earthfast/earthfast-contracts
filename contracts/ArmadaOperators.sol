@@ -211,6 +211,7 @@ contract ArmadaOperators is AccessControlUpgradeable, PausableUpgradeable, Reent
   }
 
   /// @notice Transfers tokens into the contract and applies them toward given operator stake.
+  /// @dev Needs either a token allowance from msg.sender, or a gasless approval (v/r/s != 0).
   /// @dev CAUTION: To avoid loss of funds, do NOT deposit to this contract by token.transfer().
   function depositOperatorStake(bytes32 operatorId, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
   public virtual whenNotPaused {
@@ -218,7 +219,11 @@ contract ArmadaOperators is AccessControlUpgradeable, PausableUpgradeable, Reent
     require(operator.id != 0, "unknown operator");
     uint256 oldStake = operator.stake;
     operator.stake += amount;
-    _registry.getToken().permit(msg.sender, address(this), amount, deadline, v, r, s);
+    if (s != 0) {
+      _registry.getToken().permit(msg.sender, address(this), amount, deadline, v, r, s);
+    } else {
+      require(deadline == 0 && v == 0 && r == 0, "invalid permit");
+    }
     _registry.getToken().transferFrom(msg.sender, address(_registry), amount);
     emit OperatorStakeChanged(operatorId, oldStake, operator.stake);
   }
@@ -238,6 +243,7 @@ contract ArmadaOperators is AccessControlUpgradeable, PausableUpgradeable, Reent
   }
 
   /// @notice Transfers USDC into the contract and applies them toward given operator balance.
+  /// @dev Needs either a token allowance from msg.sender, or a gasless approval (v/r/s != 0).
   /// @dev CAUTION: To avoid loss of funds, do NOT deposit to this contract by token.transfer().
   function depositOperatorBalance(bytes32 operatorId, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
   public virtual whenNotPaused {
@@ -245,7 +251,11 @@ contract ArmadaOperators is AccessControlUpgradeable, PausableUpgradeable, Reent
     require(operator.id != 0, "unknown operator");
     uint256 oldBalance = operator.balance;
     operator.balance += amount;
-    _registry.getUSDC().permit(msg.sender, address(this), amount, deadline, v, r, s);
+    if (s != 0) {
+      _registry.getUSDC().permit(msg.sender, address(this), amount, deadline, v, r, s);
+    } else {
+      require(deadline == 0 && v == 0 && r == 0, "invalid permit");
+    }
     _registry.getUSDC().transferFrom(msg.sender, address(_registry), amount);
     emit OperatorBalanceChanged(operatorId, oldBalance, operator.balance);
   }
