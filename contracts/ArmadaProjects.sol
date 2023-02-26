@@ -168,6 +168,7 @@ contract ArmadaProjects is AccessControlUpgradeable, PausableUpgradeable, Reentr
   /// @dev Does not check name or email for validity or uniqueness
   function createProject(ArmadaCreateProjectData memory project)
   public onlyProjectCreator whenNotReconciling whenNotPaused returns (bytes32 projectId) {
+    require(project.owner != address(0), "zero owner");
     require(bytes(project.name).length > 0, "empty name");
     require(bytes(project.name).length <= ARMADA_MAX_NAME_BYTES, "name too long");
     require(bytes(project.email).length <= ARMADA_MAX_EMAIL_BYTES, "email too long");

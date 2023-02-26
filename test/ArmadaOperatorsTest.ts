@@ -94,6 +94,7 @@ describe("ArmadaOperators", function () {
   });
 
   it("Should check operator create parameters", async function () {
+    await expect(operators.connect(admin).createOperator(AddressZero, "", "@")).to.be.revertedWith("zero owner");
     await expect(operators.connect(admin).createOperator(operator.address, "", "@")).to.be.revertedWith("empty name");
     await expect(operators.connect(admin).createOperator(operator.address, "x".repeat(257), "@")).to.be.revertedWith("name too long");
     await expect(operators.connect(admin).createOperator(operator.address, "o", "x".repeat(257))).to.be.revertedWith("email too long");
