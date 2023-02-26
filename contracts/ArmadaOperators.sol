@@ -160,6 +160,7 @@ contract ArmadaOperators is AccessControlUpgradeable, PausableUpgradeable, Reent
   /// @dev Does not check name or email for validity or uniqueness
   function createOperator(address owner, string calldata name, string calldata email)
   public onlyAdmin whenNotReconciling whenNotPaused returns (bytes32 operatorId) {
+    require(owner != address(0), "zero owner");
     require(bytes(name).length > 0, "empty name");
     require(bytes(name).length <= ARMADA_MAX_NAME_BYTES, "name too long");
     require(bytes(email).length <= ARMADA_MAX_EMAIL_BYTES, "email too long");

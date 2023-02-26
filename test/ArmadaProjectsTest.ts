@@ -67,6 +67,7 @@ describe("ArmadaProjects", function () {
 
   it("Should check create projects parameters", async function () {
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
+    await expect(projects.connect(project).createProject({ owner: AddressZero, name: "", email: "@", content: "", checksum: HashZero })).to.be.revertedWith("zero owner");
     await expect(projects.connect(project).createProject({ owner: project.address, name: "", email: "@", content: "", checksum: HashZero })).to.be.revertedWith("empty name");
     await expect(projects.connect(project).createProject({ owner: project.address, name: "x".repeat(257), email: "@", content: "", checksum: HashZero })).to.be.revertedWith("name too long");
     await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "x".repeat(257), content: "", checksum: HashZero })).to.be.revertedWith("email too long");
