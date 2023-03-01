@@ -17,7 +17,7 @@ import "./ArmadaToken.sol";
 
 /// @title Main entry point for the core contracts and functionality
 contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeable {
-  // Controls who in addition to topology nodes can reconcile the network
+  // Controls who in addition to topology nodes can reconcile the network. Grant to zero address to allow everybody.
   bytes32 public constant RECONCILER_ROLE = keccak256("RECONCILER_ROLE");
 
   string private _version;          // Interpreted by the node software, used for automatic upgrading of the nodes
@@ -55,7 +55,10 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
 
   modifier onlyReconcilerOrTopologyNode(bytes32 nodeIdOrZero) {
     if (nodeIdOrZero == 0) {
-      require(hasRole(RECONCILER_ROLE, msg.sender), "not reconciler");
+      require(
+        hasRole(RECONCILER_ROLE, address(0)) ||
+        hasRole(RECONCILER_ROLE, msg.sender),
+        "not reconciler");
     } else {
       _operators.requireTopologyNode(nodeIdOrZero, msg.sender);
     }

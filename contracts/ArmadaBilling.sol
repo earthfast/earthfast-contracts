@@ -16,7 +16,7 @@ import "./ArmadaTypes.sol";
 contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpgradeable {
   using EnumerableSet for EnumerableSet.Bytes32Set;
 
-  // Controls who in addition to topology nodes can reconcile the network
+  // Controls who in addition to topology nodes can reconcile the network. Grant to zero address to allow everybody.
   bytes32 public constant RECONCILER_ROLE = keccak256("RECONCILER_ROLE");
 
   ArmadaRegistry private _registry;
@@ -40,7 +40,10 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
 
   modifier onlyReconcilerOrTopologyNode(bytes32 nodeIdOrZero) {
     if (nodeIdOrZero == 0) {
-      require(hasRole(RECONCILER_ROLE, msg.sender), "not reconciler");
+      require(
+        hasRole(RECONCILER_ROLE, address(0)) ||
+        hasRole(RECONCILER_ROLE, msg.sender),
+        "not reconciler");
     } else {
       _registry.getOperators().requireTopologyNode(nodeIdOrZero, msg.sender);
     }
@@ -91,6 +94,7 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
   /// @param topologyNodeId The topology node calling this function (zero is OK if caller has reconciler role)
   /// @param nodeIds Content nodes being reported
   /// @param uptimeBips Uptime of corresponding content node in basis points (1 is 0.01%)
+  /// @dev Note that uptimeBips is ignored (forced to 100%) if RECONCILER_ROLE is granted to zero address.
   function processBilling(bytes32 topologyNodeId, bytes32[] memory nodeIds, uint256[] memory uptimeBips)
   public virtual onlyReconcilerOrTopologyNode(topologyNodeId) whenReconciling whenNotPaused {
     ArmadaNodes allNodes = _registry.getNodes();
@@ -99,6 +103,7 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
     require(_renewalNodeIndex == 0, "renewal in progress");
     require(_billingNodeIndex < allNodes.getNodeCount(0, false), "billing finished");
     uint256 lastEpochStart = _registry.getLastEpochStart();
+    bool everybody = hasRole(RECONCILER_ROLE, address(0));
     for (uint256 i = 0; i < nodeIds.length; i++) {
       ArmadaNode[] memory nodeCopy0 = allNodes.getNodes(0, false, _billingNodeIndex++, 1);
       ArmadaNode memory nodeCopy = allNodes.getNode(nodeIds[i]);
@@ -106,12 +111,13 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
       require(uptimeBips[i] <= 10000, "invalid uptime");
       if (nodeCopy.projectIds[ARMADA_LAST_EPOCH] != 0) {
         bytes32 projectId = nodeCopy.projectIds[ARMADA_LAST_EPOCH];
-        uint256 payout = nodeCopy.prices[ARMADA_LAST_EPOCH] * uptimeBips[i] / 10000;
+        uint256 uptimeBip = everybody ? 10000 : uptimeBips[i];
+        uint256 payout = nodeCopy.prices[ARMADA_LAST_EPOCH] * uptimeBip / 10000;
         projects.setProjectEscrowImpl(projectId, payout, 0);
         projects.setProjectReserveImpl(projectId, nodeCopy.prices[ARMADA_LAST_EPOCH], 0);
         operators.setOperatorBalanceImpl(nodeCopy.operatorId, 0, payout);
         emit ReservationResolved(nodeCopy.id, nodeCopy.operatorId, projectId, nodeCopy.prices[ARMADA_LAST_EPOCH],
-          uptimeBips[i], payout, lastEpochStart);
+          uptimeBip, payout, lastEpochStart);
         if (nodeCopy.projectIds[ARMADA_NEXT_EPOCH] != projectId) {
           assert(_registry.getReservations().removeProjectNodeIdImpl(projectId, nodeCopy.id));
         }
