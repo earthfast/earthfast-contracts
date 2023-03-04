@@ -75,7 +75,7 @@ export async function fixtures(hre: HardhatRuntimeEnvironment): Promise<{
 
   const initialSupply = parseTokens("1000000000");
   const tokenFactory = await hre.ethers.getContractFactory("ArmadaToken");
-  const tokenArgs = [[admin.address], [admin.address], [admin.address]];
+  const tokenArgs = ["Armada", "ARMADA", [admin.address], [admin.address], [admin.address]];
   const token = <ArmadaToken>await tokenFactory.deploy(...tokenArgs);
   const tokenMint = await token.connect(admin).mint(admin.address, initialSupply);
   await tokenMint.wait();
