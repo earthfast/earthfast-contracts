@@ -196,7 +196,7 @@ describe("ArmadaRegistry", function () {
 
     // Set token address
     const tokenFactory = await hre.ethers.getContractFactory("ArmadaToken");
-    const tokenArgs = [[admin.address], [admin.address], [admin.address]];
+    const tokenArgs = ["Armada", "ARMADA", [admin.address], [admin.address], [admin.address]];
     const newTokenContract = <ArmadaToken>await tokenFactory.deploy(...tokenArgs);
     expect(await registry.connect(admin).unsafeSetToken(newTokenContract.address)).to.be.ok;
     expect(await registry.connect(operator).getToken()).to.be.deep.equal(newTokenContract.address);

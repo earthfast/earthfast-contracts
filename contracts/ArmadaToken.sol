@@ -9,9 +9,13 @@ contract ArmadaToken is ERC20Votes, AccessControl, Pausable {
   bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
   bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
-  constructor(address[] memory admins, address[] memory minters, address[] memory pausers)
-    ERC20("Armada", "ARMADA")
-    ERC20Permit("Armada") {
+  constructor(
+    string memory name,
+    string memory symbol,
+    address[] memory admins,
+    address[] memory minters,
+    address[] memory pausers
+  ) ERC20(name, symbol) ERC20Permit(name) {
     require(admins.length > 0, "no admins");
     for (uint256 i = 0; i < admins.length; ++i) {
       require(admins[i] != address(0), "zero admin");
