@@ -9,7 +9,7 @@ task("upgrade")
   .addOptionalParam("libs", "Libraries to link, comma separated (ex. ArmadaNodesImpl)")
   .setAction(async (args, hre, runSuper) => {
     hre.config.ask = args.ask;
-    if (!hre.network.tags.dev) hre.config.ask = true;
+    if (!hre.network.tags.local) hre.config.ask = true;
     if (hre.network.tags.local) hre.config.defender = undefined;
     const { guardian } = await signers(hre);
     await upgradeProxy(hre, args.name, {

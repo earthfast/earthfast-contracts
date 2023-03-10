@@ -4,7 +4,7 @@ import { signers } from "../lib/util";
 
 export default main;
 async function main() {
-  if (!hre.network.tags.dev) {
+  if (!hre.network.tags.local) {
     console.log("Skipping DeployNodesV2 for production");
     return;
   }
