@@ -24,7 +24,7 @@ type ArmadaCreateProjectDataStruct = import("../typechain-types").ArmadaCreatePr
 type USDC = import("../typechain-types").USDC;
 
 task("seed", "Uploads dummy programmatic contract data").setAction(async (_args, hre) => {
-  if (!hre.network.tags.dev) {
+  if (!hre.network.tags.local) {
     throw Error("Should not seed data for production");
   }
 

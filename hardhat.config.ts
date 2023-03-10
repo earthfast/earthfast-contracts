@@ -32,10 +32,10 @@ const config: HardhatUserConfig = {
   },
   networks: {
     localhost: {
-      tags: ["dev", "local"],
+      tags: ["local"],
     },
     hardhat: {
-      tags: ["dev", "local"],
+      tags: ["local"],
 
       // For solidity-coverage ganache
       allowUnlimitedContractSize: true,
@@ -44,14 +44,16 @@ const config: HardhatUserConfig = {
       gasPrice: 0,
     },
     ganache: {
-      tags: ["dev", "local", "ganache"],
+      tags: ["local", "ganache"],
       url: "http://127.0.0.1:8545",
     },
     staging: {
+      tags: ["goerli"],
       url: `https://eth-goerli.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
     testnet: {
+      tags: ["goerli"],
       url: `https://eth-goerli.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },

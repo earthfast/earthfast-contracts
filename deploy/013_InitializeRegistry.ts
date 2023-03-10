@@ -49,12 +49,12 @@ async function main() {
   }
 
   let usdc;
-  if (hre.network.name === "goerli") {
+  if (hre.network.tags.local) {
+    usdc = await attach(hre, "USDC");
+  } else if (hre.network.tags.goerli) {
     usdc = await hre.ethers.getContractAt([], USDC_GOERLI_ADDRESS);
   } else if (hre.network.name === "mainnet") {
     usdc = await hre.ethers.getContractAt([], USDC_MAINNET_ADDRESS);
-  } else if (hre.network.name === "hardhat") {
-    usdc = await attach(hre, "USDC");
   } else {
     throw Error("Unexpected network");
   }

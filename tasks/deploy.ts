@@ -8,7 +8,7 @@ task("deploy")
     hre.config.ask = args.ask;
     hre.config.data = args.data;
     hre.config.seed = args.seed;
-    if (!hre.network.tags.dev) hre.config.ask = true;
+    if (!hre.network.tags.local) hre.config.ask = true;
     if (hre.network.tags.local) hre.config.defender = undefined;
     await runSuper(args);
   });
