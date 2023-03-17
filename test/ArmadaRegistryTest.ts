@@ -186,6 +186,10 @@ describe("ArmadaRegistry", function () {
     expect(await registry.connect(admin).unsafeSetToken(token.address)).to.be.ok;
     expect(await registry.connect(admin).unsafeSetUSDC(usdc.address)).to.be.ok;
 
+    // Should fail if token is reused
+    await expect(registry.connect(admin).unsafeSetToken(usdc.address)).to.be.revertedWith("reused token");
+    await expect(registry.connect(admin).unsafeSetUSDC(token.address)).to.be.revertedWith("reused token");
+
     // Set operators address
     const stakePerNode = parseTokens("1");
     const operatorsFactory = await hre.ethers.getContractFactory("ArmadaOperators");
@@ -347,6 +351,11 @@ describe("ArmadaRegistry", function () {
     // admin address is zero
     newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });
     await expect(newRegistry.connect(admin).initialize([admin.address, AddressZero], registryArgs)).to.be.revertedWith("zero admin");
+
+    // reused token
+    newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });
+    newRegistryArgs = { ...registryArgs, usdc: token.address };
+    await expect(newRegistry.connect(admin).initialize([admin.address], newRegistryArgs)).to.be.revertedWith("reused token");
 
     // operators address is zero then token approval stays at 0
     newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });
