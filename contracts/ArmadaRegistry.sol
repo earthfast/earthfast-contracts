@@ -81,6 +81,7 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
     __ReentrancyGuard_init();
     __UUPSUpgradeable_init();
 
+    require(data.usdc != data.token, "reused token");
     require(data.epochStart <= block.timestamp, "late epoch start");
     require(data.lastEpochLength != 0, "zero last epoch length");
     require(data.nextEpochLength != 0, "zero next epoch length");
@@ -121,6 +122,7 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
 
   /// @dev CAUTION: This can break data consistency. Used for proxy-less upgrades.
   function unsafeSetUSDC(ERC20Permit usdc) public virtual onlyAdmin {
+    require(usdc != _token, "reused token");
     if (address(_operators) != address(0)) {
       _usdc.approve(address(_operators), 0);
       usdc.approve(address(_operators), type(uint256).max);
@@ -134,6 +136,7 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
 
   /// @dev CAUTION: This can break data consistency. Used for proxy-less upgrades.
   function unsafeSetToken(ArmadaToken token) public virtual onlyAdmin {
+    require(token != _usdc, "reused token");
     if (address(_operators) != address(0)) {
       _token.approve(address(_operators), 0);
       token.approve(address(_operators), type(uint256).max);
