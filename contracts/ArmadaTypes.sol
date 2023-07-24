@@ -16,6 +16,7 @@ uint256 constant ARMADA_MAX_REGION_BYTES = 2;
 uint256 constant ARMADA_MAX_NAME_BYTES = 256;
 uint256 constant ARMADA_MAX_EMAIL_BYTES = 256;
 uint256 constant ARMADA_MAX_CONTENT_BYTES = 2048;
+uint256 constant ARMADA_MAX_METADATA_BYTES = 2048;
 
 // Indexes of epoch slots
 uint256 constant ARMADA_LAST_EPOCH = 0;
@@ -47,6 +48,7 @@ struct ArmadaProject {
   uint256 reserve;  // Part of escrow that is locked to fulfill payment obligations for the last and next epoch
   string content;   // What to serve by content nodes as interpreted by the node software, e.g. tarball URL
   bytes32 checksum; // Checksum of the content field above as interpreted by the node software, e.g. SHA-256
+  string metadata;  // Serialized JSON metadata string for future additions or annotations
 }
 
 struct ArmadaCreateProjectData {
