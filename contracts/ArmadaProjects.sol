@@ -176,7 +176,7 @@ contract ArmadaProjects is AccessControlUpgradeable, PausableUpgradeable, Reentr
     projectId = keccak256(abi.encodePacked(_registry.newNonceImpl()));
     _projects[projectId] = ArmadaProject({
       id: projectId, owner: project.owner, name: project.name, email: project.email, escrow: 0, reserve: 0,
-      content: project.content, checksum: project.checksum
+      content: project.content, checksum: project.checksum, metadata: ""
     });
     assert(_projectIds.add(projectId));
     emit ProjectCreated(projectId, project.owner, project.name, project.email, project.content, project.checksum);
@@ -231,6 +231,15 @@ contract ArmadaProjects is AccessControlUpgradeable, PausableUpgradeable, Reentr
     project.content = content;
     project.checksum = checksum;
     emit ProjectContentChanged(projectId, oldContent, oldChecksum, content, checksum);
+  }
+
+  /// @notice Sets project metadata
+  function setProjectMetadata(bytes32 projectId, string calldata metadata)
+  public virtual onlyProjectOwner(projectId) whenNotReconciling whenNotPaused {
+    require(bytes(metadata).length <= ARMADA_MAX_METADATA_BYTES, "metadata too long");
+    ArmadaProject storage project = _projects[projectId];
+    assert(project.id != 0); // Impossible because of onlyProjectOwner
+    project.metadata = metadata;
   }
 
   /// @notice Transfers USDC into the contract and applies them toward given operator stake.

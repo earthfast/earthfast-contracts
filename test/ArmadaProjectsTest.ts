@@ -159,6 +159,23 @@ describe("ArmadaProjects", function () {
     expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 1, 0: { ...p1, content: newContent, name: newName, email: newEmail, owner: newOwner } });
   });
 
+  it("Should set project metadata", async function () {
+    // Create project
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
+    expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
+    const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
+    const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
+    expect(projectId1).to.not.eq(HashZero);
+    expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 1, 0: p1 });
+
+    // Set metadata
+    const metadata = { customLandingPage: "https://example.com/page.html" };
+    const metadataStr = JSON.stringify(metadata);
+    await expect(projects.connect(project).setProjectMetadata(projectId1, metadataStr)).to.be.ok;
+    const projectDetails1 = await projects.connect(project).getProject(projectId1);
+    expect(projectDetails1.metadata).to.equal(metadataStr);
+  });
+
   it("Should allow importer role to use unsafeImportData ", async function () {
     // Create project
     const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };

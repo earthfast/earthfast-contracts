@@ -59,6 +59,7 @@ export type ArmadaProjectStruct = {
   reserve: PromiseOrValue<BigNumberish>;
   content: PromiseOrValue<string>;
   checksum: PromiseOrValue<BytesLike>;
+  metadata: PromiseOrValue<string>;
 };
 
 export type ArmadaProjectStructOutput = [
@@ -68,6 +69,7 @@ export type ArmadaProjectStructOutput = [
   string,
   BigNumber,
   BigNumber,
+  string,
   string,
   string
 ] & {
@@ -79,6 +81,7 @@ export type ArmadaProjectStructOutput = [
   reserve: BigNumber;
   content: string;
   checksum: string;
+  metadata: string;
 };
 
 export interface ArmadaProjectsInterface extends utils.Interface {
@@ -104,12 +107,13 @@ export interface ArmadaProjectsInterface extends utils.Interface {
     "revokeRole(bytes32,address)": FunctionFragment;
     "setProjectContent(bytes32,string,bytes32)": FunctionFragment;
     "setProjectEscrowImpl(bytes32,uint256,uint256)": FunctionFragment;
+    "setProjectMetadata(bytes32,string)": FunctionFragment;
     "setProjectOwner(bytes32,address)": FunctionFragment;
     "setProjectProps(bytes32,string,string)": FunctionFragment;
     "setProjectReserveImpl(bytes32,uint256,uint256)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "unpause()": FunctionFragment;
-    "unsafeImportData((bytes32,address,string,string,uint256,uint256,string,bytes32)[],address[],bool)": FunctionFragment;
+    "unsafeImportData((bytes32,address,string,string,uint256,uint256,string,bytes32,string)[],address[],bool)": FunctionFragment;
     "unsafeSetEscrows(uint256,uint256,uint256,uint256)": FunctionFragment;
     "unsafeSetRegistry(address)": FunctionFragment;
     "upgradeTo(address)": FunctionFragment;
@@ -140,6 +144,7 @@ export interface ArmadaProjectsInterface extends utils.Interface {
       | "revokeRole"
       | "setProjectContent"
       | "setProjectEscrowImpl"
+      | "setProjectMetadata"
       | "setProjectOwner"
       | "setProjectProps"
       | "setProjectReserveImpl"
@@ -249,6 +254,10 @@ export interface ArmadaProjectsInterface extends utils.Interface {
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>
     ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setProjectMetadata",
+    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "setProjectOwner",
@@ -374,6 +383,10 @@ export interface ArmadaProjectsInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "setProjectEscrowImpl",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setProjectMetadata",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -750,6 +763,12 @@ export interface ArmadaProjects extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    setProjectMetadata(
+      projectId: PromiseOrValue<BytesLike>,
+      metadata: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     setProjectOwner(
       projectId: PromiseOrValue<BytesLike>,
       owner: PromiseOrValue<string>,
@@ -917,6 +936,12 @@ export interface ArmadaProjects extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  setProjectMetadata(
+    projectId: PromiseOrValue<BytesLike>,
+    metadata: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   setProjectOwner(
     projectId: PromiseOrValue<BytesLike>,
     owner: PromiseOrValue<string>,
@@ -1079,6 +1104,12 @@ export interface ArmadaProjects extends BaseContract {
       projectId: PromiseOrValue<BytesLike>,
       decrease: PromiseOrValue<BigNumberish>,
       increase: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setProjectMetadata(
+      projectId: PromiseOrValue<BytesLike>,
+      metadata: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1401,6 +1432,12 @@ export interface ArmadaProjects extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    setProjectMetadata(
+      projectId: PromiseOrValue<BytesLike>,
+      metadata: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     setProjectOwner(
       projectId: PromiseOrValue<BytesLike>,
       owner: PromiseOrValue<string>,
@@ -1570,6 +1607,12 @@ export interface ArmadaProjects extends BaseContract {
       projectId: PromiseOrValue<BytesLike>,
       decrease: PromiseOrValue<BigNumberish>,
       increase: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setProjectMetadata(
+      projectId: PromiseOrValue<BytesLike>,
+      metadata: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
