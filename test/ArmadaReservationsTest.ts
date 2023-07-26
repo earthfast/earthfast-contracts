@@ -86,7 +86,7 @@ describe("ArmadaReservations", function () {
 
     // Create project
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
     const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));

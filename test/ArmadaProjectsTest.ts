@@ -67,16 +67,16 @@ describe("ArmadaProjects", function () {
 
   it("Should check create projects parameters", async function () {
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
-    await expect(projects.connect(project).createProject({ owner: AddressZero, name: "", email: "@", content: "", checksum: HashZero })).to.be.revertedWith("zero owner");
-    await expect(projects.connect(project).createProject({ owner: project.address, name: "", email: "@", content: "", checksum: HashZero })).to.be.revertedWith("empty name");
-    await expect(projects.connect(project).createProject({ owner: project.address, name: "x".repeat(257), email: "@", content: "", checksum: HashZero })).to.be.revertedWith("name too long");
-    await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "x".repeat(257), content: "", checksum: HashZero })).to.be.revertedWith("email too long");
-    await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "@", content: "x".repeat(2049), checksum: HashZero })).to.be.revertedWith("content too long");
+    await expect(projects.connect(project).createProject({ owner: AddressZero, name: "", email: "@", content: "", checksum: HashZero, metadata: "" })).to.be.revertedWith("zero owner");
+    await expect(projects.connect(project).createProject({ owner: project.address, name: "", email: "@", content: "", checksum: HashZero, metadata: "" })).to.be.revertedWith("empty name");
+    await expect(projects.connect(project).createProject({ owner: project.address, name: "x".repeat(257), email: "@", content: "", checksum: HashZero, metadata: "" })).to.be.revertedWith("name too long");
+    await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "x".repeat(257), content: "", checksum: HashZero, metadata: "" })).to.be.revertedWith("email too long");
+    await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "@", content: "x".repeat(2049), checksum: HashZero, metadata: "" })).to.be.revertedWith("content too long");
   });
 
   it("Should create/delete projects", async function () {
     // Create project
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
     await expect(projects.connect(project).createProject(p1)).to.be.revertedWith("not project creator");
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
@@ -120,7 +120,7 @@ describe("ArmadaProjects", function () {
 
   it("Should update content, email/name, owner on project", async function () {
     // Create project
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
@@ -161,7 +161,7 @@ describe("ArmadaProjects", function () {
 
   it("Should set project metadata", async function () {
     // Create project
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
@@ -178,7 +178,7 @@ describe("ArmadaProjects", function () {
 
   it("Should allow importer role to use unsafeImportData ", async function () {
     // Create project
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
@@ -208,7 +208,7 @@ describe("ArmadaProjects", function () {
 
   it("Should allow admin to adjust escrows", async function () {
     // Create project
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
@@ -249,7 +249,7 @@ describe("ArmadaProjects", function () {
     const { 0: { nodeId: nodeId1 }, 1: { nodeId: nodeId2 } } = createNodes12Result; // prettier-ignore
 
     // Create project
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
@@ -308,7 +308,7 @@ describe("ArmadaProjects", function () {
 
   it("Should deposit escrow with token allowance", async function () {
     // Create project
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
