@@ -70,7 +70,7 @@ describe("Benchmark", function () {
 
     // Create project
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
-    const p: ArmadaCreateProjectDataStruct = { name: "p", owner: project.address, email: "e", content: "c", checksum: HashZero };
+    const p: ArmadaCreateProjectDataStruct = { name: "p", owner: project.address, email: "e", content: "c", checksum: HashZero, metadata: "" };
     const createProject = await expectReceipt(projects.connect(project).createProject(p));
     const [projectId] = await expectEvent(createProject, projects, "ProjectCreated");
     const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("1"));

@@ -34,9 +34,11 @@ export type ArmadaCreateProjectDataStruct = {
   email: PromiseOrValue<string>;
   content: PromiseOrValue<string>;
   checksum: PromiseOrValue<BytesLike>;
+  metadata: PromiseOrValue<string>;
 };
 
 export type ArmadaCreateProjectDataStructOutput = [
+  string,
   string,
   string,
   string,
@@ -48,6 +50,7 @@ export type ArmadaCreateProjectDataStructOutput = [
   email: string;
   content: string;
   checksum: string;
+  metadata: string;
 };
 
 export type ArmadaProjectStruct = {
@@ -89,7 +92,7 @@ export interface ArmadaProjectsInterface extends utils.Interface {
     "DEFAULT_ADMIN_ROLE()": FunctionFragment;
     "IMPORTER_ROLE()": FunctionFragment;
     "PROJECT_CREATOR_ROLE()": FunctionFragment;
-    "createProject((address,string,string,string,bytes32))": FunctionFragment;
+    "createProject((address,string,string,string,bytes32,string))": FunctionFragment;
     "deleteProject(bytes32)": FunctionFragment;
     "depositProjectEscrow(bytes32,uint256,uint256,uint8,bytes32,bytes32)": FunctionFragment;
     "getProject(bytes32)": FunctionFragment;

@@ -57,6 +57,7 @@ struct ArmadaCreateProjectData {
   string email;
   string content;
   bytes32 checksum;
+  string metadata;
 }
 
 // On-chain node entity

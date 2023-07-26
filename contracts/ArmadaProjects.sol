@@ -173,10 +173,11 @@ contract ArmadaProjects is AccessControlUpgradeable, PausableUpgradeable, Reentr
     require(bytes(project.name).length <= ARMADA_MAX_NAME_BYTES, "name too long");
     require(bytes(project.email).length <= ARMADA_MAX_EMAIL_BYTES, "email too long");
     require(bytes(project.content).length <= ARMADA_MAX_CONTENT_BYTES, "content too long");
+    require(bytes(project.metadata).length <= ARMADA_MAX_METADATA_BYTES, "metadata too long");
     projectId = keccak256(abi.encodePacked(_registry.newNonceImpl()));
     _projects[projectId] = ArmadaProject({
       id: projectId, owner: project.owner, name: project.name, email: project.email, escrow: 0, reserve: 0,
-      content: project.content, checksum: project.checksum, metadata: ""
+      content: project.content, checksum: project.checksum, metadata: project.metadata
     });
     assert(_projectIds.add(projectId));
     emit ProjectCreated(projectId, project.owner, project.name, project.email, project.content, project.checksum);
