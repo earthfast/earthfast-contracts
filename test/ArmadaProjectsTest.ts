@@ -171,7 +171,7 @@ describe("ArmadaProjects", function () {
     // Set metadata
     const metadata = { customLandingPage: "https://example.com/page.html" };
     const metadataStr = JSON.stringify(metadata);
-    await expect(projects.connect(project).setProjectMetadata(projectId1, metadataStr)).to.be.ok;
+    expect(await projects.connect(project).setProjectMetadata(projectId1, metadataStr)).to.be.ok;
     const projectDetails1 = await projects.connect(project).getProject(projectId1);
     expect(projectDetails1.metadata).to.equal(metadataStr);
   });
