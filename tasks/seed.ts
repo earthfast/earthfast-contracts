@@ -38,9 +38,9 @@ task("seed", "Uploads dummy programmatic contract data").setAction(async (_args,
   const projects = <ArmadaProjects>await attach(hre, "ArmadaProjects");
   const reservations = <ArmadaReservations>await attach(hre, "ArmadaReservations");
 
-  if (!(await registry.getNonce()).isZero()) {
-    throw Error("Contracts already have data");
-  }
+  // if (!(await registry.getNonce()).isZero()) {
+  //   throw Error("Contracts already have data");
+  // }
 
   const price0 = parseUSDC("0");
   const price1 = parseUSDC("1");
@@ -62,7 +62,7 @@ task("seed", "Uploads dummy programmatic contract data").setAction(async (_args,
 
   // Create project
   await wait(projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address));
-  const p1: ArmadaCreateProjectDataStruct = { owner: project.address, name: "p1", email: "", content: "", checksum: HashZero }; // prettier-ignore
+  const p1: ArmadaCreateProjectDataStruct = { owner: project.address, name: "p1", email: "", content: "", checksum: HashZero, metadata: "" }; // prettier-ignore
   const createProject1 = await wait(projects.connect(project).createProject(p1));
   const [projectId1] = await decodeEvent(createProject1, projects, "ProjectCreated");
   const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));
