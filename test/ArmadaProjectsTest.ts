@@ -72,6 +72,7 @@ describe("ArmadaProjects", function () {
     await expect(projects.connect(project).createProject({ owner: project.address, name: "x".repeat(257), email: "@", content: "", checksum: HashZero, metadata: "" })).to.be.revertedWith("name too long");
     await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "x".repeat(257), content: "", checksum: HashZero, metadata: "" })).to.be.revertedWith("email too long");
     await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "@", content: "x".repeat(2049), checksum: HashZero, metadata: "" })).to.be.revertedWith("content too long");
+    await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "@", content: "", checksum: HashZero, metadata: "x".repeat(2049) })).to.be.revertedWith("metadata too long");
   });
 
   it("Should create/delete projects", async function () {
@@ -118,7 +119,7 @@ describe("ArmadaProjects", function () {
     expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 2, 0: p2, 1: p3 });
   });
 
-  it("Should update content, email/name, owner on project", async function () {
+  it("Should update content, email/name, owner, metadata on project", async function () {
     // Create project
     const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
@@ -145,6 +146,16 @@ describe("ArmadaProjects", function () {
     expect(projectDetails2.email).to.equal(newEmail);
     expect(projectDetails2.name).to.equal(newName);
 
+    // Update and check metadata
+    const metadataLong = { arbitraryValue: "123".repeat(750) };
+    const metadataLongStr = JSON.stringify(metadataLong);
+    await expect(projects.connect(project).setProjectMetadata(projectId1, metadataLongStr)).to.be.revertedWith("metadata too long");
+    const metadata = { customLandingPage: "https://example.com/page.html" };
+    const metadataStr = JSON.stringify(metadata);
+    expect(await projects.connect(project).setProjectMetadata(projectId1, metadataStr)).to.be.ok;
+    const projectDetails3 = await projects.connect(project).getProject(projectId1);
+    expect(projectDetails3.metadata).to.equal(metadataStr);
+
     // Update owner
     const newOwner = admin.address;
     await expect(projects.connect(project).setProjectOwner(HashZero, newOwner)).to.be.revertedWith("unknown project");
@@ -152,28 +163,11 @@ describe("ArmadaProjects", function () {
     await expect(projects.connect(project).setProjectOwner(projectId1, AddressZero)).to.be.revertedWith("zero owner");
     expect(await projects.connect(project).setProjectOwner(projectId1, newOwner)).to.be.ok;
     expect(await projects.connect(admin).setProjectOwner(projectId1, newOwner)).to.be.ok;
-    const projectDetails3 = await projects.connect(project).getProject(projectId1);
-    expect(projectDetails3.owner).to.equal(newOwner);
+    const projectDetails4 = await projects.connect(project).getProject(projectId1);
+    expect(projectDetails4.owner).to.equal(newOwner);
 
     // Get all projects
-    expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 1, 0: { ...p1, content: newContent, name: newName, email: newEmail, owner: newOwner } });
-  });
-
-  it("Should set project metadata", async function () {
-    // Create project
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
-    expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
-    const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
-    const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    expect(projectId1).to.not.eq(HashZero);
-    expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 1, 0: p1 });
-
-    // Set metadata
-    const metadata = { customLandingPage: "https://example.com/page.html" };
-    const metadataStr = JSON.stringify(metadata);
-    expect(await projects.connect(project).setProjectMetadata(projectId1, metadataStr)).to.be.ok;
-    const projectDetails1 = await projects.connect(project).getProject(projectId1);
-    expect(projectDetails1.metadata).to.equal(metadataStr);
+    expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 1, 0: { ...p1, content: newContent, name: newName, email: newEmail, owner: newOwner, metadata: metadataStr } });
   });
 
   it("Should allow importer role to use unsafeImportData ", async function () {
