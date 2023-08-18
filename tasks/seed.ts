@@ -38,9 +38,9 @@ task("seed", "Uploads dummy programmatic contract data").setAction(async (_args,
   const projects = <ArmadaProjects>await attach(hre, "ArmadaProjects");
   const reservations = <ArmadaReservations>await attach(hre, "ArmadaReservations");
 
-  // if (!(await registry.getNonce()).isZero()) {
-  //   throw Error("Contracts already have data");
-  // }
+  if (!(await registry.getNonce()).isZero()) {
+    throw Error("Contracts already have data");
+  }
 
   const price0 = parseUSDC("0");
   const price1 = parseUSDC("1");
