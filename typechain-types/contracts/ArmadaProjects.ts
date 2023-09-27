@@ -437,9 +437,10 @@ export interface ArmadaProjectsInterface extends utils.Interface {
     "Initialized(uint8)": EventFragment;
     "Paused(address)": EventFragment;
     "ProjectContentChanged(bytes32,string,bytes32,string,bytes32)": EventFragment;
-    "ProjectCreated(bytes32,address,string,string,string,bytes32)": EventFragment;
-    "ProjectDeleted(bytes32,address,string,string,string,bytes32)": EventFragment;
+    "ProjectCreated(bytes32,address,string,string,string,bytes32,string)": EventFragment;
+    "ProjectDeleted(bytes32,address,string,string,string,bytes32,string)": EventFragment;
     "ProjectEscrowChanged(bytes32,uint256,uint256)": EventFragment;
+    "ProjectMetadataChanged(bytes32,string,string)": EventFragment;
     "ProjectOwnerChanged(bytes32,address,address)": EventFragment;
     "ProjectPropsChanged(bytes32,string,string,string,string)": EventFragment;
     "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
@@ -457,6 +458,7 @@ export interface ArmadaProjectsInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "ProjectCreated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ProjectDeleted"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ProjectEscrowChanged"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "ProjectMetadataChanged"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ProjectOwnerChanged"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ProjectPropsChanged"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleAdminChanged"): EventFragment;
@@ -523,9 +525,10 @@ export interface ProjectCreatedEventObject {
   email: string;
   content: string;
   checksum: string;
+  metadata: string;
 }
 export type ProjectCreatedEvent = TypedEvent<
-  [string, string, string, string, string, string],
+  [string, string, string, string, string, string, string],
   ProjectCreatedEventObject
 >;
 
@@ -538,9 +541,10 @@ export interface ProjectDeletedEventObject {
   email: string;
   content: string;
   checksum: string;
+  metadata: string;
 }
 export type ProjectDeletedEvent = TypedEvent<
-  [string, string, string, string, string, string],
+  [string, string, string, string, string, string, string],
   ProjectDeletedEventObject
 >;
 
@@ -558,6 +562,19 @@ export type ProjectEscrowChangedEvent = TypedEvent<
 
 export type ProjectEscrowChangedEventFilter =
   TypedEventFilter<ProjectEscrowChangedEvent>;
+
+export interface ProjectMetadataChangedEventObject {
+  projectId: string;
+  oldMetadata: string;
+  newMetadata: string;
+}
+export type ProjectMetadataChangedEvent = TypedEvent<
+  [string, string, string],
+  ProjectMetadataChangedEventObject
+>;
+
+export type ProjectMetadataChangedEventFilter =
+  TypedEventFilter<ProjectMetadataChangedEvent>;
 
 export interface ProjectOwnerChangedEventObject {
   projectId: string;
@@ -1220,13 +1237,14 @@ export interface ArmadaProjects extends BaseContract {
       newChecksum?: null
     ): ProjectContentChangedEventFilter;
 
-    "ProjectCreated(bytes32,address,string,string,string,bytes32)"(
+    "ProjectCreated(bytes32,address,string,string,string,bytes32,string)"(
       projectId?: PromiseOrValue<BytesLike> | null,
       owner?: PromiseOrValue<string> | null,
       name?: null,
       email?: null,
       content?: null,
-      checksum?: null
+      checksum?: null,
+      metadata?: null
     ): ProjectCreatedEventFilter;
     ProjectCreated(
       projectId?: PromiseOrValue<BytesLike> | null,
@@ -1234,16 +1252,18 @@ export interface ArmadaProjects extends BaseContract {
       name?: null,
       email?: null,
       content?: null,
-      checksum?: null
+      checksum?: null,
+      metadata?: null
     ): ProjectCreatedEventFilter;
 
-    "ProjectDeleted(bytes32,address,string,string,string,bytes32)"(
+    "ProjectDeleted(bytes32,address,string,string,string,bytes32,string)"(
       projectId?: PromiseOrValue<BytesLike> | null,
       owner?: PromiseOrValue<string> | null,
       name?: null,
       email?: null,
       content?: null,
-      checksum?: null
+      checksum?: null,
+      metadata?: null
     ): ProjectDeletedEventFilter;
     ProjectDeleted(
       projectId?: PromiseOrValue<BytesLike> | null,
@@ -1251,7 +1271,8 @@ export interface ArmadaProjects extends BaseContract {
       name?: null,
       email?: null,
       content?: null,
-      checksum?: null
+      checksum?: null,
+      metadata?: null
     ): ProjectDeletedEventFilter;
 
     "ProjectEscrowChanged(bytes32,uint256,uint256)"(
@@ -1264,6 +1285,17 @@ export interface ArmadaProjects extends BaseContract {
       oldEscrow?: null,
       newEscrow?: null
     ): ProjectEscrowChangedEventFilter;
+
+    "ProjectMetadataChanged(bytes32,string,string)"(
+      projectId?: PromiseOrValue<BytesLike> | null,
+      oldMetadata?: null,
+      newMetadata?: null
+    ): ProjectMetadataChangedEventFilter;
+    ProjectMetadataChanged(
+      projectId?: PromiseOrValue<BytesLike> | null,
+      oldMetadata?: null,
+      newMetadata?: null
+    ): ProjectMetadataChangedEventFilter;
 
     "ProjectOwnerChanged(bytes32,address,address)"(
       projectId?: PromiseOrValue<BytesLike> | null,
