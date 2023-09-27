@@ -28,12 +28,13 @@ contract ArmadaProjects is AccessControlUpgradeable, PausableUpgradeable, Reentr
   mapping(bytes32 => ArmadaProject) private _projects;
   EnumerableSet.Bytes32Set private _projectIds;
 
-  event ProjectCreated(bytes32 indexed projectId, address indexed owner, string name, string email, string content, bytes32 checksum);
-  event ProjectDeleted(bytes32 indexed projectId, address indexed owner, string name, string email, string content, bytes32 checksum);
+  event ProjectCreated(bytes32 indexed projectId, address indexed owner, string name, string email, string content, bytes32 checksum, string metadata);
+  event ProjectDeleted(bytes32 indexed projectId, address indexed owner, string name, string email, string content, bytes32 checksum, string metadata);
   event ProjectOwnerChanged(bytes32 indexed projectId, address indexed oldOwner, address indexed newOwner);
   event ProjectPropsChanged(bytes32 indexed projectId, string oldName, string oldEmail, string newName, string newEmail);
   event ProjectEscrowChanged(bytes32 indexed projectId, uint256 oldEscrow, uint256 newEscrow);
   event ProjectContentChanged(bytes32 indexed projectId, string oldContent, bytes32 oldChecksum, string newContent, bytes32 newChecksum);
+  event ProjectMetadataChanged(bytes32 indexed projectId, string oldMetadata, string newMetadata);
 
   modifier onlyImpl {
     require(
@@ -180,7 +181,7 @@ contract ArmadaProjects is AccessControlUpgradeable, PausableUpgradeable, Reentr
       content: project.content, checksum: project.checksum, metadata: project.metadata
     });
     assert(_projectIds.add(projectId));
-    emit ProjectCreated(projectId, project.owner, project.name, project.email, project.content, project.checksum);
+    emit ProjectCreated(projectId, project.owner, project.name, project.email, project.content, project.checksum, project.metadata);
   }
 
   /// @notice Unregisters a project. Reverts if project has escrow or reservations.
@@ -193,7 +194,7 @@ contract ArmadaProjects is AccessControlUpgradeable, PausableUpgradeable, Reentr
     require(projectCopy.escrow == 0, "project has escrow");
     delete _projects[projectId];
     assert(_projectIds.remove(projectId));
-    emit ProjectDeleted(projectId, projectCopy.owner, projectCopy.name, projectCopy.email, projectCopy.content, projectCopy.checksum);
+    emit ProjectDeleted(projectId, projectCopy.owner, projectCopy.name, projectCopy.email, projectCopy.content, projectCopy.checksum, projectCopy.metadata);
   }
 
   function setProjectOwner(bytes32 projectId, address owner)
@@ -240,7 +241,9 @@ contract ArmadaProjects is AccessControlUpgradeable, PausableUpgradeable, Reentr
     require(bytes(metadata).length <= ARMADA_MAX_METADATA_BYTES, "metadata too long");
     ArmadaProject storage project = _projects[projectId];
     assert(project.id != 0); // Impossible because of onlyProjectOwner
+    string memory oldMetadata = project.metadata;
     project.metadata = metadata;
+    emit ProjectMetadataChanged(projectId, oldMetadata, project.metadata);
   }
 
   /// @notice Transfers USDC into the contract and applies them toward given operator stake.
@@ -276,7 +279,7 @@ contract ArmadaProjects is AccessControlUpgradeable, PausableUpgradeable, Reentr
   /// @dev Reverts if the id is unknown
   function getProject(bytes32 projectId)
   public virtual view returns (ArmadaProject memory) {
-    ArmadaProject storage project = _projects[projectId];
+    ArmadaProject memory project = _projects[projectId];
     require(project.id != 0, "unknown project");
     return project;
   }
