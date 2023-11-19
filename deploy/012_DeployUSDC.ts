@@ -8,7 +8,8 @@ type USDC = import("../typechain-types").USDC;
 
 export default main;
 async function main() {
-  if (!hre.network.tags.local) {
+  // sepolia has no native USDC token
+  if (!hre.network.tags.local || hre.network.tags.sepolia) {
     console.log("Skipping DeployUSDC for production");
     return;
   }
