@@ -57,6 +57,11 @@ const config: HardhatUserConfig = {
       url: `https://eth-goerli.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
+    "testnet-sepolia": {
+      tags: ["sepolia"],
+      url: `https://eth-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+    },
   },
   // prettier-ignore
   namedAccounts: {
@@ -68,6 +73,7 @@ const config: HardhatUserConfig = {
       // Production
       staging:   getAddress(process.env.DEPLOYER_PRIVATE_KEY)!, // Developer (private key)
       testnet:   getAddress(process.env.DEPLOYER_PRIVATE_KEY)!, // Developer (private key)
+      "testnet-sepolia": getAddress(process.env.DEPLOYER_PRIVATE_KEY)!, // Developer (private key)
     },
     guardian: {
       // Testing
@@ -77,6 +83,7 @@ const config: HardhatUserConfig = {
       // Production
       staging:   "0x90bC78b839fCC1c652CCF8d6A527687AE432A3Bc", // Gnosis Safe (public key)
       testnet:   "0xF62e46336335f2344D451bAA23696CF77e5C52fC", // Gnosis Safe (public key)
+      "testnet-sepolia":   "0x76824F74dE8C1E4985D73A9ea475B7E01432CdF5", // Gnosis Safe (public key)
     },
     operator: {
       // Testing

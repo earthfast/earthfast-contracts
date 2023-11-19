@@ -2,9 +2,9 @@ import "@nomiclabs/hardhat-ethers";
 import "@openzeppelin/hardhat-defender";
 import "@openzeppelin/hardhat-upgrades";
 import "hardhat-deploy";
-import { AdminClient } from "defender-admin-client";
-import { ProposalFunctionInputs } from "defender-admin-client/lib/models/proposal";
-import { fromChainId } from "defender-base-client";
+import { AdminClient } from "@openzeppelin/defender-admin-client";
+import { ProposalFunctionInputs } from "@openzeppelin/defender-admin-client/lib/models/proposal";
+import { fromChainId } from "@openzeppelin/defender-base-client";
 import { Contract } from "ethers";
 import { Create2DeployOptions, DeployOptions } from "hardhat-deploy/dist/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
@@ -148,7 +148,7 @@ export async function createProposal(
     functionInterface: func,
     functionInputs: inputs,
     via,
-    viaType: "Gnosis Safe",
+    viaType: "Gnosis Multisig",
   });
   console.log(`...created proposal at ${proposal.url}`);
 }
@@ -160,6 +160,7 @@ export async function updateDefender(hre: HardhatRuntimeEnvironment, name: strin
   const artifact = await hre.deployments.getExtendedArtifact(contract);
   console.log(`...update defender`);
   const detailedName = `${name} (${hre.network.name})`;
+  console.log("defender debug", detailedName, address, network, hre.network, await hre.getChainId());
   await defender.addContract({ name: detailedName, address, network, abi: JSON.stringify(artifact.abi) });
 }
 
