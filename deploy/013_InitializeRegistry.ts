@@ -6,6 +6,7 @@ import { attach, confirm, loadData, signers, stringify, wait } from "../lib/util
 type ArmadaRegistry = import("../typechain-types").ArmadaRegistry;
 
 const USDC_GOERLI_ADDRESS = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
+// deployed and minted by hand on sepolia
 const USDC_SEPOLIA_ADDRESS = "0x0e9ad5c78b926f3368b1bcfc2dede9042c2d2a18";
 const USDC_MAINNET_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 
