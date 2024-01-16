@@ -69,10 +69,18 @@ describe("ArmadaProjects", function () {
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     await expect(projects.connect(project).createProject({ owner: AddressZero, name: "", email: "@", content: "", checksum: HashZero, metadata: "" })).to.be.revertedWith("zero owner");
     await expect(projects.connect(project).createProject({ owner: project.address, name: "", email: "@", content: "", checksum: HashZero, metadata: "" })).to.be.revertedWith("empty name");
-    await expect(projects.connect(project).createProject({ owner: project.address, name: "x".repeat(257), email: "@", content: "", checksum: HashZero, metadata: "" })).to.be.revertedWith("name too long");
-    await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "x".repeat(257), content: "", checksum: HashZero, metadata: "" })).to.be.revertedWith("email too long");
-    await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "@", content: "x".repeat(2049), checksum: HashZero, metadata: "" })).to.be.revertedWith("content too long");
-    await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "@", content: "", checksum: HashZero, metadata: "x".repeat(2049) })).to.be.revertedWith("metadata too long");
+    await expect(projects.connect(project).createProject({ owner: project.address, name: "x".repeat(257), email: "@", content: "", checksum: HashZero, metadata: "" })).to.be.revertedWith(
+      "name too long"
+    );
+    await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "x".repeat(257), content: "", checksum: HashZero, metadata: "" })).to.be.revertedWith(
+      "email too long"
+    );
+    await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "@", content: "x".repeat(2049), checksum: HashZero, metadata: "" })).to.be.revertedWith(
+      "content too long"
+    );
+    await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "@", content: "", checksum: HashZero, metadata: "x".repeat(2049) })).to.be.revertedWith(
+      "metadata too long"
+    );
   });
 
   it("Should create/delete projects", async function () {
