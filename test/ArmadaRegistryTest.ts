@@ -371,4 +371,53 @@ describe("ArmadaRegistry", function () {
     expect(await token.allowance(newRegistry.address, AddressZero)).to.be.equal(0);
     expect(await usdc.allowance(newRegistry.address, AddressZero)).to.be.equal(0);
   });
+
+  // in mainnet the unsafeSetToken would be called in a single transaction with the token transfer to the registry
+  it("Should test the ArmadaToken upgrade path", async function () {
+    // Deploy new ArmadaToken contract
+    const tokenFactory = await hre.ethers.getContractFactory("ArmadaToken");
+    const tokenArgs = ["Armada", "ARMADA", [admin.address], [admin.address], [admin.address]];
+    const newTokenContract = <ArmadaToken>await tokenFactory.deploy(...tokenArgs);
+    expect(await newTokenContract.connect(admin).mint(admin.address, parseTokens("1000"))).to.be.ok;
+
+    // create two operators 100 old tokens staked
+    const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
+    const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
+    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
+
+    const createOperator2 = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
+    const [operatorId2] = await expectEvent(createOperator2, operators, "OperatorCreated");
+    const operatorsPermit2 = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    expect(await operators.connect(admin).depositOperatorStake(operatorId2, parseTokens("100"), ...operatorsPermit2)).to.be.ok;
+
+    expect(await token.balanceOf(registry.address)).to.be.equal(parseTokens("200"));
+    expect((await operators.connect(admin).getOperator(operatorId)).stake.toString()).to.be.equal(parseTokens("100"));
+    expect((await operators.connect(admin).getOperator(operatorId2)).stake.toString()).to.be.equal(parseTokens("100"));
+
+    // upgrade to new ArmadaToken in the registry
+    expect(await registry.connect(admin).unsafeSetToken(newTokenContract.address)).to.be.ok;
+    expect(await registry.connect(admin).getToken()).to.be.deep.equal(newTokenContract.address);
+
+    // get operator information after token upgrade - should be the same as before even though the token contract changed
+    expect((await operators.connect(admin).getOperator(operatorId)).stake.toString()).to.be.equal(parseTokens("100"));
+    expect((await operators.connect(admin).getOperator(operatorId2)).stake.toString()).to.be.equal(parseTokens("100"));
+
+    // transfer new token to registry to make whole the current operators
+    // old tokens in registry should equal new tokens
+    const oldTokenBalance = await token.balanceOf(registry.address);
+    expect(await newTokenContract.connect(admin).transfer(registry.address, oldTokenBalance)).to.be.ok;
+    const newTokenBalance = await newTokenContract.balanceOf(registry.address);
+    expect(oldTokenBalance).to.be.equal(newTokenBalance);
+
+    // withdraw stake from operator 1 and verify consistent token balances
+    expect(await operators.connect(operator).withdrawOperatorStake(operatorId, parseTokens("1"), operator.address)).to.be.ok;
+    expect(await newTokenContract.balanceOf(operator.address)).to.be.equal(parseTokens("1"));
+    expect(await newTokenContract.balanceOf(registry.address)).to.be.equal(parseTokens("199"));
+
+    // withdraw stake from operator 2 and verify consistent token balances
+    expect(await operators.connect(operator).withdrawOperatorStake(operatorId2, parseTokens("100"), operator.address)).to.be.ok;
+    expect(await newTokenContract.balanceOf(operator.address)).to.be.equal(parseTokens("101"));
+    expect(await newTokenContract.balanceOf(registry.address)).to.be.equal(parseTokens("99"));
+  });
 });
