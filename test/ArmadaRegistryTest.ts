@@ -373,6 +373,8 @@ describe("ArmadaRegistry", function () {
   });
 
   // in mainnet the unsafeSetToken would be called in a single transaction with the token transfer to the registry
+  // if it's not in the same transaction then the token transfer should be first
+  // this test is written with the upgrade first so we can test that the old token doesn't work
   it("Should test the ArmadaToken upgrade path", async function () {
     // Deploy new ArmadaToken contract
     const tokenFactory = await hre.ethers.getContractFactory("ArmadaToken");
