@@ -92,12 +92,12 @@ export async function loadData(hre: HardhatRuntimeEnvironment): Promise<any> {
 export function confirm(hre: HardhatRuntimeEnvironment, query: any): boolean {
   console.log(`\n---${query}`);
   if (!hre.config.ask) return true;
-  const key = keyIn("(Y) yes (S) skip (Q) quit > ", { limit: "ysq" });
-  if (key === "q") {
+  const key = keyIn("(y) yes (s) skip (q) quit > ", { limit: "ysq" });
+  if (key === "q" || key === "Q") {
     console.log("Quit");
     process.exit(1); // eslint-disable-line no-process-exit
   }
-  return key === "y";
+  return key === "y" || key === "Y";
 }
 
 export async function wait(txPromise: Promise<TransactionResponse>): Promise<TransactionReceipt> {
