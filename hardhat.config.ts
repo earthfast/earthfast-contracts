@@ -110,10 +110,10 @@ const config: HardhatUserConfig = {
     gasPrice: 100,
     coinmarketcap: process.env.COINMARKETCAP_API_KEY,
   },
-  // defender: {
-  //   apiKey: process.env.DEFENDER_API_KEY!,
-  //   apiSecret: process.env.DEFENDER_API_SECRET!,
-  // },
+  defender: {
+    apiKey: process.env.DEFENDER_API_KEY!,
+    apiSecret: process.env.DEFENDER_API_SECRET!,
+  },
   verify: {
     etherscan: {
       apiKey: process.env.ETHERSCAN_API_KEY,
