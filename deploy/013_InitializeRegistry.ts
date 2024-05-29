@@ -8,6 +8,7 @@ type ArmadaRegistry = import("../typechain-types").ArmadaRegistry;
 const USDC_GOERLI_ADDRESS = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
 // deployed and minted by hand on sepolia
 const USDC_SEPOLIA_ADDRESS = "0x0e9ad5c78b926f3368b1bcfc2dede9042c2d2a18";
+const USDC_SEPOLIA_STAGING_ADDRESS = "0x152C5Ddd523890A49ba5b7E73eda0E6a3Bae7710";
 const USDC_MAINNET_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 
 export default main;
@@ -57,6 +58,8 @@ async function main() {
     usdc = await hre.ethers.getContractAt([], USDC_GOERLI_ADDRESS);
   } else if (hre.network.tags.sepolia) {
     usdc = await hre.ethers.getContractAt([], USDC_SEPOLIA_ADDRESS);
+  } else if (hre.network.tags["sepolia-staging"]) {
+    usdc = await hre.ethers.getContractAt([], USDC_SEPOLIA_STAGING_ADDRESS);
   } else if (hre.network.name === "mainnet") {
     usdc = await hre.ethers.getContractAt([], USDC_MAINNET_ADDRESS);
   } else {
