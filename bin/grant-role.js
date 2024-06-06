@@ -1,28 +1,21 @@
 require("dotenv").config();
 const { ethers } = require("ethers");
 
-// Environment variables
-const sepoliaUrl = "https://rpc.ankr.com/eth_sepolia";
-const privateKey = process.env.PRIVATE_KEY;
+const sepoliaUrl = "https://rpc.ankr.com/eth_sepolia"; // Replace this with robust endpoint
+const privateKey = process.env.PRIVATE_KEY; // Private key of the guardian address
 
-// Contract ABI and Address
 const abi = [
-  // Your contract's ABI goes here
-  // Example ABI entry for grantRole function:
+  // ABI entry for grantRole function:
   "function grantRole(bytes32 role, address account) external",
 ];
-const contractAddress = ""; // ArmadaRegistry address
+const contractAddress = ""; // ArmadaBilling / ArmadaRegistry address
 
-// Initialize provider and wallet
 const provider = new ethers.providers.JsonRpcProvider(sepoliaUrl);
 const wallet = new ethers.Wallet(privateKey, provider);
-
-// Connect to the contract
 const contract = new ethers.Contract(contractAddress, abi, wallet);
 
-// Role and account to grant the role to
-const role = ethers.utils.id("RECONCILER_ROLE"); // Replace 'YOUR_ROLE' with the role identifier
-const account = "0x0000000000000000000000000000000000000000"; // Replace with the address to grant the role to
+const role = ethers.utils.id("RECONCILER_ROLE"); // role identifier
+const account = "0x0000000000000000000000000000000000000000"; // address to grant the role to
 
 async function grantRole() {
   try {
