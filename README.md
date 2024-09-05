@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Node 16 - install [manually](https://nodejs.org/en/download/) or using
+- Node 20 - install [manually](https://nodejs.org/en/download/) or using
   [nvm](https://github.com/nvm-sh/nvm#install--update-script)
 
 ## Configuration
