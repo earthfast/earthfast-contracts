@@ -1,5 +1,6 @@
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-etherscan";
+import "@nomicfoundation/hardhat-foundry";
 import "@nomiclabs/hardhat-waffle";
 import "@openzeppelin/hardhat-defender";
 import "@openzeppelin/hardhat-upgrades";
