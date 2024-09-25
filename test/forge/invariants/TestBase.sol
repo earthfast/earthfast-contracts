@@ -5,6 +5,8 @@ import { Test }   from "@std/Test.sol";
 
 contract TestBase is Test {
 
+    uint256 public currentBlock;
+
   /*****************/
   /*** Modifiers ***/
   /*****************/
