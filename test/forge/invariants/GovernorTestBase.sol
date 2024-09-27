@@ -13,8 +13,6 @@ import { ArmadaTimelock } from "../../../contracts/ArmadaTimelock.sol";
 contract GovernorTestBase is TestBase {
 
   GovernorHandler internal _governorHandler;
-  address internal _governor;
-  address internal _token;
 
   ArmadaGovernor internal _armadaGovernor;
   ArmadaTimelock internal _armadaTimelock;
@@ -41,9 +39,10 @@ contract GovernorTestBase is TestBase {
     _deployArmadaToken(adminRole, minterRole, pauserRole);
 
     // deploy governance contracts
+    _deployGovernanceContracts(adminRole);
 
     // instantiate handlers
-    _governorHandler = new GovernorHandler(_governor, _token);
+    _governorHandler = new GovernorHandler(_armadaGovernor, _armadaTimelock, _armadaToken);
 
     // target governance handler
     targetContract(address(_governorHandler));
@@ -76,12 +75,9 @@ contract GovernorTestBase is TestBase {
     executors[0] = address(0);
     _armadaTimelock = new ArmadaTimelock(votingDelay, admins_, proposers, executors);
 
-    // TODO: fix IVotes reference... need to point the remappings at the node_modules
     // deploy governor
     IVotes token = IVotes(address(_armadaToken));
     _armadaGovernor = new ArmadaGovernor(admins_[0], token, _armadaTimelock, votingDelay, votingPeriod, proposalThreshold, quorumNumerator);
-
-
   }
 
 }

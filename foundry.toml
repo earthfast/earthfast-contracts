@@ -6,6 +6,6 @@ test = 'test/forge'
 cache_path  = 'cache_forge'
 
 remappings = [
-  "@oz/=lib/openzeppelin-contracts/contracts/",
+  "@oz/=node_modules/@openzeppelin/contracts/",
   "@std=lib/forge-std/src/"
 ]
