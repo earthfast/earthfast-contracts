@@ -12,6 +12,8 @@
     "lint": "eslint '**/*.{js,ts}' && solhint 'contracts/**/*.sol' && prettier '**/*.{json,md}' --check"
   },
   "devDependencies": {
+    "@chainlink/contracts": "^1.2.0",
+    "@chainlink/contracts-ccip": "^1.4.0",
     "@ethersproject/abstract-provider": "^5.7.0",
     "@ethersproject/abstract-signer": "^5.7.0",
     "@ethersproject/constants": "^5.7.0",
