@@ -2,7 +2,7 @@ import { TransactionReceipt, TransactionResponse } from "@ethersproject/abstract
 import { AddressZero } from "@ethersproject/constants";
 import { expect } from "chai";
 import { Contract } from "ethers";
-import { hexZeroPad, randomBytes, Result } from "ethers/lib/utils";
+import { ethers, randomBytes, Result } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { ArmadaBilling } from "../typechain-types/contracts/ArmadaBilling";
 import { ArmadaGovernor } from "../typechain-types/contracts/ArmadaGovernor";
@@ -15,9 +15,9 @@ import { ArmadaReservations } from "../typechain-types/contracts/ArmadaReservati
 import { ArmadaTimelock } from "../typechain-types/contracts/ArmadaTimelock";
 import { ArmadaToken } from "../typechain-types/contracts/ArmadaToken";
 import { USDC } from "../typechain-types/contracts/test/USDC";
-import { decodeEvent, parseTokens, signers, toHexString } from "./util";
+import { decodeEvent, parseTokens, signers, toHexString, getAddress } from './util';
 
-export const newId = (): string => hexZeroPad(randomBytes(32), 32);
+export const newId = (): string => ethers.zeroPadValue(randomBytes(32), 32);
 
 // Mines given transaction with exact timestamp
 export async function mineWith(hre: HardhatRuntimeEnvironment, fn: () => Promise<any>): Promise<void> {
@@ -72,11 +72,13 @@ export async function fixtures(hre: HardhatRuntimeEnvironment): Promise<{
   const usdcFactory = await hre.ethers.getContractFactory("USDC");
   const usdcArgs = [admin.address];
   const usdc = <USDC>await usdcFactory.deploy(...usdcArgs);
+  const usdcAddress = await usdc.getAddress();
 
   const initialSupply = parseTokens("1000000000");
   const tokenFactory = await hre.ethers.getContractFactory("ArmadaToken");
   const tokenArgs = ["Armada", "ARMADA", [admin.address], [admin.address], [admin.address]];
   const token = <ArmadaToken>await tokenFactory.deploy(...tokenArgs);
+  const tokenAddress = await token.getAddress();
   const tokenMint = await token.connect(admin).mint(admin.address, initialSupply);
   await tokenMint.wait();
 
@@ -84,43 +86,52 @@ export async function fixtures(hre: HardhatRuntimeEnvironment): Promise<{
   const timelockArgs = [0, [deployer.address], [deployer.address], [AddressZero]];
   const timelockFactory = await hre.ethers.getContractFactory("ArmadaTimelock");
   const timelock = <ArmadaTimelock>await timelockFactory.deploy(...timelockArgs);
+  const timelockAddress = await timelock.getAddress();
 
   // governorArgs: token, timelock, votingDelay, votingPeriod, proposalThreshold, quorumNumerator
-  const governorArgs = [admin.address, token.address, timelock.address, 0, 25, 0, 51];
+  const governorArgs = [admin.address, tokenAddress, timelockAddress, 0, 25, 0, 51];
   const governorFactory = await hre.ethers.getContractFactory("ArmadaGovernor");
   const governor = <ArmadaGovernor>await governorFactory.deploy(...governorArgs);
+  const governorAddress = await governor.getAddress();
 
   // Grant govenor ability to execute, queue proposals
-  await timelock.grantRole(await timelock.PROPOSER_ROLE(), governor.address);
+  await timelock.grantRole(await timelock.PROPOSER_ROLE(), governorAddress);
 
   const registryFactory = await hre.ethers.getContractFactory("ArmadaRegistry");
   const registry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false }); // prettier-ignore
+  const registryAddress = await registry.getAddress();
 
   const nodesImplFactory = await hre.ethers.getContractFactory("ArmadaNodesImpl");
   const nodesImpl = <ArmadaNodes>await nodesImplFactory.deploy();
+  const nodesImplAddress = await nodesImpl.getAddress();
 
-  const nodesFactory = await hre.ethers.getContractFactory("ArmadaNodes", { libraries: { ArmadaNodesImpl: nodesImpl.address } }); // prettier-ignore
-  const nodesArgs = [[admin.address], registry.address, true];
+  const nodesFactory = await hre.ethers.getContractFactory("ArmadaNodes", { libraries: { ArmadaNodesImpl: nodesImplAddress } }); // prettier-ignore
+  const nodesArgs = [[admin.address], registryAddress, true];
   const nodes = <ArmadaNodes>await hre.upgrades.deployProxy(nodesFactory, nodesArgs, { kind: "uups" });
-  await hre.network.provider.request({ method: "hardhat_impersonateAccount", params: [nodes.address] });
+  const nodesAddress = await nodes.getAddress();
+  await hre.network.provider.request({ method: "hardhat_impersonateAccount", params: [nodesAddress] });
 
   const stakePerNode = parseTokens("1");
   const operatorsFactory = await hre.ethers.getContractFactory("ArmadaOperators");
-  const operatorsArgs = [[admin.address], registry.address, stakePerNode, true];
+  const operatorsArgs = [[admin.address], registryAddress, stakePerNode, true];
   const operators = <ArmadaOperators>await hre.upgrades.deployProxy(operatorsFactory, operatorsArgs, { kind: "uups" });
-  await hre.network.provider.request({ method: "hardhat_impersonateAccount", params: [operators.address] });
+  const operatorsAddress = await operators.getAddress();
+  await hre.network.provider.request({ method: "hardhat_impersonateAccount", params: [operatorsAddress] });
 
   const projectsFactory = await hre.ethers.getContractFactory("ArmadaProjects");
-  const projectsArgs = [[admin.address], registry.address, true];
+  const projectsArgs = [[admin.address], registryAddress, true];
   const projects = <ArmadaProjects>await hre.upgrades.deployProxy(projectsFactory, projectsArgs, { kind: "uups" });
+  const projectsAddress = await projects.getAddress();
 
   const reservationsFactory = await hre.ethers.getContractFactory("ArmadaReservations");
-  const reservationsArgs = [[admin.address], registry.address, true];
+  const reservationsArgs = [[admin.address], registryAddress, true];
   const reservations = <ArmadaReservations>await hre.upgrades.deployProxy(reservationsFactory, reservationsArgs, { kind: "uups" }); // prettier-ignore
+  const reservationsAddress = await reservations.getAddress();
 
   const billingFactory = await hre.ethers.getContractFactory("ArmadaBilling");
-  const billingArgs = [[admin.address], registry.address];
+  const billingArgs = [[admin.address], registryAddress];
   const billing = <ArmadaBilling>await hre.upgrades.deployProxy(billingFactory, billingArgs, { kind: "uups" });
+  const billingAddress = await billing.getAddress();
 
   const block = await hre.ethers.provider.getBlock("latest");
   const registryArgs = {
@@ -130,22 +141,22 @@ export async function fixtures(hre: HardhatRuntimeEnvironment): Promise<{
     lastEpochLength: 100,
     nextEpochLength: 100,
     gracePeriod: 0,
-    usdc: usdc.address,
-    token: token.address,
-    billing: billing.address,
-    nodes: nodes.address,
-    operators: operators.address,
-    projects: projects.address,
-    reservations: reservations.address,
+    usdc: usdcAddress,
+    token: tokenAddress,
+    billing: billingAddress,
+    nodes: nodesAddress,
+    operators: operatorsAddress,
+    projects: projectsAddress,
+    reservations: reservationsAddress,
   };
   const registryInitialize = await registry.connect(admin).initialize([admin.address], registryArgs);
   await registryInitialize.wait();
 
   const nodesV2Factory = await hre.ethers.getContractFactory("ArmadaNodesV2", {
     signer: admin,
-    libraries: { ArmadaNodesImpl: nodesImpl.address },
+    libraries: { ArmadaNodesImpl: nodesImplAddress },
   });
-  const nodesV2 = <ArmadaNodesV2>await hre.upgrades.upgradeProxy(nodes.address, nodesV2Factory);
+  const nodesV2 = <ArmadaNodesV2>await hre.upgrades.upgradeProxy(nodesAddress, nodesV2Factory);
 
   return { usdc, token, registry, nodes: nodesV2, operators, projects, reservations, timelock, governor, billing };
 }

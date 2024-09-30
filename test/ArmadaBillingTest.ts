@@ -3,7 +3,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
 import { BigNumber } from "ethers";
-import { Result } from "ethers/lib/utils";
+import { Result } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine, mineWith } from "../lib/test";
 import { approve, formatUSDC, parseTokens, parseUSDC, signers } from "../lib/util";

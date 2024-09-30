@@ -3,7 +3,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
 import { keccak256 } from "ethereumjs-util";
-import { parseEther } from "ethers/lib/utils";
+import { parseEther } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine } from "../lib/test";
 import { getInterfaceID, parseTokens, signers } from "../lib/util";

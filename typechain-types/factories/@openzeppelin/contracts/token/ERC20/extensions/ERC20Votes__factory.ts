@@ -2,8 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { Contract, Signer, utils } from "ethers";
-import type { Provider } from "@ethersproject/providers";
+import { Contract, Interface, type ContractRunner } from "ethers";
 import type {
   ERC20Votes,
   ERC20VotesInterface,
@@ -592,17 +591,14 @@ const _abi = [
     stateMutability: "nonpayable",
     type: "function",
   },
-];
+] as const;
 
 export class ERC20Votes__factory {
   static readonly abi = _abi;
   static createInterface(): ERC20VotesInterface {
-    return new utils.Interface(_abi) as ERC20VotesInterface;
+    return new Interface(_abi) as ERC20VotesInterface;
   }
-  static connect(
-    address: string,
-    signerOrProvider: Signer | Provider
-  ): ERC20Votes {
-    return new Contract(address, _abi, signerOrProvider) as ERC20Votes;
+  static connect(address: string, runner?: ContractRunner | null): ERC20Votes {
+    return new Contract(address, _abi, runner) as unknown as ERC20Votes;
   }
 }

@@ -3,83 +3,75 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PayableOverrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
-} from "ethers";
-import type {
   FunctionFragment,
   Result,
+  Interface,
   EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
+} from "ethers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
-  PromiseOrValue,
+  TypedContractMethod,
 } from "../common";
 
-export type ArmadaSlotStruct = {
-  last: PromiseOrValue<boolean>;
-  next: PromiseOrValue<boolean>;
-};
+export type ArmadaSlotStruct = { last: boolean; next: boolean };
 
-export type ArmadaSlotStructOutput = [boolean, boolean] & {
+export type ArmadaSlotStructOutput = [last: boolean, next: boolean] & {
   last: boolean;
   next: boolean;
 };
 
 export type ArmadaCreateNodeDataStruct = {
-  host: PromiseOrValue<string>;
-  region: PromiseOrValue<string>;
-  topology: PromiseOrValue<boolean>;
-  disabled: PromiseOrValue<boolean>;
-  price: PromiseOrValue<BigNumberish>;
+  host: string;
+  region: string;
+  topology: boolean;
+  disabled: boolean;
+  price: BigNumberish;
 };
 
 export type ArmadaCreateNodeDataStructOutput = [
-  string,
-  string,
-  boolean,
-  boolean,
-  BigNumber
+  host: string,
+  region: string,
+  topology: boolean,
+  disabled: boolean,
+  price: bigint
 ] & {
   host: string;
   region: string;
   topology: boolean;
   disabled: boolean;
-  price: BigNumber;
+  price: bigint;
 };
 
 export type ArmadaNodeStruct = {
-  id: PromiseOrValue<BytesLike>;
-  operatorId: PromiseOrValue<BytesLike>;
-  host: PromiseOrValue<string>;
-  region: PromiseOrValue<string>;
-  topology: PromiseOrValue<boolean>;
-  disabled: PromiseOrValue<boolean>;
-  prices: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>];
-  projectIds: [PromiseOrValue<BytesLike>, PromiseOrValue<BytesLike>];
+  id: BytesLike;
+  operatorId: BytesLike;
+  host: string;
+  region: string;
+  topology: boolean;
+  disabled: boolean;
+  prices: [BigNumberish, BigNumberish];
+  projectIds: [BytesLike, BytesLike];
 };
 
 export type ArmadaNodeStructOutput = [
-  string,
-  string,
-  string,
-  string,
-  boolean,
-  boolean,
-  [BigNumber, BigNumber],
-  [string, string]
+  id: string,
+  operatorId: string,
+  host: string,
+  region: string,
+  topology: boolean,
+  disabled: boolean,
+  prices: [bigint, bigint],
+  projectIds: [string, string]
 ] & {
   id: string;
   operatorId: string;
@@ -87,49 +79,13 @@ export type ArmadaNodeStructOutput = [
   region: string;
   topology: boolean;
   disabled: boolean;
-  prices: [BigNumber, BigNumber];
+  prices: [bigint, bigint];
   projectIds: [string, string];
 };
 
-export interface ArmadaNodesV2Interface extends utils.Interface {
-  functions: {
-    "DEFAULT_ADMIN_ROLE()": FunctionFragment;
-    "IMPORTER_ROLE()": FunctionFragment;
-    "TOPOLOGY_CREATOR_ROLE()": FunctionFragment;
-    "advanceNodeEpochImpl(bytes32)": FunctionFragment;
-    "createNodes(bytes32,bool,(string,string,bool,bool,uint256)[])": FunctionFragment;
-    "deleteNodes(bytes32,bool,bytes32[])": FunctionFragment;
-    "getNode(bytes32)": FunctionFragment;
-    "getNodeCount(bytes32,bool)": FunctionFragment;
-    "getNodes(bytes32,bool,uint256,uint256)": FunctionFragment;
-    "getRegistry()": FunctionFragment;
-    "getRoleAdmin(bytes32)": FunctionFragment;
-    "getTest()": FunctionFragment;
-    "grantRole(bytes32,address)": FunctionFragment;
-    "hasRole(bytes32,address)": FunctionFragment;
-    "initialize(address[],address,bool)": FunctionFragment;
-    "pause()": FunctionFragment;
-    "paused()": FunctionFragment;
-    "proxiableUUID()": FunctionFragment;
-    "renounceRole(bytes32,address)": FunctionFragment;
-    "revokeRole(bytes32,address)": FunctionFragment;
-    "setNodeDisabled(bytes32,bytes32[],bool[])": FunctionFragment;
-    "setNodeHosts(bytes32,bytes32[],string[],string[])": FunctionFragment;
-    "setNodePriceImpl(bytes32,uint256,uint256)": FunctionFragment;
-    "setNodePrices(bytes32,bytes32[],uint256[],(bool,bool))": FunctionFragment;
-    "setNodeProjectImpl(bytes32,uint256,bytes32)": FunctionFragment;
-    "setTest(uint256)": FunctionFragment;
-    "supportsInterface(bytes4)": FunctionFragment;
-    "unpause()": FunctionFragment;
-    "unsafeImportData((bytes32,bytes32,string,string,bool,bool,uint256[2],bytes32[2])[],address[],bool)": FunctionFragment;
-    "unsafeSetPrices(uint256,uint256,uint256,uint256)": FunctionFragment;
-    "unsafeSetRegistry(address)": FunctionFragment;
-    "upgradeTo(address)": FunctionFragment;
-    "upgradeToAndCall(address,bytes)": FunctionFragment;
-  };
-
+export interface ArmadaNodesV2Interface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "DEFAULT_ADMIN_ROLE"
       | "IMPORTER_ROLE"
       | "TOPOLOGY_CREATOR_ROLE"
@@ -165,6 +121,24 @@ export interface ArmadaNodesV2Interface extends utils.Interface {
       | "upgradeToAndCall"
   ): FunctionFragment;
 
+  getEvent(
+    nameOrSignatureOrTopic:
+      | "AdminChanged"
+      | "BeaconUpgraded"
+      | "Initialized"
+      | "NodeCreated"
+      | "NodeDeleted"
+      | "NodeDisabledChanged"
+      | "NodeHostChanged"
+      | "NodePriceChanged"
+      | "Paused"
+      | "RoleAdminChanged"
+      | "RoleGranted"
+      | "RoleRevoked"
+      | "Unpaused"
+      | "Upgraded"
+  ): EventFragment;
+
   encodeFunctionData(
     functionFragment: "DEFAULT_ADMIN_ROLE",
     values?: undefined
@@ -179,40 +153,24 @@ export interface ArmadaNodesV2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "advanceNodeEpochImpl",
-    values: [PromiseOrValue<BytesLike>]
+    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "createNodes",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<boolean>,
-      ArmadaCreateNodeDataStruct[]
-    ]
+    values: [BytesLike, boolean, ArmadaCreateNodeDataStruct[]]
   ): string;
   encodeFunctionData(
     functionFragment: "deleteNodes",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<boolean>,
-      PromiseOrValue<BytesLike>[]
-    ]
+    values: [BytesLike, boolean, BytesLike[]]
   ): string;
-  encodeFunctionData(
-    functionFragment: "getNode",
-    values: [PromiseOrValue<BytesLike>]
-  ): string;
+  encodeFunctionData(functionFragment: "getNode", values: [BytesLike]): string;
   encodeFunctionData(
     functionFragment: "getNodeCount",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<boolean>]
+    values: [BytesLike, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "getNodes",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<boolean>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [BytesLike, boolean, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getRegistry",
@@ -220,24 +178,20 @@ export interface ArmadaNodesV2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getRoleAdmin",
-    values: [PromiseOrValue<BytesLike>]
+    values: [BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "getTest", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "grantRole",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "hasRole",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [
-      PromiseOrValue<string>[],
-      PromiseOrValue<string>,
-      PromiseOrValue<boolean>
-    ]
+    values: [AddressLike[], AddressLike, boolean]
   ): string;
   encodeFunctionData(functionFragment: "pause", values?: undefined): string;
   encodeFunctionData(functionFragment: "paused", values?: undefined): string;
@@ -247,91 +201,60 @@ export interface ArmadaNodesV2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "renounceRole",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "revokeRole",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setNodeDisabled",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BytesLike>[],
-      PromiseOrValue<boolean>[]
-    ]
+    values: [BytesLike, BytesLike[], boolean[]]
   ): string;
   encodeFunctionData(
     functionFragment: "setNodeHosts",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BytesLike>[],
-      PromiseOrValue<string>[],
-      PromiseOrValue<string>[]
-    ]
+    values: [BytesLike, BytesLike[], string[], string[]]
   ): string;
   encodeFunctionData(
     functionFragment: "setNodePriceImpl",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [BytesLike, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setNodePrices",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BytesLike>[],
-      PromiseOrValue<BigNumberish>[],
-      ArmadaSlotStruct
-    ]
+    values: [BytesLike, BytesLike[], BigNumberish[], ArmadaSlotStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "setNodeProjectImpl",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BytesLike>
-    ]
+    values: [BytesLike, BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setTest",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "supportsInterface",
-    values: [PromiseOrValue<BytesLike>]
+    values: [BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "unsafeImportData",
-    values: [
-      ArmadaNodeStruct[],
-      PromiseOrValue<string>[],
-      PromiseOrValue<boolean>
-    ]
+    values: [ArmadaNodeStruct[], AddressLike[], boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "unsafeSetPrices",
-    values: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "unsafeSetRegistry",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "upgradeTo",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "upgradeToAndCall",
-    values: [PromiseOrValue<string>, PromiseOrValue<BytesLike>]
+    values: [AddressLike, BytesLike]
   ): string;
 
   decodeFunctionResult(
@@ -430,1249 +353,966 @@ export interface ArmadaNodesV2Interface extends utils.Interface {
     functionFragment: "upgradeToAndCall",
     data: BytesLike
   ): Result;
-
-  events: {
-    "AdminChanged(address,address)": EventFragment;
-    "BeaconUpgraded(address)": EventFragment;
-    "Initialized(uint8)": EventFragment;
-    "NodeCreated(bytes32,bytes32,string,string,bool,bool,uint256)": EventFragment;
-    "NodeDeleted(bytes32,bytes32,string,string,bool,bool,uint256)": EventFragment;
-    "NodeDisabledChanged(bytes32,bool,bool)": EventFragment;
-    "NodeHostChanged(bytes32,string,string,string,string)": EventFragment;
-    "NodePriceChanged(bytes32,uint256,uint256,uint256,tuple)": EventFragment;
-    "Paused(address)": EventFragment;
-    "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
-    "RoleGranted(bytes32,address,address)": EventFragment;
-    "RoleRevoked(bytes32,address,address)": EventFragment;
-    "Unpaused(address)": EventFragment;
-    "Upgraded(address)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "AdminChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "BeaconUpgraded"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "NodeCreated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "NodeDeleted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "NodeDisabledChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "NodeHostChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "NodePriceChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RoleAdminChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RoleGranted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RoleRevoked"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Upgraded"): EventFragment;
 }
 
-export interface AdminChangedEventObject {
-  previousAdmin: string;
-  newAdmin: string;
+export namespace AdminChangedEvent {
+  export type InputTuple = [previousAdmin: AddressLike, newAdmin: AddressLike];
+  export type OutputTuple = [previousAdmin: string, newAdmin: string];
+  export interface OutputObject {
+    previousAdmin: string;
+    newAdmin: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type AdminChangedEvent = TypedEvent<
-  [string, string],
-  AdminChangedEventObject
->;
 
-export type AdminChangedEventFilter = TypedEventFilter<AdminChangedEvent>;
-
-export interface BeaconUpgradedEventObject {
-  beacon: string;
+export namespace BeaconUpgradedEvent {
+  export type InputTuple = [beacon: AddressLike];
+  export type OutputTuple = [beacon: string];
+  export interface OutputObject {
+    beacon: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type BeaconUpgradedEvent = TypedEvent<
-  [string],
-  BeaconUpgradedEventObject
->;
 
-export type BeaconUpgradedEventFilter = TypedEventFilter<BeaconUpgradedEvent>;
-
-export interface InitializedEventObject {
-  version: number;
+export namespace InitializedEvent {
+  export type InputTuple = [version: BigNumberish];
+  export type OutputTuple = [version: bigint];
+  export interface OutputObject {
+    version: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type InitializedEvent = TypedEvent<[number], InitializedEventObject>;
 
-export type InitializedEventFilter = TypedEventFilter<InitializedEvent>;
-
-export interface NodeCreatedEventObject {
-  nodeId: string;
-  operatorId: string;
-  host: string;
-  region: string;
-  topology: boolean;
-  disabled: boolean;
-  price: BigNumber;
+export namespace NodeCreatedEvent {
+  export type InputTuple = [
+    nodeId: BytesLike,
+    operatorId: BytesLike,
+    host: string,
+    region: string,
+    topology: boolean,
+    disabled: boolean,
+    price: BigNumberish
+  ];
+  export type OutputTuple = [
+    nodeId: string,
+    operatorId: string,
+    host: string,
+    region: string,
+    topology: boolean,
+    disabled: boolean,
+    price: bigint
+  ];
+  export interface OutputObject {
+    nodeId: string;
+    operatorId: string;
+    host: string;
+    region: string;
+    topology: boolean;
+    disabled: boolean;
+    price: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type NodeCreatedEvent = TypedEvent<
-  [string, string, string, string, boolean, boolean, BigNumber],
-  NodeCreatedEventObject
->;
 
-export type NodeCreatedEventFilter = TypedEventFilter<NodeCreatedEvent>;
-
-export interface NodeDeletedEventObject {
-  nodeId: string;
-  operatorId: string;
-  host: string;
-  region: string;
-  topology: boolean;
-  disabled: boolean;
-  price: BigNumber;
+export namespace NodeDeletedEvent {
+  export type InputTuple = [
+    nodeId: BytesLike,
+    operatorId: BytesLike,
+    host: string,
+    region: string,
+    topology: boolean,
+    disabled: boolean,
+    price: BigNumberish
+  ];
+  export type OutputTuple = [
+    nodeId: string,
+    operatorId: string,
+    host: string,
+    region: string,
+    topology: boolean,
+    disabled: boolean,
+    price: bigint
+  ];
+  export interface OutputObject {
+    nodeId: string;
+    operatorId: string;
+    host: string;
+    region: string;
+    topology: boolean;
+    disabled: boolean;
+    price: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type NodeDeletedEvent = TypedEvent<
-  [string, string, string, string, boolean, boolean, BigNumber],
-  NodeDeletedEventObject
->;
 
-export type NodeDeletedEventFilter = TypedEventFilter<NodeDeletedEvent>;
-
-export interface NodeDisabledChangedEventObject {
-  nodeId: string;
-  oldDisabled: boolean;
-  newDisabled: boolean;
+export namespace NodeDisabledChangedEvent {
+  export type InputTuple = [
+    nodeId: BytesLike,
+    oldDisabled: boolean,
+    newDisabled: boolean
+  ];
+  export type OutputTuple = [
+    nodeId: string,
+    oldDisabled: boolean,
+    newDisabled: boolean
+  ];
+  export interface OutputObject {
+    nodeId: string;
+    oldDisabled: boolean;
+    newDisabled: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type NodeDisabledChangedEvent = TypedEvent<
-  [string, boolean, boolean],
-  NodeDisabledChangedEventObject
->;
 
-export type NodeDisabledChangedEventFilter =
-  TypedEventFilter<NodeDisabledChangedEvent>;
-
-export interface NodeHostChangedEventObject {
-  nodeId: string;
-  oldHost: string;
-  oldRegion: string;
-  newHost: string;
-  newRegion: string;
+export namespace NodeHostChangedEvent {
+  export type InputTuple = [
+    nodeId: BytesLike,
+    oldHost: string,
+    oldRegion: string,
+    newHost: string,
+    newRegion: string
+  ];
+  export type OutputTuple = [
+    nodeId: string,
+    oldHost: string,
+    oldRegion: string,
+    newHost: string,
+    newRegion: string
+  ];
+  export interface OutputObject {
+    nodeId: string;
+    oldHost: string;
+    oldRegion: string;
+    newHost: string;
+    newRegion: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type NodeHostChangedEvent = TypedEvent<
-  [string, string, string, string, string],
-  NodeHostChangedEventObject
->;
 
-export type NodeHostChangedEventFilter = TypedEventFilter<NodeHostChangedEvent>;
-
-export interface NodePriceChangedEventObject {
-  nodeId: string;
-  oldLastPrice: BigNumber;
-  oldNextPrice: BigNumber;
-  newPrice: BigNumber;
-  slot: ArmadaSlotStructOutput;
+export namespace NodePriceChangedEvent {
+  export type InputTuple = [
+    nodeId: BytesLike,
+    oldLastPrice: BigNumberish,
+    oldNextPrice: BigNumberish,
+    newPrice: BigNumberish,
+    slot: ArmadaSlotStruct
+  ];
+  export type OutputTuple = [
+    nodeId: string,
+    oldLastPrice: bigint,
+    oldNextPrice: bigint,
+    newPrice: bigint,
+    slot: ArmadaSlotStructOutput
+  ];
+  export interface OutputObject {
+    nodeId: string;
+    oldLastPrice: bigint;
+    oldNextPrice: bigint;
+    newPrice: bigint;
+    slot: ArmadaSlotStructOutput;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type NodePriceChangedEvent = TypedEvent<
-  [string, BigNumber, BigNumber, BigNumber, ArmadaSlotStructOutput],
-  NodePriceChangedEventObject
->;
 
-export type NodePriceChangedEventFilter =
-  TypedEventFilter<NodePriceChangedEvent>;
-
-export interface PausedEventObject {
-  account: string;
+export namespace PausedEvent {
+  export type InputTuple = [account: AddressLike];
+  export type OutputTuple = [account: string];
+  export interface OutputObject {
+    account: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type PausedEvent = TypedEvent<[string], PausedEventObject>;
 
-export type PausedEventFilter = TypedEventFilter<PausedEvent>;
-
-export interface RoleAdminChangedEventObject {
-  role: string;
-  previousAdminRole: string;
-  newAdminRole: string;
+export namespace RoleAdminChangedEvent {
+  export type InputTuple = [
+    role: BytesLike,
+    previousAdminRole: BytesLike,
+    newAdminRole: BytesLike
+  ];
+  export type OutputTuple = [
+    role: string,
+    previousAdminRole: string,
+    newAdminRole: string
+  ];
+  export interface OutputObject {
+    role: string;
+    previousAdminRole: string;
+    newAdminRole: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RoleAdminChangedEvent = TypedEvent<
-  [string, string, string],
-  RoleAdminChangedEventObject
->;
 
-export type RoleAdminChangedEventFilter =
-  TypedEventFilter<RoleAdminChangedEvent>;
-
-export interface RoleGrantedEventObject {
-  role: string;
-  account: string;
-  sender: string;
+export namespace RoleGrantedEvent {
+  export type InputTuple = [
+    role: BytesLike,
+    account: AddressLike,
+    sender: AddressLike
+  ];
+  export type OutputTuple = [role: string, account: string, sender: string];
+  export interface OutputObject {
+    role: string;
+    account: string;
+    sender: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RoleGrantedEvent = TypedEvent<
-  [string, string, string],
-  RoleGrantedEventObject
->;
 
-export type RoleGrantedEventFilter = TypedEventFilter<RoleGrantedEvent>;
-
-export interface RoleRevokedEventObject {
-  role: string;
-  account: string;
-  sender: string;
+export namespace RoleRevokedEvent {
+  export type InputTuple = [
+    role: BytesLike,
+    account: AddressLike,
+    sender: AddressLike
+  ];
+  export type OutputTuple = [role: string, account: string, sender: string];
+  export interface OutputObject {
+    role: string;
+    account: string;
+    sender: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RoleRevokedEvent = TypedEvent<
-  [string, string, string],
-  RoleRevokedEventObject
->;
 
-export type RoleRevokedEventFilter = TypedEventFilter<RoleRevokedEvent>;
-
-export interface UnpausedEventObject {
-  account: string;
+export namespace UnpausedEvent {
+  export type InputTuple = [account: AddressLike];
+  export type OutputTuple = [account: string];
+  export interface OutputObject {
+    account: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UnpausedEvent = TypedEvent<[string], UnpausedEventObject>;
 
-export type UnpausedEventFilter = TypedEventFilter<UnpausedEvent>;
-
-export interface UpgradedEventObject {
-  implementation: string;
+export namespace UpgradedEvent {
+  export type InputTuple = [implementation: AddressLike];
+  export type OutputTuple = [implementation: string];
+  export interface OutputObject {
+    implementation: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpgradedEvent = TypedEvent<[string], UpgradedEventObject>;
-
-export type UpgradedEventFilter = TypedEventFilter<UpgradedEvent>;
 
 export interface ArmadaNodesV2 extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+  connect(runner?: ContractRunner | null): ArmadaNodesV2;
+  waitForDeployment(): Promise<this>;
 
   interface: ArmadaNodesV2Interface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
 
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-  functions: {
-    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<[string]>;
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-    IMPORTER_ROLE(overrides?: CallOverrides): Promise<[string]>;
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
 
-    TOPOLOGY_CREATOR_ROLE(overrides?: CallOverrides): Promise<[string]>;
+  DEFAULT_ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
 
-    advanceNodeEpochImpl(
-      nodeId: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  IMPORTER_ROLE: TypedContractMethod<[], [string], "view">;
 
-    createNodes(
-      operatorId: PromiseOrValue<BytesLike>,
-      topology: PromiseOrValue<boolean>,
-      nodes: ArmadaCreateNodeDataStruct[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  TOPOLOGY_CREATOR_ROLE: TypedContractMethod<[], [string], "view">;
 
-    deleteNodes(
-      operatorId: PromiseOrValue<BytesLike>,
-      topology: PromiseOrValue<boolean>,
-      nodeIds: PromiseOrValue<BytesLike>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  advanceNodeEpochImpl: TypedContractMethod<
+    [nodeId: BytesLike],
+    [void],
+    "nonpayable"
+  >;
 
-    getNode(
-      nodeId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[ArmadaNodeStructOutput]>;
+  createNodes: TypedContractMethod<
+    [
+      operatorId: BytesLike,
+      topology: boolean,
+      nodes: ArmadaCreateNodeDataStruct[]
+    ],
+    [string[]],
+    "nonpayable"
+  >;
 
-    getNodeCount(
-      operatorIdOrZero: PromiseOrValue<BytesLike>,
-      topology: PromiseOrValue<boolean>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { count: BigNumber }>;
+  deleteNodes: TypedContractMethod<
+    [operatorId: BytesLike, topology: boolean, nodeIds: BytesLike[]],
+    [void],
+    "nonpayable"
+  >;
 
-    getNodes(
-      operatorIdOrZero: PromiseOrValue<BytesLike>,
-      topology: PromiseOrValue<boolean>,
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [ArmadaNodeStructOutput[]] & { values: ArmadaNodeStructOutput[] }
-    >;
+  getNode: TypedContractMethod<
+    [nodeId: BytesLike],
+    [ArmadaNodeStructOutput],
+    "view"
+  >;
 
-    getRegistry(overrides?: CallOverrides): Promise<[string]>;
+  getNodeCount: TypedContractMethod<
+    [operatorIdOrZero: BytesLike, topology: boolean],
+    [bigint],
+    "view"
+  >;
 
-    getRoleAdmin(
-      role: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
+  getNodes: TypedContractMethod<
+    [
+      operatorIdOrZero: BytesLike,
+      topology: boolean,
+      skip: BigNumberish,
+      size: BigNumberish
+    ],
+    [ArmadaNodeStructOutput[]],
+    "view"
+  >;
 
-    getTest(overrides?: CallOverrides): Promise<[BigNumber]>;
+  getRegistry: TypedContractMethod<[], [string], "view">;
 
-    grantRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  getRoleAdmin: TypedContractMethod<[role: BytesLike], [string], "view">;
 
-    hasRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
+  getTest: TypedContractMethod<[], [bigint], "view">;
 
-    initialize(
-      admins: PromiseOrValue<string>[],
-      registry: PromiseOrValue<string>,
-      grantImporterRole: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  grantRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    pause(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  hasRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [boolean],
+    "view"
+  >;
 
-    paused(overrides?: CallOverrides): Promise<[boolean]>;
+  initialize: TypedContractMethod<
+    [admins: AddressLike[], registry: AddressLike, grantImporterRole: boolean],
+    [void],
+    "nonpayable"
+  >;
 
-    proxiableUUID(overrides?: CallOverrides): Promise<[string]>;
+  pause: TypedContractMethod<[], [void], "nonpayable">;
 
-    renounceRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  paused: TypedContractMethod<[], [boolean], "view">;
 
-    revokeRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  proxiableUUID: TypedContractMethod<[], [string], "view">;
 
-    setNodeDisabled(
-      operatorId: PromiseOrValue<BytesLike>,
-      nodeIds: PromiseOrValue<BytesLike>[],
-      disabled: PromiseOrValue<boolean>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  renounceRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    setNodeHosts(
-      operatorId: PromiseOrValue<BytesLike>,
-      nodeIds: PromiseOrValue<BytesLike>[],
-      hosts: PromiseOrValue<string>[],
-      regions: PromiseOrValue<string>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  revokeRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    setNodePriceImpl(
-      nodeId: PromiseOrValue<BytesLike>,
-      epochSlot: PromiseOrValue<BigNumberish>,
-      price: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  setNodeDisabled: TypedContractMethod<
+    [operatorId: BytesLike, nodeIds: BytesLike[], disabled: boolean[]],
+    [void],
+    "nonpayable"
+  >;
 
-    setNodePrices(
-      operatorId: PromiseOrValue<BytesLike>,
-      nodeIds: PromiseOrValue<BytesLike>[],
-      prices: PromiseOrValue<BigNumberish>[],
-      slot: ArmadaSlotStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  setNodeHosts: TypedContractMethod<
+    [
+      operatorId: BytesLike,
+      nodeIds: BytesLike[],
+      hosts: string[],
+      regions: string[]
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    setNodeProjectImpl(
-      nodeId: PromiseOrValue<BytesLike>,
-      epochSlot: PromiseOrValue<BigNumberish>,
-      projectId: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  setNodePriceImpl: TypedContractMethod<
+    [nodeId: BytesLike, epochSlot: BigNumberish, price: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    setTest(
-      newTest: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  setNodePrices: TypedContractMethod<
+    [
+      operatorId: BytesLike,
+      nodeIds: BytesLike[],
+      prices: BigNumberish[],
+      slot: ArmadaSlotStruct
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
+  setNodeProjectImpl: TypedContractMethod<
+    [nodeId: BytesLike, epochSlot: BigNumberish, projectId: BytesLike],
+    [void],
+    "nonpayable"
+  >;
 
-    unpause(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  setTest: TypedContractMethod<[newTest: BigNumberish], [void], "nonpayable">;
 
-    unsafeImportData(
+  supportsInterface: TypedContractMethod<
+    [interfaceId: BytesLike],
+    [boolean],
+    "view"
+  >;
+
+  unpause: TypedContractMethod<[], [void], "nonpayable">;
+
+  unsafeImportData: TypedContractMethod<
+    [
       nodes: ArmadaNodeStruct[],
-      topologyCreators: PromiseOrValue<string>[],
-      revokeImporterRole: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    unsafeSetPrices(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      mul: PromiseOrValue<BigNumberish>,
-      div: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    unsafeSetRegistry(
-      registry: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    upgradeToAndCall(
-      newImplementation: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-  };
-
-  DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
-
-  IMPORTER_ROLE(overrides?: CallOverrides): Promise<string>;
-
-  TOPOLOGY_CREATOR_ROLE(overrides?: CallOverrides): Promise<string>;
-
-  advanceNodeEpochImpl(
-    nodeId: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  createNodes(
-    operatorId: PromiseOrValue<BytesLike>,
-    topology: PromiseOrValue<boolean>,
-    nodes: ArmadaCreateNodeDataStruct[],
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  deleteNodes(
-    operatorId: PromiseOrValue<BytesLike>,
-    topology: PromiseOrValue<boolean>,
-    nodeIds: PromiseOrValue<BytesLike>[],
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  getNode(
-    nodeId: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<ArmadaNodeStructOutput>;
-
-  getNodeCount(
-    operatorIdOrZero: PromiseOrValue<BytesLike>,
-    topology: PromiseOrValue<boolean>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  getNodes(
-    operatorIdOrZero: PromiseOrValue<BytesLike>,
-    topology: PromiseOrValue<boolean>,
-    skip: PromiseOrValue<BigNumberish>,
-    size: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<ArmadaNodeStructOutput[]>;
-
-  getRegistry(overrides?: CallOverrides): Promise<string>;
-
-  getRoleAdmin(
-    role: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getTest(overrides?: CallOverrides): Promise<BigNumber>;
-
-  grantRole(
-    role: PromiseOrValue<BytesLike>,
-    account: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  hasRole(
-    role: PromiseOrValue<BytesLike>,
-    account: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  initialize(
-    admins: PromiseOrValue<string>[],
-    registry: PromiseOrValue<string>,
-    grantImporterRole: PromiseOrValue<boolean>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  pause(
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  paused(overrides?: CallOverrides): Promise<boolean>;
-
-  proxiableUUID(overrides?: CallOverrides): Promise<string>;
-
-  renounceRole(
-    role: PromiseOrValue<BytesLike>,
-    account: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  revokeRole(
-    role: PromiseOrValue<BytesLike>,
-    account: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setNodeDisabled(
-    operatorId: PromiseOrValue<BytesLike>,
-    nodeIds: PromiseOrValue<BytesLike>[],
-    disabled: PromiseOrValue<boolean>[],
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setNodeHosts(
-    operatorId: PromiseOrValue<BytesLike>,
-    nodeIds: PromiseOrValue<BytesLike>[],
-    hosts: PromiseOrValue<string>[],
-    regions: PromiseOrValue<string>[],
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setNodePriceImpl(
-    nodeId: PromiseOrValue<BytesLike>,
-    epochSlot: PromiseOrValue<BigNumberish>,
-    price: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setNodePrices(
-    operatorId: PromiseOrValue<BytesLike>,
-    nodeIds: PromiseOrValue<BytesLike>[],
-    prices: PromiseOrValue<BigNumberish>[],
-    slot: ArmadaSlotStruct,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setNodeProjectImpl(
-    nodeId: PromiseOrValue<BytesLike>,
-    epochSlot: PromiseOrValue<BigNumberish>,
-    projectId: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setTest(
-    newTest: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  supportsInterface(
-    interfaceId: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  unpause(
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  unsafeImportData(
-    nodes: ArmadaNodeStruct[],
-    topologyCreators: PromiseOrValue<string>[],
-    revokeImporterRole: PromiseOrValue<boolean>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  unsafeSetPrices(
-    skip: PromiseOrValue<BigNumberish>,
-    size: PromiseOrValue<BigNumberish>,
-    mul: PromiseOrValue<BigNumberish>,
-    div: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  unsafeSetRegistry(
-    registry: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  upgradeTo(
-    newImplementation: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  upgradeToAndCall(
-    newImplementation: PromiseOrValue<string>,
-    data: PromiseOrValue<BytesLike>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  callStatic: {
-    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
-
-    IMPORTER_ROLE(overrides?: CallOverrides): Promise<string>;
-
-    TOPOLOGY_CREATOR_ROLE(overrides?: CallOverrides): Promise<string>;
-
-    advanceNodeEpochImpl(
-      nodeId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    createNodes(
-      operatorId: PromiseOrValue<BytesLike>,
-      topology: PromiseOrValue<boolean>,
-      nodes: ArmadaCreateNodeDataStruct[],
-      overrides?: CallOverrides
-    ): Promise<string[]>;
-
-    deleteNodes(
-      operatorId: PromiseOrValue<BytesLike>,
-      topology: PromiseOrValue<boolean>,
-      nodeIds: PromiseOrValue<BytesLike>[],
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    getNode(
-      nodeId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<ArmadaNodeStructOutput>;
-
-    getNodeCount(
-      operatorIdOrZero: PromiseOrValue<BytesLike>,
-      topology: PromiseOrValue<boolean>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getNodes(
-      operatorIdOrZero: PromiseOrValue<BytesLike>,
-      topology: PromiseOrValue<boolean>,
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<ArmadaNodeStructOutput[]>;
-
-    getRegistry(overrides?: CallOverrides): Promise<string>;
-
-    getRoleAdmin(
-      role: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    getTest(overrides?: CallOverrides): Promise<BigNumber>;
-
-    grantRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    hasRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    initialize(
-      admins: PromiseOrValue<string>[],
-      registry: PromiseOrValue<string>,
-      grantImporterRole: PromiseOrValue<boolean>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    pause(overrides?: CallOverrides): Promise<void>;
-
-    paused(overrides?: CallOverrides): Promise<boolean>;
-
-    proxiableUUID(overrides?: CallOverrides): Promise<string>;
-
-    renounceRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    revokeRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setNodeDisabled(
-      operatorId: PromiseOrValue<BytesLike>,
-      nodeIds: PromiseOrValue<BytesLike>[],
-      disabled: PromiseOrValue<boolean>[],
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setNodeHosts(
-      operatorId: PromiseOrValue<BytesLike>,
-      nodeIds: PromiseOrValue<BytesLike>[],
-      hosts: PromiseOrValue<string>[],
-      regions: PromiseOrValue<string>[],
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setNodePriceImpl(
-      nodeId: PromiseOrValue<BytesLike>,
-      epochSlot: PromiseOrValue<BigNumberish>,
-      price: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setNodePrices(
-      operatorId: PromiseOrValue<BytesLike>,
-      nodeIds: PromiseOrValue<BytesLike>[],
-      prices: PromiseOrValue<BigNumberish>[],
-      slot: ArmadaSlotStruct,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setNodeProjectImpl(
-      nodeId: PromiseOrValue<BytesLike>,
-      epochSlot: PromiseOrValue<BigNumberish>,
-      projectId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setTest(
-      newTest: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    unpause(overrides?: CallOverrides): Promise<void>;
-
-    unsafeImportData(
+      topologyCreators: AddressLike[],
+      revokeImporterRole: boolean
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  unsafeSetPrices: TypedContractMethod<
+    [
+      skip: BigNumberish,
+      size: BigNumberish,
+      mul: BigNumberish,
+      div: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  unsafeSetRegistry: TypedContractMethod<
+    [registry: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  upgradeTo: TypedContractMethod<
+    [newImplementation: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  upgradeToAndCall: TypedContractMethod<
+    [newImplementation: AddressLike, data: BytesLike],
+    [void],
+    "payable"
+  >;
+
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
+
+  getFunction(
+    nameOrSignature: "DEFAULT_ADMIN_ROLE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "IMPORTER_ROLE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "TOPOLOGY_CREATOR_ROLE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "advanceNodeEpochImpl"
+  ): TypedContractMethod<[nodeId: BytesLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "createNodes"
+  ): TypedContractMethod<
+    [
+      operatorId: BytesLike,
+      topology: boolean,
+      nodes: ArmadaCreateNodeDataStruct[]
+    ],
+    [string[]],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "deleteNodes"
+  ): TypedContractMethod<
+    [operatorId: BytesLike, topology: boolean, nodeIds: BytesLike[]],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "getNode"
+  ): TypedContractMethod<[nodeId: BytesLike], [ArmadaNodeStructOutput], "view">;
+  getFunction(
+    nameOrSignature: "getNodeCount"
+  ): TypedContractMethod<
+    [operatorIdOrZero: BytesLike, topology: boolean],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getNodes"
+  ): TypedContractMethod<
+    [
+      operatorIdOrZero: BytesLike,
+      topology: boolean,
+      skip: BigNumberish,
+      size: BigNumberish
+    ],
+    [ArmadaNodeStructOutput[]],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getRegistry"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "getRoleAdmin"
+  ): TypedContractMethod<[role: BytesLike], [string], "view">;
+  getFunction(
+    nameOrSignature: "getTest"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "grantRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "hasRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [boolean],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "initialize"
+  ): TypedContractMethod<
+    [admins: AddressLike[], registry: AddressLike, grantImporterRole: boolean],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "pause"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "paused"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "proxiableUUID"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "renounceRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "revokeRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setNodeDisabled"
+  ): TypedContractMethod<
+    [operatorId: BytesLike, nodeIds: BytesLike[], disabled: boolean[]],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setNodeHosts"
+  ): TypedContractMethod<
+    [
+      operatorId: BytesLike,
+      nodeIds: BytesLike[],
+      hosts: string[],
+      regions: string[]
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setNodePriceImpl"
+  ): TypedContractMethod<
+    [nodeId: BytesLike, epochSlot: BigNumberish, price: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setNodePrices"
+  ): TypedContractMethod<
+    [
+      operatorId: BytesLike,
+      nodeIds: BytesLike[],
+      prices: BigNumberish[],
+      slot: ArmadaSlotStruct
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setNodeProjectImpl"
+  ): TypedContractMethod<
+    [nodeId: BytesLike, epochSlot: BigNumberish, projectId: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setTest"
+  ): TypedContractMethod<[newTest: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "supportsInterface"
+  ): TypedContractMethod<[interfaceId: BytesLike], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "unpause"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "unsafeImportData"
+  ): TypedContractMethod<
+    [
       nodes: ArmadaNodeStruct[],
-      topologyCreators: PromiseOrValue<string>[],
-      revokeImporterRole: PromiseOrValue<boolean>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      topologyCreators: AddressLike[],
+      revokeImporterRole: boolean
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "unsafeSetPrices"
+  ): TypedContractMethod<
+    [
+      skip: BigNumberish,
+      size: BigNumberish,
+      mul: BigNumberish,
+      div: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "unsafeSetRegistry"
+  ): TypedContractMethod<[registry: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "upgradeTo"
+  ): TypedContractMethod<
+    [newImplementation: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "upgradeToAndCall"
+  ): TypedContractMethod<
+    [newImplementation: AddressLike, data: BytesLike],
+    [void],
+    "payable"
+  >;
 
-    unsafeSetPrices(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      mul: PromiseOrValue<BigNumberish>,
-      div: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    unsafeSetRegistry(
-      registry: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    upgradeToAndCall(
-      newImplementation: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-  };
+  getEvent(
+    key: "AdminChanged"
+  ): TypedContractEvent<
+    AdminChangedEvent.InputTuple,
+    AdminChangedEvent.OutputTuple,
+    AdminChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "BeaconUpgraded"
+  ): TypedContractEvent<
+    BeaconUpgradedEvent.InputTuple,
+    BeaconUpgradedEvent.OutputTuple,
+    BeaconUpgradedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Initialized"
+  ): TypedContractEvent<
+    InitializedEvent.InputTuple,
+    InitializedEvent.OutputTuple,
+    InitializedEvent.OutputObject
+  >;
+  getEvent(
+    key: "NodeCreated"
+  ): TypedContractEvent<
+    NodeCreatedEvent.InputTuple,
+    NodeCreatedEvent.OutputTuple,
+    NodeCreatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "NodeDeleted"
+  ): TypedContractEvent<
+    NodeDeletedEvent.InputTuple,
+    NodeDeletedEvent.OutputTuple,
+    NodeDeletedEvent.OutputObject
+  >;
+  getEvent(
+    key: "NodeDisabledChanged"
+  ): TypedContractEvent<
+    NodeDisabledChangedEvent.InputTuple,
+    NodeDisabledChangedEvent.OutputTuple,
+    NodeDisabledChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "NodeHostChanged"
+  ): TypedContractEvent<
+    NodeHostChangedEvent.InputTuple,
+    NodeHostChangedEvent.OutputTuple,
+    NodeHostChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "NodePriceChanged"
+  ): TypedContractEvent<
+    NodePriceChangedEvent.InputTuple,
+    NodePriceChangedEvent.OutputTuple,
+    NodePriceChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Paused"
+  ): TypedContractEvent<
+    PausedEvent.InputTuple,
+    PausedEvent.OutputTuple,
+    PausedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RoleAdminChanged"
+  ): TypedContractEvent<
+    RoleAdminChangedEvent.InputTuple,
+    RoleAdminChangedEvent.OutputTuple,
+    RoleAdminChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RoleGranted"
+  ): TypedContractEvent<
+    RoleGrantedEvent.InputTuple,
+    RoleGrantedEvent.OutputTuple,
+    RoleGrantedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RoleRevoked"
+  ): TypedContractEvent<
+    RoleRevokedEvent.InputTuple,
+    RoleRevokedEvent.OutputTuple,
+    RoleRevokedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Unpaused"
+  ): TypedContractEvent<
+    UnpausedEvent.InputTuple,
+    UnpausedEvent.OutputTuple,
+    UnpausedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Upgraded"
+  ): TypedContractEvent<
+    UpgradedEvent.InputTuple,
+    UpgradedEvent.OutputTuple,
+    UpgradedEvent.OutputObject
+  >;
 
   filters: {
-    "AdminChanged(address,address)"(
-      previousAdmin?: null,
-      newAdmin?: null
-    ): AdminChangedEventFilter;
-    AdminChanged(
-      previousAdmin?: null,
-      newAdmin?: null
-    ): AdminChangedEventFilter;
-
-    "BeaconUpgraded(address)"(
-      beacon?: PromiseOrValue<string> | null
-    ): BeaconUpgradedEventFilter;
-    BeaconUpgraded(
-      beacon?: PromiseOrValue<string> | null
-    ): BeaconUpgradedEventFilter;
-
-    "Initialized(uint8)"(version?: null): InitializedEventFilter;
-    Initialized(version?: null): InitializedEventFilter;
-
-    "NodeCreated(bytes32,bytes32,string,string,bool,bool,uint256)"(
-      nodeId?: PromiseOrValue<BytesLike> | null,
-      operatorId?: PromiseOrValue<BytesLike> | null,
-      host?: null,
-      region?: null,
-      topology?: null,
-      disabled?: null,
-      price?: null
-    ): NodeCreatedEventFilter;
-    NodeCreated(
-      nodeId?: PromiseOrValue<BytesLike> | null,
-      operatorId?: PromiseOrValue<BytesLike> | null,
-      host?: null,
-      region?: null,
-      topology?: null,
-      disabled?: null,
-      price?: null
-    ): NodeCreatedEventFilter;
-
-    "NodeDeleted(bytes32,bytes32,string,string,bool,bool,uint256)"(
-      nodeId?: PromiseOrValue<BytesLike> | null,
-      operatorId?: PromiseOrValue<BytesLike> | null,
-      host?: null,
-      region?: null,
-      topology?: null,
-      disabled?: null,
-      price?: null
-    ): NodeDeletedEventFilter;
-    NodeDeleted(
-      nodeId?: PromiseOrValue<BytesLike> | null,
-      operatorId?: PromiseOrValue<BytesLike> | null,
-      host?: null,
-      region?: null,
-      topology?: null,
-      disabled?: null,
-      price?: null
-    ): NodeDeletedEventFilter;
-
-    "NodeDisabledChanged(bytes32,bool,bool)"(
-      nodeId?: PromiseOrValue<BytesLike> | null,
-      oldDisabled?: null,
-      newDisabled?: null
-    ): NodeDisabledChangedEventFilter;
-    NodeDisabledChanged(
-      nodeId?: PromiseOrValue<BytesLike> | null,
-      oldDisabled?: null,
-      newDisabled?: null
-    ): NodeDisabledChangedEventFilter;
-
-    "NodeHostChanged(bytes32,string,string,string,string)"(
-      nodeId?: PromiseOrValue<BytesLike> | null,
-      oldHost?: null,
-      oldRegion?: null,
-      newHost?: null,
-      newRegion?: null
-    ): NodeHostChangedEventFilter;
-    NodeHostChanged(
-      nodeId?: PromiseOrValue<BytesLike> | null,
-      oldHost?: null,
-      oldRegion?: null,
-      newHost?: null,
-      newRegion?: null
-    ): NodeHostChangedEventFilter;
-
-    "NodePriceChanged(bytes32,uint256,uint256,uint256,tuple)"(
-      nodeId?: PromiseOrValue<BytesLike> | null,
-      oldLastPrice?: null,
-      oldNextPrice?: null,
-      newPrice?: null,
-      slot?: null
-    ): NodePriceChangedEventFilter;
-    NodePriceChanged(
-      nodeId?: PromiseOrValue<BytesLike> | null,
-      oldLastPrice?: null,
-      oldNextPrice?: null,
-      newPrice?: null,
-      slot?: null
-    ): NodePriceChangedEventFilter;
-
-    "Paused(address)"(account?: null): PausedEventFilter;
-    Paused(account?: null): PausedEventFilter;
-
-    "RoleAdminChanged(bytes32,bytes32,bytes32)"(
-      role?: PromiseOrValue<BytesLike> | null,
-      previousAdminRole?: PromiseOrValue<BytesLike> | null,
-      newAdminRole?: PromiseOrValue<BytesLike> | null
-    ): RoleAdminChangedEventFilter;
-    RoleAdminChanged(
-      role?: PromiseOrValue<BytesLike> | null,
-      previousAdminRole?: PromiseOrValue<BytesLike> | null,
-      newAdminRole?: PromiseOrValue<BytesLike> | null
-    ): RoleAdminChangedEventFilter;
-
-    "RoleGranted(bytes32,address,address)"(
-      role?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      sender?: PromiseOrValue<string> | null
-    ): RoleGrantedEventFilter;
-    RoleGranted(
-      role?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      sender?: PromiseOrValue<string> | null
-    ): RoleGrantedEventFilter;
-
-    "RoleRevoked(bytes32,address,address)"(
-      role?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      sender?: PromiseOrValue<string> | null
-    ): RoleRevokedEventFilter;
-    RoleRevoked(
-      role?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      sender?: PromiseOrValue<string> | null
-    ): RoleRevokedEventFilter;
-
-    "Unpaused(address)"(account?: null): UnpausedEventFilter;
-    Unpaused(account?: null): UnpausedEventFilter;
-
-    "Upgraded(address)"(
-      implementation?: PromiseOrValue<string> | null
-    ): UpgradedEventFilter;
-    Upgraded(
-      implementation?: PromiseOrValue<string> | null
-    ): UpgradedEventFilter;
-  };
-
-  estimateGas: {
-    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
-
-    IMPORTER_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
-
-    TOPOLOGY_CREATOR_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
-
-    advanceNodeEpochImpl(
-      nodeId: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    createNodes(
-      operatorId: PromiseOrValue<BytesLike>,
-      topology: PromiseOrValue<boolean>,
-      nodes: ArmadaCreateNodeDataStruct[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    deleteNodes(
-      operatorId: PromiseOrValue<BytesLike>,
-      topology: PromiseOrValue<boolean>,
-      nodeIds: PromiseOrValue<BytesLike>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    getNode(
-      nodeId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getNodeCount(
-      operatorIdOrZero: PromiseOrValue<BytesLike>,
-      topology: PromiseOrValue<boolean>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getNodes(
-      operatorIdOrZero: PromiseOrValue<BytesLike>,
-      topology: PromiseOrValue<boolean>,
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getRegistry(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getRoleAdmin(
-      role: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getTest(overrides?: CallOverrides): Promise<BigNumber>;
-
-    grantRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    hasRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    initialize(
-      admins: PromiseOrValue<string>[],
-      registry: PromiseOrValue<string>,
-      grantImporterRole: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    pause(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    paused(overrides?: CallOverrides): Promise<BigNumber>;
-
-    proxiableUUID(overrides?: CallOverrides): Promise<BigNumber>;
-
-    renounceRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    revokeRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setNodeDisabled(
-      operatorId: PromiseOrValue<BytesLike>,
-      nodeIds: PromiseOrValue<BytesLike>[],
-      disabled: PromiseOrValue<boolean>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setNodeHosts(
-      operatorId: PromiseOrValue<BytesLike>,
-      nodeIds: PromiseOrValue<BytesLike>[],
-      hosts: PromiseOrValue<string>[],
-      regions: PromiseOrValue<string>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setNodePriceImpl(
-      nodeId: PromiseOrValue<BytesLike>,
-      epochSlot: PromiseOrValue<BigNumberish>,
-      price: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setNodePrices(
-      operatorId: PromiseOrValue<BytesLike>,
-      nodeIds: PromiseOrValue<BytesLike>[],
-      prices: PromiseOrValue<BigNumberish>[],
-      slot: ArmadaSlotStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setNodeProjectImpl(
-      nodeId: PromiseOrValue<BytesLike>,
-      epochSlot: PromiseOrValue<BigNumberish>,
-      projectId: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setTest(
-      newTest: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    unpause(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    unsafeImportData(
-      nodes: ArmadaNodeStruct[],
-      topologyCreators: PromiseOrValue<string>[],
-      revokeImporterRole: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    unsafeSetPrices(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      mul: PromiseOrValue<BigNumberish>,
-      div: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    unsafeSetRegistry(
-      registry: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    upgradeToAndCall(
-      newImplementation: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    DEFAULT_ADMIN_ROLE(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    IMPORTER_ROLE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    TOPOLOGY_CREATOR_ROLE(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    advanceNodeEpochImpl(
-      nodeId: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    createNodes(
-      operatorId: PromiseOrValue<BytesLike>,
-      topology: PromiseOrValue<boolean>,
-      nodes: ArmadaCreateNodeDataStruct[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    deleteNodes(
-      operatorId: PromiseOrValue<BytesLike>,
-      topology: PromiseOrValue<boolean>,
-      nodeIds: PromiseOrValue<BytesLike>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    getNode(
-      nodeId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getNodeCount(
-      operatorIdOrZero: PromiseOrValue<BytesLike>,
-      topology: PromiseOrValue<boolean>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getNodes(
-      operatorIdOrZero: PromiseOrValue<BytesLike>,
-      topology: PromiseOrValue<boolean>,
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getRegistry(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getRoleAdmin(
-      role: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getTest(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    grantRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    hasRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    initialize(
-      admins: PromiseOrValue<string>[],
-      registry: PromiseOrValue<string>,
-      grantImporterRole: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    pause(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    paused(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    proxiableUUID(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    renounceRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    revokeRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setNodeDisabled(
-      operatorId: PromiseOrValue<BytesLike>,
-      nodeIds: PromiseOrValue<BytesLike>[],
-      disabled: PromiseOrValue<boolean>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setNodeHosts(
-      operatorId: PromiseOrValue<BytesLike>,
-      nodeIds: PromiseOrValue<BytesLike>[],
-      hosts: PromiseOrValue<string>[],
-      regions: PromiseOrValue<string>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setNodePriceImpl(
-      nodeId: PromiseOrValue<BytesLike>,
-      epochSlot: PromiseOrValue<BigNumberish>,
-      price: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setNodePrices(
-      operatorId: PromiseOrValue<BytesLike>,
-      nodeIds: PromiseOrValue<BytesLike>[],
-      prices: PromiseOrValue<BigNumberish>[],
-      slot: ArmadaSlotStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setNodeProjectImpl(
-      nodeId: PromiseOrValue<BytesLike>,
-      epochSlot: PromiseOrValue<BigNumberish>,
-      projectId: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setTest(
-      newTest: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    unpause(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    unsafeImportData(
-      nodes: ArmadaNodeStruct[],
-      topologyCreators: PromiseOrValue<string>[],
-      revokeImporterRole: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    unsafeSetPrices(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      mul: PromiseOrValue<BigNumberish>,
-      div: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    unsafeSetRegistry(
-      registry: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    upgradeToAndCall(
-      newImplementation: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
+    "AdminChanged(address,address)": TypedContractEvent<
+      AdminChangedEvent.InputTuple,
+      AdminChangedEvent.OutputTuple,
+      AdminChangedEvent.OutputObject
+    >;
+    AdminChanged: TypedContractEvent<
+      AdminChangedEvent.InputTuple,
+      AdminChangedEvent.OutputTuple,
+      AdminChangedEvent.OutputObject
+    >;
+
+    "BeaconUpgraded(address)": TypedContractEvent<
+      BeaconUpgradedEvent.InputTuple,
+      BeaconUpgradedEvent.OutputTuple,
+      BeaconUpgradedEvent.OutputObject
+    >;
+    BeaconUpgraded: TypedContractEvent<
+      BeaconUpgradedEvent.InputTuple,
+      BeaconUpgradedEvent.OutputTuple,
+      BeaconUpgradedEvent.OutputObject
+    >;
+
+    "Initialized(uint8)": TypedContractEvent<
+      InitializedEvent.InputTuple,
+      InitializedEvent.OutputTuple,
+      InitializedEvent.OutputObject
+    >;
+    Initialized: TypedContractEvent<
+      InitializedEvent.InputTuple,
+      InitializedEvent.OutputTuple,
+      InitializedEvent.OutputObject
+    >;
+
+    "NodeCreated(bytes32,bytes32,string,string,bool,bool,uint256)": TypedContractEvent<
+      NodeCreatedEvent.InputTuple,
+      NodeCreatedEvent.OutputTuple,
+      NodeCreatedEvent.OutputObject
+    >;
+    NodeCreated: TypedContractEvent<
+      NodeCreatedEvent.InputTuple,
+      NodeCreatedEvent.OutputTuple,
+      NodeCreatedEvent.OutputObject
+    >;
+
+    "NodeDeleted(bytes32,bytes32,string,string,bool,bool,uint256)": TypedContractEvent<
+      NodeDeletedEvent.InputTuple,
+      NodeDeletedEvent.OutputTuple,
+      NodeDeletedEvent.OutputObject
+    >;
+    NodeDeleted: TypedContractEvent<
+      NodeDeletedEvent.InputTuple,
+      NodeDeletedEvent.OutputTuple,
+      NodeDeletedEvent.OutputObject
+    >;
+
+    "NodeDisabledChanged(bytes32,bool,bool)": TypedContractEvent<
+      NodeDisabledChangedEvent.InputTuple,
+      NodeDisabledChangedEvent.OutputTuple,
+      NodeDisabledChangedEvent.OutputObject
+    >;
+    NodeDisabledChanged: TypedContractEvent<
+      NodeDisabledChangedEvent.InputTuple,
+      NodeDisabledChangedEvent.OutputTuple,
+      NodeDisabledChangedEvent.OutputObject
+    >;
+
+    "NodeHostChanged(bytes32,string,string,string,string)": TypedContractEvent<
+      NodeHostChangedEvent.InputTuple,
+      NodeHostChangedEvent.OutputTuple,
+      NodeHostChangedEvent.OutputObject
+    >;
+    NodeHostChanged: TypedContractEvent<
+      NodeHostChangedEvent.InputTuple,
+      NodeHostChangedEvent.OutputTuple,
+      NodeHostChangedEvent.OutputObject
+    >;
+
+    "NodePriceChanged(bytes32,uint256,uint256,uint256,tuple)": TypedContractEvent<
+      NodePriceChangedEvent.InputTuple,
+      NodePriceChangedEvent.OutputTuple,
+      NodePriceChangedEvent.OutputObject
+    >;
+    NodePriceChanged: TypedContractEvent<
+      NodePriceChangedEvent.InputTuple,
+      NodePriceChangedEvent.OutputTuple,
+      NodePriceChangedEvent.OutputObject
+    >;
+
+    "Paused(address)": TypedContractEvent<
+      PausedEvent.InputTuple,
+      PausedEvent.OutputTuple,
+      PausedEvent.OutputObject
+    >;
+    Paused: TypedContractEvent<
+      PausedEvent.InputTuple,
+      PausedEvent.OutputTuple,
+      PausedEvent.OutputObject
+    >;
+
+    "RoleAdminChanged(bytes32,bytes32,bytes32)": TypedContractEvent<
+      RoleAdminChangedEvent.InputTuple,
+      RoleAdminChangedEvent.OutputTuple,
+      RoleAdminChangedEvent.OutputObject
+    >;
+    RoleAdminChanged: TypedContractEvent<
+      RoleAdminChangedEvent.InputTuple,
+      RoleAdminChangedEvent.OutputTuple,
+      RoleAdminChangedEvent.OutputObject
+    >;
+
+    "RoleGranted(bytes32,address,address)": TypedContractEvent<
+      RoleGrantedEvent.InputTuple,
+      RoleGrantedEvent.OutputTuple,
+      RoleGrantedEvent.OutputObject
+    >;
+    RoleGranted: TypedContractEvent<
+      RoleGrantedEvent.InputTuple,
+      RoleGrantedEvent.OutputTuple,
+      RoleGrantedEvent.OutputObject
+    >;
+
+    "RoleRevoked(bytes32,address,address)": TypedContractEvent<
+      RoleRevokedEvent.InputTuple,
+      RoleRevokedEvent.OutputTuple,
+      RoleRevokedEvent.OutputObject
+    >;
+    RoleRevoked: TypedContractEvent<
+      RoleRevokedEvent.InputTuple,
+      RoleRevokedEvent.OutputTuple,
+      RoleRevokedEvent.OutputObject
+    >;
+
+    "Unpaused(address)": TypedContractEvent<
+      UnpausedEvent.InputTuple,
+      UnpausedEvent.OutputTuple,
+      UnpausedEvent.OutputObject
+    >;
+    Unpaused: TypedContractEvent<
+      UnpausedEvent.InputTuple,
+      UnpausedEvent.OutputTuple,
+      UnpausedEvent.OutputObject
+    >;
+
+    "Upgraded(address)": TypedContractEvent<
+      UpgradedEvent.InputTuple,
+      UpgradedEvent.OutputTuple,
+      UpgradedEvent.OutputObject
+    >;
+    Upgraded: TypedContractEvent<
+      UpgradedEvent.InputTuple,
+      UpgradedEvent.OutputTuple,
+      UpgradedEvent.OutputObject
+    >;
   };
 }

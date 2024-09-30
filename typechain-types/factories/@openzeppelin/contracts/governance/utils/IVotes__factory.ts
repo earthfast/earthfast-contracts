@@ -2,8 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { Contract, Signer, utils } from "ethers";
-import type { Provider } from "@ethersproject/providers";
+import { Contract, Interface, type ContractRunner } from "ethers";
 import type {
   IVotes,
   IVotesInterface,
@@ -192,14 +191,14 @@ const _abi = [
     stateMutability: "view",
     type: "function",
   },
-];
+] as const;
 
 export class IVotes__factory {
   static readonly abi = _abi;
   static createInterface(): IVotesInterface {
-    return new utils.Interface(_abi) as IVotesInterface;
+    return new Interface(_abi) as IVotesInterface;
   }
-  static connect(address: string, signerOrProvider: Signer | Provider): IVotes {
-    return new Contract(address, _abi, signerOrProvider) as IVotes;
+  static connect(address: string, runner?: ContractRunner | null): IVotes {
+    return new Contract(address, _abi, runner) as unknown as IVotes;
   }
 }

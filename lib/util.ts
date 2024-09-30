@@ -2,11 +2,11 @@ import { promises as fs } from "fs";
 import { TransactionReceipt, TransactionResponse } from "@ethersproject/abstract-provider";
 import { TypedDataSigner } from "@ethersproject/abstract-signer";
 import { Zero } from "@ethersproject/constants";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import * as ethutil from "ethereumjs-util";
 import * as ethwallet from "ethereumjs-wallet";
 import { BigNumber, BigNumberish, Contract, ethers, TypedDataField } from "ethers";
-import { formatUnits, Interface, parseUnits, Result } from "ethers/lib/utils";
+import { formatUnits, Interface, parseUnits, Result } from "ethers";
 import { HardhatRuntimeEnvironment, Libraries } from "hardhat/types";
 import { keyIn } from "readline-sync";
 
@@ -41,11 +41,12 @@ export async function approve(
   const chainId = await hre.getChainId();
   const deadline = Math.floor(Date.now() / 1000) + 3600;
   const nonce = await token.nonces(owner);
-  const domain = { name: await token.name(), version: "1", chainId, verifyingContract: token.address };
+  const tokenAddress = await token.getAddress();
+  const domain = { name: await token.name(), version: "1", chainId, verifyingContract: tokenAddress };
   const values = { owner, spender, value, nonce, deadline };
   const signer = await hre.ethers.getSigner(owner);
-  const signature = await (signer as unknown as TypedDataSigner)._signTypedData(domain, Permit, values);
-  const sig = ethers.utils.splitSignature(signature);
+  const signature = await (signer as unknown as TypedDataSigner).signTypedData(domain, Permit, values);
+  const sig = ethers.Signature.from(signature);
   return [deadline, sig.v, sig.r, sig.s];
 }
 

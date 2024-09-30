@@ -1,12 +1,7 @@
-import "@nomiclabs/hardhat-ethers";
-import "@nomiclabs/hardhat-etherscan";
-import "@nomiclabs/hardhat-waffle";
-import "@openzeppelin/hardhat-defender";
+import "@nomicfoundation/hardhat-toolbox";
+import "@openzeppelin/defender-sdk";
 import "@openzeppelin/hardhat-upgrades";
-import "@typechain/hardhat";
 import "hardhat-deploy";
-import "hardhat-gas-reporter";
-import "solidity-coverage";
 
 import "./tasks/deploy";
 import "./tasks/node";

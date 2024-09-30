@@ -2,10 +2,10 @@ import { AddressZero, HashZero } from "@ethersproject/constants";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
-import { Result } from "ethers/lib/utils";
+import { Result } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, newId } from "../lib/test";
-import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
+import { approve, parseTokens, parseUSDC, signers, getAddress } from '../lib/util';
 import { ArmadaCreateNodeDataStruct, ArmadaNodes, ArmadaNodeStruct } from "../typechain-types/contracts/ArmadaNodes";
 import { ArmadaOperators, ArmadaOperatorStruct } from "../typechain-types/contracts/ArmadaOperators";
 import { ArmadaCreateProjectDataStruct, ArmadaProjects } from "../typechain-types/contracts/ArmadaProjects";
@@ -30,9 +30,25 @@ describe("ArmadaNodes", function () {
 
   let snapshotId: string;
 
+  // store contract addresses after awaiting fixture
+  let usdcAddress: string;
+  let tokenAddress: string;
+  let nodesAddress: string;
+  let operatorsAddress: string;
+  let registryAddress: string;
+  let projectsAddress: string;
+
   async function fixture() {
     ({ admin, deployer, operator, project } = await signers(hre));
     ({ usdc, token, nodes, operators, registry, projects } = await fixtures(hre));
+  
+    // set contract addresses as string
+    usdcAddress = await usdc.getAddress();
+    tokenAddress = await token.getAddress();
+    nodesAddress = await nodes.getAddress();
+    operatorsAddress = await operators.getAddress();
+    registryAddress = await registry.getAddress();
+    projectsAddress = await projects.getAddress();
   }
 
   before(async function () {
@@ -48,9 +64,10 @@ describe("ArmadaNodes", function () {
   it("Should disallow empty admins", async function () {
     const nodesImplFactory = await hre.ethers.getContractFactory("ArmadaNodesImpl");
     const nodesImpl = await nodesImplFactory.deploy();
+    const nodesImplAddress = await nodesImpl.getAddress();
 
-    const nodesFactory = await hre.ethers.getContractFactory("ArmadaNodes", { libraries: { ArmadaNodesImpl: nodesImpl.address } });
-    const nodesArgs = [[], registry.address, true];
+    const nodesFactory = await hre.ethers.getContractFactory("ArmadaNodes", { libraries: { ArmadaNodesImpl: nodesImplAddress } });
+    const nodesArgs = [[], registryAddress, true];
     await expect(hre.upgrades.deployProxy(nodesFactory, nodesArgs, { kind: "uups" })).to.be.revertedWith("no admins");
   });
 
@@ -79,12 +96,12 @@ describe("ArmadaNodes", function () {
   it("Should create/delete nodes", async function () {
     const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
     const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
-    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
     const createOperator2 = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
     const [operatorId2] = await expectEvent(createOperator2, operators, "OperatorCreated");
-    const operatorsPermit2 = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit2 = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId2, parseTokens("100"), ...operatorsPermit2)).to.be.ok;
 
     const price = parseUSDC("1");
@@ -176,7 +193,7 @@ describe("ArmadaNodes", function () {
   it("Should require topolgy nodes have a price of 0", async function () {
     const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
     const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
-    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
     const node3: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h1", region: "r1", price: parseUSDC("1") };
@@ -191,11 +208,11 @@ describe("ArmadaNodes", function () {
 
   it("Should check if a node is reserved before deleting or setting host", async function () {
     // Allows calls from operator smart contract
-    const operatorsSigner = await hre.ethers.getSigner(operators.address);
+    const operatorsSigner = await hre.ethers.getSigner(operatorsAddress);
 
     const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
     const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
-    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
     const node3: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseUSDC("1") };
@@ -211,7 +228,7 @@ describe("ArmadaNodes", function () {
     const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));
+    const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
     expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
 
     // Set last or next project of node to have a project to simulate "node is reserved" state
@@ -228,7 +245,7 @@ describe("ArmadaNodes", function () {
   it("Should allow importer role to unsafeImportData", async function () {
     const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
     const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
-    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
     const price = parseUSDC("1");
@@ -254,6 +271,8 @@ describe("ArmadaNodes", function () {
     const nodesToImport = preImportNodes.map((n: ArmadaNodeStruct) => ({ ...n, id: newId() }));
 
     // Add the new nodes data using import
+    // TODO: unsafeImportData is failing here
+    console.log("operatorId: ", operatorId, "operator.address: ", operator.address);
     expect(await nodes.connect(deployer).unsafeImportData(nodesToImport, [operator.address], false)).to.be.ok;
 
     const postImportNodes = await nodes.getNodes(operatorId, false, 0, 10);
@@ -273,7 +292,7 @@ describe("ArmadaNodes", function () {
     // Create operator
     const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
     const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
-    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
     // Create node
@@ -294,12 +313,12 @@ describe("ArmadaNodes", function () {
   it("Should get nodes in range", async function () {
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
     const [operatorId1] = await expectEvent(createOperator1, operators, "OperatorCreated");
-    const operatorsPermit1 = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit1 = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId1, parseTokens("100"), ...operatorsPermit1)).to.be.ok;
 
     const createOperator2 = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
     const [operatorId2] = await expectEvent(createOperator2, operators, "OperatorCreated");
-    const operatorsPermit2 = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit2 = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId2, parseTokens("100"), ...operatorsPermit2)).to.be.ok;
     expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
 
@@ -413,13 +432,13 @@ describe("ArmadaNodes", function () {
   it("Should change node host", async function () {
     const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
     const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
-    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
     // create another
     const createOperator2 = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
     const [operatorId2] = await expectEvent(createOperator2, operators, "OperatorCreated");
-    const operatorsPermit2 = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit2 = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId2, parseTokens("100"), ...operatorsPermit2)).to.be.ok;
 
     const node: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseUSDC("1") };
@@ -449,17 +468,17 @@ describe("ArmadaNodes", function () {
 
   it("Should change node price", async function () {
     // allows calls from smart contract
-    const operatorsSigner = await hre.ethers.getSigner(operators.address);
+    const operatorsSigner = await hre.ethers.getSigner(operatorsAddress);
 
     const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
     const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
-    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
     // create another
     const createOperator2 = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
     const [operatorId2] = await expectEvent(createOperator2, operators, "OperatorCreated");
-    const operatorsPermit2 = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit2 = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId2, parseTokens("100"), ...operatorsPermit2)).to.be.ok;
 
     // create a content node
@@ -483,7 +502,7 @@ describe("ArmadaNodes", function () {
     const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));
+    const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
     expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
 
     // check inputs
@@ -509,11 +528,11 @@ describe("ArmadaNodes", function () {
 
   it("Should keep reservation if has enough escrow when raising price", async function () {
     // allow calls from smart contract
-    const operatorsSigner = await hre.ethers.getSigner(operators.address);
+    const operatorsSigner = await hre.ethers.getSigner(operatorsAddress);
 
     const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
     const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
-    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
     const node: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseUSDC("0") };
@@ -528,7 +547,7 @@ describe("ArmadaNodes", function () {
     const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));
+    const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
     expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
 
     await nodes.connect(operatorsSigner).setNodeProjectImpl(nodeId, 1, projectId1, { gasPrice: 0 });
@@ -538,13 +557,13 @@ describe("ArmadaNodes", function () {
   it("Should change node disabled status", async function () {
     const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
     const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
-    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
     // create another
     const createOperator2 = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o1", "e1"));
     const [operatorId2] = await expectEvent(createOperator2, operators, "OperatorCreated");
-    const operatorsPermit2 = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit2 = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId2, parseTokens("100"), ...operatorsPermit2)).to.be.ok;
 
     const node: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseUSDC("1") };
@@ -579,20 +598,21 @@ describe("ArmadaNodes", function () {
 
   it("Should allow admin to use unsafeSetRegistry", async function () {
     // check current registry
-    expect(await nodes.getRegistry()).to.equal(registry.address);
+    expect(await nodes.getRegistry()).to.equal(registryAddress);
 
     // deploy new registry
     const registryFactory = await hre.ethers.getContractFactory("ArmadaRegistry");
     const newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });
+    const newRegistryAddress = await newRegistry.getAddress();
 
     // unsafeSetRegistry
-    expect(await nodes.connect(admin).unsafeSetRegistry(newRegistry.address)).to.be.ok;
+    expect(await nodes.connect(admin).unsafeSetRegistry(newRegistryAddress)).to.be.ok;
 
     // expect non admins to revert
-    await expect(nodes.connect(operator).unsafeSetRegistry(newRegistry.address)).to.be.revertedWith("not admin");
+    await expect(nodes.connect(operator).unsafeSetRegistry(newRegistryAddress)).to.be.revertedWith("not admin");
 
     // check new registry
-    expect(await nodes.getRegistry()).to.equal(newRegistry.address);
+    expect(await nodes.getRegistry()).to.equal(newRegistryAddress);
   });
 
   it("Should disallow impl calls from unauthorized senders", async function () {
@@ -613,7 +633,7 @@ describe("ArmadaNodes", function () {
 
   it("Should check for valid inputs within the set price, set node, and advance epoch calls", async function () {
     // allows calls from smart contract
-    const operatorsSigner = await hre.ethers.getSigner(operators.address);
+    const operatorsSigner = await hre.ethers.getSigner(operatorsAddress);
 
     // create operator
     const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
@@ -635,7 +655,7 @@ describe("ArmadaNodes", function () {
     const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));
+    const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
     expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
 
     // ensure the node id is valid
@@ -652,9 +672,10 @@ describe("ArmadaNodes", function () {
   it("Should allow initialization without granting importer role", async function () {
     const nodesImplFactory = await hre.ethers.getContractFactory("ArmadaNodesImpl");
     const nodesImpl = <ArmadaNodes>await nodesImplFactory.deploy();
+    const nodesImplAddress = await nodesImpl.getAddress();
 
-    const nodesFactory = await hre.ethers.getContractFactory("ArmadaNodes", { libraries: { ArmadaNodesImpl: nodesImpl.address } });
-    const nodesArgs = [[admin.address], registry.address, false];
+    const nodesFactory = await hre.ethers.getContractFactory("ArmadaNodes", { libraries: { ArmadaNodesImpl: nodesImplAddress } });
+    const nodesArgs = [[admin.address], registryAddress, false];
     const newNodes = <ArmadaNodes>await hre.upgrades.deployProxy(nodesFactory, nodesArgs, { kind: "uups" });
     expect(newNodes).to.be.ok;
 
@@ -665,9 +686,10 @@ describe("ArmadaNodes", function () {
   it("Should prevent zero address admins", async function () {
     const nodesImplFactory = await hre.ethers.getContractFactory("ArmadaNodesImpl");
     const nodesImpl = <ArmadaNodes>await nodesImplFactory.deploy();
+    const nodesImplAddress = await nodesImpl.getAddress();
 
-    const nodesFactory = await hre.ethers.getContractFactory("ArmadaNodes", { libraries: { ArmadaNodesImpl: nodesImpl.address } });
-    const nodesArgs = [[AddressZero], registry.address, false];
+    const nodesFactory = await hre.ethers.getContractFactory("ArmadaNodes", { libraries: { ArmadaNodesImpl: nodesImplAddress } });
+    const nodesArgs = [[AddressZero], registryAddress, false];
     await expect(hre.upgrades.deployProxy(nodesFactory, nodesArgs, { kind: "uups" })).to.be.revertedWith("zero admin");
   });
 });
