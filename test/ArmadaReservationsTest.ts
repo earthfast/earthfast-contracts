@@ -33,6 +33,15 @@ describe("ArmadaReservations", function () {
   let projects: ArmadaProjects;
   let reservations: ArmadaReservations;
 
+  let usdcAddress: string;
+  let tokenAddress: string;
+  let registryAddress: string;
+  let billingAddress: string;
+  let nodesAddress: string;
+  let operatorsAddress: string;
+  let projectsAddress: string;
+  let reservationsAddress: string;
+
   let nodeId0: string;
   let nodeId1: string;
   let nodeId2: string;
@@ -42,16 +51,28 @@ describe("ArmadaReservations", function () {
   const price = parseUSDC("1");
 
   let pricePerSec: BigNumber;
-  let epochLength: number;
+  let epochLength: BigNumber;
   let snapshotId: string;
 
+  // // Returns the number of seconds remaining in the current epoch as of the next block to be mined
+  // async function epochRemainder(): Promise<number> {
+  //   const block = await hre.ethers.provider.getBlock("latest");
+  //   const start = (await registry.getLastEpochStart()).toNumber();
+  //   const length = (await registry.getLastEpochLength()).toNumber();
+  //   const remaining = start + length - (block.timestamp + 1);
+  //   expect(remaining).to.be.greaterThan(1);
+  //   expect(remaining).to.be.lessThanOrEqual(epochLength);
+  //   return remaining;
+  // }
+
   // Returns the number of seconds remaining in the current epoch as of the next block to be mined
-  async function epochRemainder(): Promise<number> {
+  async function epochRemainder(): Promise<BigNumber> {
     const block = await hre.ethers.provider.getBlock("latest");
-    const start = (await registry.getLastEpochStart()).toNumber();
-    const length = (await registry.getLastEpochLength()).toNumber();
-    const remaining = start + length - (block.timestamp + 1);
-    expect(remaining).to.be.greaterThan(1);
+    const blockTimestamp = BigInt(block.timestamp);
+    const start = await registry.getLastEpochStart();
+    const length = await registry.getLastEpochLength();
+    const remaining = start + length - (blockTimestamp + BigInt(1));
+    expect(remaining).to.be.greaterThan(BigInt(1));
     expect(remaining).to.be.lessThanOrEqual(epochLength);
     return remaining;
   }
@@ -60,14 +81,23 @@ describe("ArmadaReservations", function () {
     ({ admin, operator, project, deployer } = await signers(hre));
     ({ usdc, token, billing, nodes, operators, projects, reservations, registry } = await fixtures(hre));
 
-    epochLength = (await registry.getLastEpochLength()).toNumber();
-    pricePerSec = price.div(epochLength); // Node price per second
+    usdcAddress = await usdc.getAddress();
+    tokenAddress = await token.getAddress();
+    registryAddress = await registry.getAddress();
+    billingAddress = await billing.getAddress();
+    nodesAddress = await nodes.getAddress();
+    operatorsAddress = await operators.getAddress();
+    projectsAddress = await projects.getAddress();
+    reservationsAddress = await reservations.getAddress();
+
+    epochLength = await registry.getLastEpochLength();
+    pricePerSec = price / epochLength; // Node price per second
 
     // Create operator
     const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     [operatorId1] = await expectEvent(createOperator1, operators, "OperatorCreated");
-    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId1, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
     // Create topology node
@@ -89,24 +119,26 @@ describe("ArmadaReservations", function () {
     const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));
+    const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
     expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
 
     // Jump to the next epoch start and mark the previous epoch as reconciled,
     // and force align epoch start to a multiple of epochLength for convenience.
     // await mine(hre, 100 - ((await hre.ethers.provider.getBlock("latest")).timestamp % 100) - 1);
     let block = await hre.ethers.provider.getBlock("latest");
-    let delta = epochLength - (block.timestamp % epochLength); // 1..100
-    if (delta < 2) delta += epochLength; // Fit unsafeSetLastEpochStart()
-    console.log(`    > Block timestamp ${block.timestamp} + ${delta} => ${block.timestamp + delta}, mine ${delta - 2}`);
-    await mineWith(hre, async () => await registry.connect(admin).unsafeSetLastEpochStart(block.timestamp + delta));
-    await mine(hre, delta - 2);
+    let blockTimestamp = BigInt(block.timestamp);
+    let delta = epochLength - (blockTimestamp % epochLength); // 1..100
+    if (delta < BigInt(2)) delta += epochLength; // Fit unsafeSetLastEpochStart()
+    console.log(`    > Block timestamp ${blockTimestamp} + ${delta} => ${blockTimestamp + delta}, mine ${delta - BigInt(2)}`);
+    await mineWith(hre, async () => await registry.connect(admin).unsafeSetLastEpochStart(blockTimestamp + delta));
+    await mine(hre, delta - BigInt(2));
 
     block = await hre.ethers.provider.getBlock("latest");
+    blockTimestamp = BigInt(block.timestamp);
     delta = await epochRemainder();
-    expect(block.timestamp % epochLength).to.be.equal(99);
-    expect(delta).to.be.equal(100);
-    console.log(`    > Block timestamp ${block.timestamp}, epoch start sec ${await registry.getLastEpochStart()}`);
+    expect(blockTimestamp % epochLength).to.be.equal(BigInt(99));
+    expect(delta).to.be.equal(BigInt(100));
+    console.log(`    > Block timestamp ${blockTimestamp}, epoch start sec ${await registry.getLastEpochStart()}`);
   }
 
   before(async function () {
@@ -127,19 +159,19 @@ describe("ArmadaReservations", function () {
 
   it("Should disallow empty admins", async function () {
     const reservationsFactory = await hre.ethers.getContractFactory("ArmadaReservations");
-    const reservationsArgs = [[], registry.address, true];
+    const reservationsArgs = [[], registryAddress, true];
     await expect(hre.upgrades.deployProxy(reservationsFactory, reservationsArgs, { kind: "uups" })).to.be.revertedWith("no admins");
   });
 
   it("Should disallow zero admin", async function () {
     const reservationsFactory = await hre.ethers.getContractFactory("ArmadaReservations");
-    const reservationsArgs = [[AddressZero], registry.address, true];
+    const reservationsArgs = [[AddressZero], registryAddress, true];
     await expect(hre.upgrades.deployProxy(reservationsFactory, reservationsArgs, { kind: "uups" })).to.be.revertedWith("zero admin");
   });
 
   it("Should not grant importer role", async function () {
     const reservationsFactory = await hre.ethers.getContractFactory("ArmadaReservations");
-    const reservationsArgs = [[admin.address], registry.address, false];
+    const reservationsArgs = [[admin.address], registryAddress, false];
     expect(await hre.upgrades.deployProxy(reservationsFactory, reservationsArgs, { kind: "uups" })).to.be.ok;
   });
 
@@ -154,8 +186,8 @@ describe("ArmadaReservations", function () {
     await expect(reservations.connect(operator).createReservations(projectId1, [nodeId1], [price], { last: false, next: true })).to.be.revertedWith("not project owner");
     await expect(reservations.connect(project).createReservations(projectId1, [nodeId1], [price], { last: false, next: false })).to.be.revertedWith("no slot");
     await expect(reservations.connect(project).createReservations(projectId1, [nodeId1], [price, price], { last: false, next: true })).to.be.revertedWith("length mismatch");
-    await expect(reservations.connect(project).createReservations(projectId1, [nodeId1], [price.div(2)], { last: true, next: false })).to.be.revertedWith("price mismatch");
-    await expect(reservations.connect(project).createReservations(projectId1, [nodeId1], [price.div(2)], { last: false, next: true })).to.be.revertedWith("price mismatch");
+    await expect(reservations.connect(project).createReservations(projectId1, [nodeId1], [price / BigInt(2)], { last: true, next: false })).to.be.revertedWith("price mismatch");
+    await expect(reservations.connect(project).createReservations(projectId1, [nodeId1], [price / BigInt(2)], { last: false, next: true })).to.be.revertedWith("price mismatch");
     expect(await reservations.connect(project).createReservations(projectId1, [nodeId1], [price], { last: false, next: true })).to.be.ok;
     expect(await reservations.connect(project).createReservations(projectId1, [nodeId2], [price], { last: true, next: false })).to.be.ok;
     await expect(reservations.connect(project).createReservations(projectId1, [nodeId1], [price], { last: false, next: true })).to.be.revertedWith("node reserved");
@@ -169,26 +201,26 @@ describe("ArmadaReservations", function () {
 
   it("Should reserve non-spot nodes and immediately manually release them", async function () {
     expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: false, next: true })).to.be.ok;
-    expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(2));
+    expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(2));
     expect(await reservations.connect(project).deleteReservations(projectId1, [nodeId1, nodeId2], { last: false, next: true })).to.be.ok;
-    expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(0));
+    expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(0));
   });
 
   it("Should reserve spot nodes and immediately manually release them if admin", async function () {
     expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok;
-    expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(2));
+    expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(2));
     await expect(reservations.connect(project).deleteReservations(projectId1, [nodeId1, nodeId2], { last: true, next: false })).to.be.revertedWith("not admin");
-    expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(2));
+    expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(2));
     expect(await reservations.connect(admin).deleteReservations(projectId1, [nodeId1, nodeId2], { last: true, next: false })).to.be.ok;
-    expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(0));
+    expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(0));
   });
 
   it("Should restore this epoch price to next epoch price if releasing node as admin", async function () {
     expect(await nodes.connect(operator).setNodePrices(operatorId1, [nodeId1], [price], { last: true, next: false })).to.be.ok;
-    expect(await nodes.connect(operator).setNodePrices(operatorId1, [nodeId1], [price.mul(2)], { last: false, next: true })).to.be.ok;
+    expect(await nodes.connect(operator).setNodePrices(operatorId1, [nodeId1], [price * BigInt(2)], { last: false, next: true })).to.be.ok;
 
-    const proratedPrice1 = pricePerSec.mul(await epochRemainder());
-    expect(proratedPrice1.lt(price));
+    const proratedPrice1 = pricePerSec * (await epochRemainder());
+    expect(proratedPrice1 < price);
     expect(await reservations.connect(project).createReservations(projectId1, [nodeId1], [price], { last: true, next: false })).to.be.ok;
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice1);
     expect(await reservations.connect(admin).deleteReservations(projectId1, [nodeId1], { last: true, next: false })).to.be.ok;
@@ -199,9 +231,9 @@ describe("ArmadaReservations", function () {
     expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
     expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
 
-    const proratedPrice2 = pricePerSec.mul(2).mul(await epochRemainder());
-    expect(proratedPrice2.gt(price));
-    expect(await reservations.connect(project).createReservations(projectId1, [nodeId1], [price.mul(2)], { last: true, next: false })).to.be.ok;
+    const proratedPrice2 = pricePerSec * BigInt(2) * (await epochRemainder());
+    expect(proratedPrice2 > price);
+    expect(await reservations.connect(project).createReservations(projectId1, [nodeId1], [price * BigInt(2)], { last: true, next: false })).to.be.ok;
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice2);
   });
 
@@ -327,16 +359,17 @@ describe("ArmadaReservations", function () {
   // allow admin to unsafeSetRegistry
   it("Should allow admin to update registry address in projects", async () => {
     // check old registry
-    expect(await reservations.getRegistry()).to.equal(registry.address);
+    expect(await reservations.getRegistry()).to.equal(registryAddress);
 
     // create new registry
     const registryFactory = await hre.ethers.getContractFactory("ArmadaRegistry");
     const newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });
+    const newRegistryAddress = await newRegistry.getAddress();
 
-    expect(await reservations.connect(admin).unsafeSetRegistry(newRegistry.address)).to.be.ok;
+    expect(await reservations.connect(admin).unsafeSetRegistry(newRegistryAddress)).to.be.ok;
 
     // check new registry
-    expect(await reservations.getRegistry()).to.equal(newRegistry.address);
+    expect(await reservations.getRegistry()).to.equal(newRegistryAddress);
   });
 
   it("Should allow admin to pause and unpause", async function () {

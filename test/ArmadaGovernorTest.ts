@@ -25,11 +25,19 @@ describe("ArmadaGovernor", function () {
   let governor: ArmadaGovernor;
   let timelock: ArmadaTimelock;
 
+  let tokenAddress: string;
+  let governorAddress: string;
+  let timelockAddress: string;
+
   let snapshotId: string;
 
   async function fixture() {
     ({ admin, deployer, operator, project } = await signers(hre));
     ({ token, governor, timelock } = await fixtures(hre));
+
+    tokenAddress = await token.getAddress();
+    governorAddress = await governor.getAddress();
+    timelockAddress = await timelock.getAddress();
   }
 
   before(async function () {
@@ -52,7 +60,7 @@ describe("ArmadaGovernor", function () {
 
   it("Should allow zero admin", async function () {
     const factory = await hre.ethers.getContractFactory("ArmadaGovernor");
-    const governor = <ArmadaGovernor>await factory.deploy(AddressZero, token.address, timelock.address, 0, 25, 0, 51);
+    const governor = <ArmadaGovernor>await factory.deploy(AddressZero, tokenAddress, timelockAddress, 0, 25, 0, 51);
     expect(await governor.hasRole(governor.DEFAULT_ADMIN_ROLE(), deployer.address)).to.be.false;
   });
 
@@ -74,12 +82,12 @@ describe("ArmadaGovernor", function () {
 
     // send governance some erc20 tokens and eth to fill up governance treasury
     // timelock in this case holds the governance treasury
-    expect(await token.connect(admin).transfer(timelock.address, parseTokens("100"))).to.be.ok;
-    expect(await admin.sendTransaction({ to: timelock.address, value: parseEther("1.0") })).to.be.ok;
+    expect(await token.connect(admin).transfer(timelockAddress, parseTokens("100"))).to.be.ok;
+    expect(await admin.sendTransaction({ to: timelockAddress, value: parseEther("1.0") })).to.be.ok;
 
     // check governance treasury balance
-    expect(await token.balanceOf(timelock.address)).to.eq(parseTokens("100"));
-    expect(await hre.ethers.provider.getBalance(timelock.address)).to.eq(parseEther("1.0"));
+    expect(await token.balanceOf(timelockAddress)).to.eq(parseTokens("100"));
+    expect(await hre.ethers.provider.getBalance(timelockAddress)).to.eq(parseEther("1.0"));
 
     // send voter some erc20 tokens and eth
     expect(await token.connect(admin).mint(voter.address, parseTokens("100"))).to.be.ok;
@@ -98,7 +106,7 @@ describe("ArmadaGovernor", function () {
     expect(await governor.getVotes(voter.address, latestBlock.number - 1)).to.eq(parseTokens("100"));
 
     // add proposal
-    const addProposal = await expectReceipt(governor.connect(admin).propose([token.address], [0], [transferCalldata], proposalDescription));
+    const addProposal = await expectReceipt(governor.connect(admin).propose([tokenAddress], [0], [transferCalldata], proposalDescription));
     const [proposalId] = await expectEvent(addProposal, governor, "ProposalCreated");
     expect(proposalId).to.not.be.NaN;
 
@@ -115,12 +123,12 @@ describe("ArmadaGovernor", function () {
     await mine(hre, eta.toNumber());
 
     // queue proposal
-    const queueProposal = await expectReceipt(governor.connect(admin).queue([token.address], [0], [transferCalldata], keccak256(Buffer.from(proposalDescription))));
+    const queueProposal = await expectReceipt(governor.connect(admin).queue([tokenAddress], [0], [transferCalldata], keccak256(Buffer.from(proposalDescription))));
     const queueProposalRes = await expectEvent(queueProposal, governor, "ProposalQueued");
     expect(queueProposalRes).to.shallowDeepEqual([proposalId]);
 
     // execute proposal
-    expect(await governor.connect(admin).execute([token.address], [0], [transferCalldata], keccak256(Buffer.from(proposalDescription)))).to.be.ok;
+    expect(await governor.connect(admin).execute([tokenAddress], [0], [transferCalldata], keccak256(Buffer.from(proposalDescription)))).to.be.ok;
 
     // check balance to ensure proposal went through
     expect(await token.balanceOf(team.address)).to.eq(grantAmount);
@@ -133,15 +141,15 @@ describe("ArmadaGovernor", function () {
     const description = "proposal description";
     const descriptionHash = keccak256(Buffer.from(description));
 
-    const propose = await expectReceipt(governor.connect(admin).propose([token.address], [0], [calldata], description));
+    const propose = await expectReceipt(governor.connect(admin).propose([tokenAddress], [0], [calldata], description));
     const [proposalId] = await expectEvent(propose, governor, "ProposalCreated");
     expect(proposalId).to.not.be.NaN;
 
-    await expect(governor.connect(project).cancel([token.address], [0], [calldata], descriptionHash)).to.be.revertedWith(
+    await expect(governor.connect(project).cancel([tokenAddress], [0], [calldata], descriptionHash)).to.be.revertedWith(
       `AccessControl: account ${project.address.toLowerCase()} is missing role ${await governor.DEFAULT_ADMIN_ROLE()}`
     );
 
-    const cancel = await expectReceipt(governor.connect(admin).cancel([token.address], [0], [calldata], descriptionHash));
+    const cancel = await expectReceipt(governor.connect(admin).cancel([tokenAddress], [0], [calldata], descriptionHash));
     const cancelResult = await expectEvent(cancel, governor, "ProposalCanceled");
     expect(cancelResult).to.shallowDeepEqual(proposalId);
 

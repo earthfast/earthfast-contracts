@@ -11,12 +11,14 @@ describe("ArmadaToken", function () {
   let operator: SignerWithAddress;
 
   let token: ArmadaToken;
+  let tokenAddress: string;
 
   let snapshotId: string;
 
   async function fixture() {
     ({ admin, operator } = await signers(hre));
     ({ token } = await fixtures(hre));
+    tokenAddress = await token.getAddress();
   }
 
   before(async function () {
@@ -48,11 +50,11 @@ describe("ArmadaToken", function () {
     // burn from
     const originalBal = await token.balanceOf(admin.address);
     expect(await token.connect(admin).approve(operator.address, parseTokens("100")));
-    expect(await token.allowance(admin.address, token.address));
+    expect(await token.allowance(admin.address, tokenAddress));
     expect(await token.connect(operator).burnFrom(admin.address, parseTokens("100"))).to.be.ok;
 
     const newBal = await token.connect(admin).balanceOf(admin.address);
-    expect(originalBal.sub(newBal)).to.eq(parseTokens("100"));
+    expect(originalBal - newBal).to.eq(parseTokens("100"));
   });
 
   it("Should pause/unpause ok", async function () {

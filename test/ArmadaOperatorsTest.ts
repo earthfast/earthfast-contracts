@@ -25,11 +25,23 @@ describe("ArmadaOperators", function () {
   let nodes: ArmadaNodes;
   let operators: ArmadaOperators;
 
+  let usdcAddress: string;
+  let tokenAddress: string;
+  let registryAddress: string;
+  let nodesAddress: string;
+  let operatorsAddress: string;
+
   let snapshotId: string;
 
   async function fixture() {
     ({ admin, operator, deployer } = await signers(hre));
     ({ usdc, token, registry, nodes, operators } = await fixtures(hre));
+
+    usdcAddress = await usdc.getAddress();
+    tokenAddress = await token.getAddress();
+    registryAddress = await registry.getAddress();
+    nodesAddress = await nodes.getAddress();
+    operatorsAddress = await operators.getAddress();
   }
 
   before(async function () {
@@ -45,21 +57,21 @@ describe("ArmadaOperators", function () {
   it("Should disallow empty admins", async function () {
     const stakePerNode = parseTokens("1");
     const operatorsFactory = await hre.ethers.getContractFactory("ArmadaOperators");
-    const operatorsArgs = [[], registry.address, stakePerNode, true];
+    const operatorsArgs = [[], registryAddress, stakePerNode, true];
     await expect(hre.upgrades.deployProxy(operatorsFactory, operatorsArgs, { kind: "uups" })).to.be.revertedWith("no admins");
   });
 
   it("Should disallow zero admin", async function () {
     const stakePerNode = parseTokens("1");
     const operatorsFactory = await hre.ethers.getContractFactory("ArmadaOperators");
-    const operatorsArgs = [[AddressZero], registry.address, stakePerNode, true];
+    const operatorsArgs = [[AddressZero], registryAddress, stakePerNode, true];
     await expect(hre.upgrades.deployProxy(operatorsFactory, operatorsArgs, { kind: "uups" })).to.be.revertedWith("zero admin");
   });
 
   it("Should not grant importer role", async function () {
     const stakePerNode = parseTokens("1");
     const operatorsFactory = await hre.ethers.getContractFactory("ArmadaOperators");
-    const operatorsArgs = [[admin.address], registry.address, stakePerNode, false];
+    const operatorsArgs = [[admin.address], registryAddress, stakePerNode, false];
     expect(await hre.upgrades.deployProxy(operatorsFactory, operatorsArgs, { kind: "uups" })).to.be.ok;
   });
 
@@ -69,7 +81,7 @@ describe("ArmadaOperators", function () {
     const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
 
     // Deposit stake
-    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
     // Grant creator role
@@ -203,11 +215,11 @@ describe("ArmadaOperators", function () {
     await expect(nodes.connect(operator).createNodes(o1.id, false, [n1, n2])).to.be.revertedWith("not enough stake");
 
     // Deposit stake
-    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     await expect(operators.connect(admin).depositOperatorStake(HashZero, parseTokens("100"), ...operatorsPermit)).to.be.revertedWith("unknown operator");
     expect(await operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), ...operatorsPermit)).to.be.ok;
     expect(await token.connect(admin).balanceOf(operator.address)).to.equal(parseTokens("0"));
-    expect(await token.connect(admin).balanceOf(registry.address)).to.equal(parseTokens("100"));
+    expect(await token.connect(admin).balanceOf(registryAddress)).to.equal(parseTokens("100"));
     expect((await operators.getOperator(o1.id)).stake).to.equal(parseTokens("100"));
 
     // Create content nodes
@@ -224,7 +236,7 @@ describe("ArmadaOperators", function () {
     await expect(operators.connect(operator).withdrawOperatorStake(o1.id, parseTokens("100"), operator.address)).to.be.revertedWith("not enough stake");
     expect(await operators.connect(operator).withdrawOperatorStake(o1.id, parseTokens("98"), operator.address)).to.be.ok;
     expect(await token.connect(admin).balanceOf(operator.address)).to.equal(parseTokens("98"));
-    expect(await token.connect(admin).balanceOf(registry.address)).to.equal(parseTokens("2"));
+    expect(await token.connect(admin).balanceOf(registryAddress)).to.equal(parseTokens("2"));
     expect((await operators.getOperator(o1.id)).stake).to.equal(parseTokens("2"));
     await expect(operators.connect(operator).withdrawOperatorStake(o1.id, parseTokens("2"), operator.address)).to.be.revertedWith("not enough stake");
 
@@ -246,7 +258,7 @@ describe("ArmadaOperators", function () {
     // Withdraw stake
     expect(await operators.connect(operator).withdrawOperatorStake(o1.id, parseTokens("2"), operator.address)).to.be.ok;
     expect(await token.connect(admin).balanceOf(operator.address)).to.equal(parseTokens("100"));
-    expect(await token.connect(admin).balanceOf(registry.address)).to.equal(parseTokens("0"));
+    expect(await token.connect(admin).balanceOf(registryAddress)).to.equal(parseTokens("0"));
     expect((await operators.getOperator(o1.id)).stake).to.equal(parseTokens("0"));
 
     // Delete operator
@@ -269,7 +281,7 @@ describe("ArmadaOperators", function () {
     // Deposit with allowance
     await expect(operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), 0, 0, HashZero, HashZero)).to.be.revertedWith("ERC20: insufficient allowance");
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: o1 });
-    expect(await token.connect(admin).approve(operators.address, parseTokens("100"))).to.be.ok;
+    expect(await token.connect(admin).approve(operatorsAddress, parseTokens("100"))).to.be.ok;
     expect(await operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), 0, 0, HashZero, HashZero)).to.be.ok;
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: { ...o1, stake: parseTokens("100") } });
   });
@@ -287,11 +299,11 @@ describe("ArmadaOperators", function () {
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 2, 0: o1, 1: o2 });
 
     // Deposit balance
-    const operatorsPermit = await approve(hre, usdc, admin.address, operators.address, parseUSDC("2"));
+    const operatorsPermit = await approve(hre, usdc, admin.address, operatorsAddress, parseUSDC("2"));
     await expect(operators.connect(admin).depositOperatorBalance(HashZero, parseUSDC("2"), ...operatorsPermit)).to.be.revertedWith("unknown operator");
     expect(await operators.connect(admin).depositOperatorBalance(o1.id, parseUSDC("2"), ...operatorsPermit)).to.be.ok;
     expect(await usdc.connect(admin).balanceOf(operator.address)).to.equal(parseUSDC("0"));
-    expect(await usdc.connect(admin).balanceOf(registry.address)).to.equal(parseUSDC("2"));
+    expect(await usdc.connect(admin).balanceOf(registryAddress)).to.equal(parseUSDC("2"));
     expect((await operators.getOperator(o1.id)).balance).to.equal(parseUSDC("2"));
     expect((await operators.getOperator(o2.id)).balance).to.equal(parseUSDC("0"));
 
@@ -303,7 +315,7 @@ describe("ArmadaOperators", function () {
     await expect(operators.connect(operator).withdrawOperatorBalance(o1.id, parseUSDC("3"), operator.address)).to.be.revertedWith("not enough balance");
     expect(await operators.connect(operator).withdrawOperatorBalance(o1.id, parseUSDC("2"), operator.address)).to.be.ok;
     expect(await usdc.connect(admin).balanceOf(operator.address)).to.equal(parseUSDC("2"));
-    expect(await usdc.connect(admin).balanceOf(registry.address)).to.equal(parseUSDC("0"));
+    expect(await usdc.connect(admin).balanceOf(registryAddress)).to.equal(parseUSDC("0"));
     expect((await operators.getOperator(o1.id)).balance).to.equal(parseUSDC("0"));
 
     // Delete operators
@@ -327,7 +339,7 @@ describe("ArmadaOperators", function () {
     // Deposit with allowance
     await expect(operators.connect(admin).depositOperatorBalance(o1.id, parseTokens("100"), 0, 0, HashZero, HashZero)).to.be.revertedWith("ERC20: insufficient allowance");
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: o1 });
-    expect(await usdc.connect(admin).approve(operators.address, parseTokens("100"))).to.be.ok;
+    expect(await usdc.connect(admin).approve(operatorsAddress, parseTokens("100"))).to.be.ok;
     expect(await operators.connect(admin).depositOperatorBalance(o1.id, parseTokens("100"), 0, 0, HashZero, HashZero)).to.be.ok;
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: { ...o1, balance: parseTokens("100") } });
   });
@@ -385,20 +397,21 @@ describe("ArmadaOperators", function () {
 
   it("Should allow admin to update registry address in operators", async function () {
     // check old registry
-    expect(await operators.getRegistry()).to.equal(registry.address);
+    expect(await operators.getRegistry()).to.equal(registryAddress);
 
     // create new registry
     const registryFactory = await hre.ethers.getContractFactory("ArmadaRegistry");
     const newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });
+    const newRegistryAddress = await newRegistry.getAddress();
 
     // unsafeSetRegistry by non-admin
-    await expect(operators.connect(operator).unsafeSetRegistry(newRegistry.address)).to.be.revertedWith("not admin");
+    await expect(operators.connect(operator).unsafeSetRegistry(newRegistryAddress)).to.be.revertedWith("not admin");
 
     // unsafeSetRegistry by admin
-    expect(await operators.connect(admin).unsafeSetRegistry(newRegistry.address)).to.be.ok;
+    expect(await operators.connect(admin).unsafeSetRegistry(newRegistryAddress)).to.be.ok;
 
     // check new registry
-    expect(await operators.getRegistry()).to.equal(newRegistry.address);
+    expect(await operators.getRegistry()).to.equal(newRegistryAddress);
   });
 
   it("Should allow admin to adjust balances", async function () {
@@ -409,7 +422,7 @@ describe("ArmadaOperators", function () {
     expect(o1.id !== HashZero);
 
     // Deposit balance
-    const operatorsPermit = await approve(hre, usdc, admin.address, operators.address, parseUSDC("2"));
+    const operatorsPermit = await approve(hre, usdc, admin.address, operatorsAddress, parseUSDC("2"));
     expect(await operators.connect(admin).depositOperatorBalance(o1.id, parseUSDC("2"), ...operatorsPermit)).to.be.ok;
     expect((await operators.getOperator(o1.id)).balance).to.equal(parseUSDC("2"));
 
@@ -434,7 +447,7 @@ describe("ArmadaOperators", function () {
   });
 
   it("Should disallow impl calls from unauthorized senders", async function () {
-    const nodesSigner = await hre.ethers.getSigner(nodes.address);
+    const nodesSigner = await hre.ethers.getSigner(nodesAddress);
 
     // unknown operator id is disallowed
     await expect(operators.connect(nodesSigner).setOperatorBalanceImpl(HashZero, 0, 0, { gasPrice: 0 })).to.be.revertedWith("unknown operator");

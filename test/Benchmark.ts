@@ -28,6 +28,9 @@ describe("Benchmark", function () {
   let projects: ArmadaProjects;
   let reservations: ArmadaReservations;
 
+  let projectsAddress: string;
+  let operatorsAddress: string;
+
   let epochLength: number;
   let snapshotId: string;
 
@@ -35,7 +38,10 @@ describe("Benchmark", function () {
     ({ admin, operator, project } = await signers(hre));
     ({ usdc, token, operators, projects, reservations, nodes, billing, registry } = await fixtures(hre));
 
-    epochLength = (await registry.getLastEpochLength()).toNumber();
+    projectsAddress = await projects.getAddress();
+    operatorsAddress = await operators.getAddress();
+
+    epochLength = await registry.getLastEpochLength();
   }
 
   before(async function () {
@@ -52,7 +58,7 @@ describe("Benchmark", function () {
     // Create operator
     const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o", "e"));
     const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
-    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
     // Create topology node
@@ -73,7 +79,7 @@ describe("Benchmark", function () {
     const p: ArmadaCreateProjectDataStruct = { name: "p", owner: project.address, email: "e", content: "c", checksum: HashZero, metadata: "" };
     const createProject = await expectReceipt(projects.connect(project).createProject(p));
     const [projectId] = await expectEvent(createProject, projects, "ProjectCreated");
-    const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("1"));
+    const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("1"));
     expect(await projects.connect(admin).depositProjectEscrow(projectId, parseUSDC("1"), ...projectsPermit)).to.be.ok;
 
     // Create reservations

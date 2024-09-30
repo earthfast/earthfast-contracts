@@ -156,6 +156,7 @@ export async function decodeEvent(
 
 export function getInterfaceID(contractInterface: Interface) {
   let interfaceID = Zero;
+  // TODO: fix this .functions key no longer exists in v6
   const functions = Object.keys(contractInterface.functions);
   for (let i = 0; i < functions.length; i++) {
     interfaceID = interfaceID.xor(contractInterface.getSighash(functions[i]));

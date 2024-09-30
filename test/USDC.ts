@@ -13,7 +13,6 @@ describe("USDC", function () {
   }
 
   before(async function () {
-    console.log("working here?");
     await fixture();
     snapshotId = await hre.ethers.provider.send("evm_snapshot", []);
   });
