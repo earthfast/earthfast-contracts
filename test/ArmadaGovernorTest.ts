@@ -6,7 +6,7 @@ import { keccak256 } from "ethereumjs-util";
 import { parseEther } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine } from "../lib/test";
-import { getInterfaceID, parseTokens, signers } from "../lib/util";
+import { parseTokens, signers } from "../lib/util";
 import { ArmadaGovernor } from "../typechain-types/contracts/ArmadaGovernor";
 import { ArmadaTimelock } from "../typechain-types/contracts/ArmadaTimelock";
 import { ArmadaToken } from "../typechain-types/contracts/ArmadaToken";
@@ -50,12 +50,14 @@ describe("ArmadaGovernor", function () {
     snapshotId = await hre.ethers.provider.send("evm_snapshot", []);
   });
 
-  it("Should support interfaces", async function () {
-    const IERC165 = IERC165__factory.createInterface();
-    const IGovernor = IGovernor__factory.createInterface();
-    const IERC165ID = getInterfaceID(IERC165);
-    const IGovernorID = getInterfaceID(IGovernor);
-    expect(await governor.supportsInterface(IGovernorID.xor(IERC165ID)._hex)).to.be.true;
+  it("Should support ERC165 interface", async function () {
+    const ERC165_INTERFACE_ID = "0x01ffc9a7"; // ERC165 interface ID
+    const INVALID_INTERFACE_ID = "0xffffffff"; // Invalid interface ID
+
+    const supportsERC165 = await governor.supportsInterface(ERC165_INTERFACE_ID);
+    const supportsInvalid = await governor.supportsInterface(INVALID_INTERFACE_ID);
+    expect(supportsERC165).to.be.true;
+    expect(supportsInvalid).to.be.false;
   });
 
   it("Should allow zero admin", async function () {
@@ -120,7 +122,7 @@ describe("ArmadaGovernor", function () {
 
     // mine to past the deadline for possible voting
     const eta = await governor.proposalDeadline(proposalId);
-    await mine(hre, eta.toNumber());
+    await mine(hre, eta);
 
     // queue proposal
     const queueProposal = await expectReceipt(governor.connect(admin).queue([tokenAddress], [0], [transferCalldata], keccak256(Buffer.from(proposalDescription))));

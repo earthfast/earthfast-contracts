@@ -625,10 +625,10 @@ describe("ArmadaNodes", function () {
     await expect(nodes.setNodeProjectImpl(HashZero, 0, HashZero)).to.be.revertedWith("not impl");
     await expect(nodes.advanceNodeEpochImpl(HashZero)).to.be.revertedWith("not impl");
 
-    // implementation call is disallowed from unauthorized contract
-    await expect(nodes.connect(newRegistry.signer).setNodePriceImpl(HashZero, 0, 0)).to.be.revertedWith("not impl");
-    await expect(nodes.connect(newRegistry.signer).setNodeProjectImpl(HashZero, 0, HashZero)).to.be.revertedWith("not impl");
-    await expect(nodes.connect(newRegistry.signer).advanceNodeEpochImpl(HashZero)).to.be.revertedWith("not impl");
+    // implementation call is disallowed from unauthorized signer
+    await expect(nodes.connect(deployer).setNodePriceImpl(HashZero, 0, 0)).to.be.revertedWith("not impl");
+    await expect(nodes.connect(deployer).setNodeProjectImpl(HashZero, 0, HashZero)).to.be.revertedWith("not impl");
+    await expect(nodes.connect(deployer).advanceNodeEpochImpl(HashZero)).to.be.revertedWith("not impl");
   });
 
   it("Should check for valid inputs within the set price, set node, and advance epoch calls", async function () {

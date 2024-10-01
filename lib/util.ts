@@ -153,13 +153,3 @@ export async function decodeEvent(
   }
   return results.length === 1 ? results[0] : results;
 }
-
-export function getInterfaceID(contractInterface: Interface) {
-  let interfaceID = Zero;
-  // TODO: fix this .functions key no longer exists in v6
-  const functions = Object.keys(contractInterface.functions);
-  for (let i = 0; i < functions.length; i++) {
-    interfaceID = interfaceID.xor(contractInterface.getSighash(functions[i]));
-  }
-  return interfaceID;
-}

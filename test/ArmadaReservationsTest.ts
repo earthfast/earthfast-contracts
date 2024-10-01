@@ -256,14 +256,20 @@ describe("ArmadaReservations", function () {
       if (hre.network.tags.ganache) await mine(hre, 0);
       expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
       if (hre.network.tags.ganache) await mine(hre, 0);
+      console.log("block number1", (await hre.ethers.provider.getBlock("latest")).number);
       expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok;
+      console.log("block number2", (await hre.ethers.provider.getBlock("latest")).number);
       if (hre.network.tags.ganache) await mine(hre, 0);
+      console.log("block number3", (await hre.ethers.provider.getBlock("latest")).number);
       if (!hre.network.tags.ganache) await mine(hre, 1);
+      console.log("block number4", (await hre.ethers.provider.getBlock("latest")).number);
     } finally {
       await automine(hre, true);
     }
 
     const proratedPrice = price;
+    console.log("reservations", reservations, await reservations.getReservationCount(projectId1));
+    console.log("block number5", (await hre.ethers.provider.getBlock("latest")).number);
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(100));
@@ -281,15 +287,15 @@ describe("ArmadaReservations", function () {
   });
 
   it("Should not reserve nodes while reconciling", async function () {
-    let proratedPrice = pricePerSec.mul(await epochRemainder());
+    let proratedPrice = pricePerSec * await epochRemainder();
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
-    expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice.mul(2));
+    expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice * BigInt(2));
 
     await mine(hre, epochLength);
     await expect(reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.revertedWith("reconciling");
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
-    expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice.mul(2));
+    expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice * BigInt(2));
 
     expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
     expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
@@ -297,10 +303,10 @@ describe("ArmadaReservations", function () {
     expect(await reservations.getReservationCount(projectId1)).to.equal(0);
     expect((await projects.getProject(projectId1)).reserve).to.equal(0);
 
-    proratedPrice = pricePerSec.mul(await epochRemainder());
+    proratedPrice = pricePerSec * await epochRemainder();
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
-    expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice.mul(2));
+    expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice * BigInt(2));
   });
 
   it("Should get reseverations", async function () {
@@ -404,8 +410,8 @@ describe("ArmadaReservations", function () {
     await expect(reservations.removeProjectNodeIdImpl(HashZero, HashZero)).to.be.revertedWith("not impl");
     await expect(reservations.deleteReservationImpl(AddressZero, AddressZero, HashZero, HashZero, { last: false, next: false })).to.be.revertedWith("not impl");
 
-    // implementation call is disallowed from unauthorized contract
-    await expect(reservations.connect(newRegistry.signer).removeProjectNodeIdImpl(HashZero, HashZero)).to.be.revertedWith("not impl");
-    await expect(reservations.connect(newRegistry.signer).deleteReservationImpl(AddressZero, AddressZero, HashZero, HashZero, { last: false, next: false })).to.be.revertedWith("not impl");
+    // implementation call is disallowed from unauthorized signer
+    await expect(reservations.connect(deployer).removeProjectNodeIdImpl(HashZero, HashZero)).to.be.revertedWith("not impl");
+    await expect(reservations.connect(deployer).deleteReservationImpl(AddressZero, AddressZero, HashZero, HashZero, { last: false, next: false })).to.be.revertedWith("not impl");
   });
 });
