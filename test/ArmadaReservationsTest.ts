@@ -54,17 +54,6 @@ describe("ArmadaReservations", function () {
   let epochLength: BigNumber;
   let snapshotId: string;
 
-  // // Returns the number of seconds remaining in the current epoch as of the next block to be mined
-  // async function epochRemainder(): Promise<number> {
-  //   const block = await hre.ethers.provider.getBlock("latest");
-  //   const start = (await registry.getLastEpochStart()).toNumber();
-  //   const length = (await registry.getLastEpochLength()).toNumber();
-  //   const remaining = start + length - (block.timestamp + 1);
-  //   expect(remaining).to.be.greaterThan(1);
-  //   expect(remaining).to.be.lessThanOrEqual(epochLength);
-  //   return remaining;
-  // }
-
   // Returns the number of seconds remaining in the current epoch as of the next block to be mined
   async function epochRemainder(): Promise<BigNumber> {
     const block = await hre.ethers.provider.getBlock("latest");
@@ -244,46 +233,34 @@ describe("ArmadaReservations", function () {
   });
 
   it("Should reserve nodes in the same block after epoch start", async function () {
-    try {
-      // NOTE: Can't see transaction reverts when automine=false
-      // https://github.com/NomicFoundation/hardhat/issues/2238
-      await automine(hre, false);
-      await mine(hre, epochLength);
-      if (hre.network.tags.ganache) await mine(hre, 1);
-      expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-      if (hre.network.tags.ganache) await mine(hre, 0);
-      expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
-      if (hre.network.tags.ganache) await mine(hre, 0);
-      expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
-      if (hre.network.tags.ganache) await mine(hre, 0);
-      console.log("block number1", (await hre.ethers.provider.getBlock("latest")).number);
-      expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok;
-      console.log("block number2", (await hre.ethers.provider.getBlock("latest")).number);
-      if (hre.network.tags.ganache) await mine(hre, 0);
-      console.log("block number3", (await hre.ethers.provider.getBlock("latest")).number);
-      if (!hre.network.tags.ganache) await mine(hre, 1);
-      console.log("block number4", (await hre.ethers.provider.getBlock("latest")).number);
-    } finally {
-      await automine(hre, true);
-    }
+    await mine(hre, epochLength);
+    if (hre.network.tags.ganache) await mine(hre, 1);
+    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    if (hre.network.tags.ganache) await mine(hre, 0);
+    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
+    if (hre.network.tags.ganache) await mine(hre, 0);
+    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    if (hre.network.tags.ganache) await mine(hre, 0);
+    let proratedPrice = pricePerSec * await epochRemainder();
+    expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok;
+    if (hre.network.tags.ganache) await mine(hre, 0);
+    if (!hre.network.tags.ganache) await mine(hre, 1);
 
-    const proratedPrice = price;
-    console.log("reservations", reservations, await reservations.getReservationCount(projectId1));
-    console.log("block number5", (await hre.ethers.provider.getBlock("latest")).number);
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(100));
-    expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice.mul(2));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(100));
+    expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice * BigInt(2));
 
     await mine(hre, epochLength);
     expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
     expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
     expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    // FIXME: proratedPrice = pricePerSec * await epochRemainder(); should this be recalculated here since we are in a new epoch?
     expect(await reservations.getReservationCount(projectId1)).to.equal(0);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
-    expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice.mul(2));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(price.mul(100).sub(proratedPrice.mul(2)));
-    expect((await projects.getProject(projectId1)).reserve).to.equal(price.mul(0));
+    expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice * BigInt(2));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(100) - (proratedPrice * BigInt(2)));
+    expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(0));
   });
 
   it("Should not reserve nodes while reconciling", async function () {
@@ -337,7 +314,30 @@ describe("ArmadaReservations", function () {
     expect(await reservations.getReservations(projectId1, 0, 10)).to.have.length(0);
 
     // importer role calls unsafeImportData and reinstates the reservations
-    expect(await reservations.connect(deployer).unsafeImportData(newReservations, false)).to.be.ok;
+    // FIXME: why is this requiring the projectId to be duplicated?
+    const newReservationsStructs = [
+      {
+        id: newReservations[0].id,
+        operatorId: newReservations[0].operatorId,
+        host: newReservations[0].host,
+        region: newReservations[0].region,
+        topology: newReservations[0].topology,
+        disabled: newReservations[0].disabled,
+        prices: [price, 0],
+        projectIds: [projectId1, projectId1]
+      },
+      {
+        id: newReservations[1].id,
+        operatorId: newReservations[1].operatorId,
+        host: newReservations[1].host,
+        region: newReservations[1].region,
+        topology: newReservations[1].topology,
+        disabled: newReservations[1].disabled,
+        prices: [price, 0],
+        projectIds: [projectId1, projectId1]
+      }
+    ]
+    expect(await reservations.connect(deployer).unsafeImportData(newReservationsStructs, false)).to.be.ok;
 
     const importedReservations = await reservations.getReservations(projectId1, 0, 10);
     expect(importedReservations.length).to.equal(2);

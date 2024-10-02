@@ -268,11 +268,21 @@ describe("ArmadaNodes", function () {
 
     // Save current node info
     const preImportNodes = await nodes.getNodes(operatorId, false, 0, 10);
-    const nodesToImport = preImportNodes.map((n: ArmadaNodeStruct) => ({ ...n, id: newId() }));
+    const nodesToImport = preImportNodes.map((n: ArmadaNodeStruct) => (nodeStructMap(n)));
+    function nodeStructMap(n: ArmadaNodeStruct) {
+      return {
+        id: newId(),
+        operatorId: n.operatorId,
+        host: n.host,
+        region: n.region,
+        topology: n.topology,
+        disabled: n.disabled,
+        prices: [price, price],
+        projectIds: [newId(), newId()]
+      };
+    }
 
     // Add the new nodes data using import
-    // TODO: unsafeImportData is failing here
-    console.log("operatorId: ", operatorId, "operator.address: ", operator.address);
     expect(await nodes.connect(deployer).unsafeImportData(nodesToImport, [operator.address], false)).to.be.ok;
 
     const postImportNodes = await nodes.getNodes(operatorId, false, 0, 10);
