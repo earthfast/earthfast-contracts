@@ -207,7 +207,13 @@ describe("ArmadaProjects", function () {
     // Use unsafeImportData
     const existingProjects = await projects.getProjects(0, 10);
     expect(existingProjects.length).to.equal(1);
-    const projectsToImport = existingProjects.map((p) => ({ ...p, id: newId() }));
+    const projectsToImport = existingProjects.map((p) => (mapProjectsToNewStruct(p)));
+    function mapProjectsToNewStruct(p: ArmadaProjectStruct): ArmadaProjectStruct{
+      const struct = p.toObject(true);
+      struct.id = newId();
+      return struct
+    }
+
     const newCreatorAddr = operator.address;
     expect(await projects.connect(deployer).unsafeImportData(projectsToImport, [newCreatorAddr], false)).to.be.ok;
 
@@ -219,7 +225,6 @@ describe("ArmadaProjects", function () {
 
     // Import duplicates
     await expect(projects.connect(deployer).unsafeImportData(projectsToImport, [newCreatorAddr], false)).to.be.revertedWith("duplicate id");
-
     // Verify importer role is revoked
     expect(await projects.hasRole(projects.IMPORTER_ROLE(), deployer.address)).to.be.true;
     expect(await projects.connect(deployer).unsafeImportData([], [], true)).to.be.ok;

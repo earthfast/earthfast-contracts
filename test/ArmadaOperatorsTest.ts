@@ -362,7 +362,7 @@ describe("ArmadaOperators", function () {
 
     // operators
     const currentOperators = await operators.getOperators(0, 10);
-    const operatorsToImport = currentOperators.map((o) => ({ ...o, id: newId() }));
+    const operatorsToImport = currentOperators.map((o) => ({ ...o.toObject(true), id: newId() }));
 
     // unsafeImportData
     expect(await operators.connect(deployer).unsafeImportData(operatorsToImport, false)).to.be.ok;
