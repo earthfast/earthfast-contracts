@@ -1,7 +1,6 @@
-import { AddressZero, HashZero } from "@ethersproject/constants";
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
-import { Result, SignerWithAddress } from "ethers";
+import { Result, SignerWithAddress, ZeroAddress, ZeroHash } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, newId } from "../lib/test";
 import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
@@ -119,14 +118,14 @@ describe("ArmadaNodes", function () {
     const createNodes1 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [node1]));
     const createNodes1Result = await expectEvent(createNodes1, nodes, "NodeCreated");
     const { nodeId: nodeId1 } = createNodes1Result as Result;
-    expect(nodeId1).to.not.equal(HashZero);
+    expect(nodeId1).to.not.equal(ZeroHash);
     expect(await nodes.getNodes(operatorId, false, 0, 10)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId1 } });
 
     // Create another
     const createNodes2 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [node2]));
     const createNodes2Result = await expectEvent(createNodes2, nodes, "NodeCreated");
     const { nodeId: nodeId2 } = createNodes2Result as Result;
-    expect(nodeId2).to.not.equal(HashZero);
+    expect(nodeId2).to.not.equal(ZeroHash);
     expect(await nodes.getNodes(operatorId, false, 0, 10)).to.shallowDeepEqual({ length: 2, 0: { id: nodeId1 }, 1: { id: nodeId2 } });
 
     // Ensure all the delete nodes checks are working
@@ -148,20 +147,20 @@ describe("ArmadaNodes", function () {
     // Delete missing
     await expect(nodes.connect(operator).deleteNodes(operatorId, false, [nodeId1])).to.be.revertedWith("unknown node");
     await expect(nodes.connect(operator).deleteNodes(operatorId, false, [newId()])).to.be.revertedWith("unknown node");
-    await expect(nodes.connect(operator).deleteNodes(operatorId, false, [HashZero])).to.be.revertedWith("unknown node");
+    await expect(nodes.connect(operator).deleteNodes(operatorId, false, [ZeroHash])).to.be.revertedWith("unknown node");
 
     // Create another
     const createNodes3 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [node3]));
     const createNodes3Result = await expectEvent(createNodes3, nodes, "NodeCreated");
     const { nodeId: nodeId3 } = createNodes3Result as Result;
-    expect(nodeId3).to.not.equal(HashZero);
+    expect(nodeId3).to.not.equal(ZeroHash);
     expect(await nodes.getNodes(operatorId, false, 0, 10)).to.shallowDeepEqual({ length: 2, 0: { id: nodeId2 }, 1: { id: nodeId3 } });
 
     // Create another
     const createNodes1b = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [node3]));
     const createNodes1bResult = await expectEvent(createNodes1b, nodes, "NodeCreated");
     const { nodeId: nodeId1b } = createNodes1bResult as Result;
-    expect(nodeId1b).to.not.equal(HashZero);
+    expect(nodeId1b).to.not.equal(ZeroHash);
     expect(await nodes.getNodes(operatorId, false, 0, 10)).to.shallowDeepEqual({ length: 3, 0: { id: nodeId2 }, 1: { id: nodeId3 }, 2: { id: nodeId1b } });
 
     // Ranged get
@@ -174,13 +173,13 @@ describe("ArmadaNodes", function () {
     expect(await nodes.getNodes(operatorId, false, 5, 10)).to.shallowDeepEqual({ length: 0 });
 
     // Global get
-    expect(await nodes.getNodeCount(HashZero, false)).to.eq(3);
-    expect(await nodes.getNodes(HashZero, false, 0, 10)).to.shallowDeepEqual({ length: 3, 0: { id: nodeId2 }, 1: { id: nodeId3 }, 2: { id: nodeId1b } });
-    expect(await nodes.getNodes(HashZero, false, 1, 10)).to.shallowDeepEqual({ length: 2, 0: { id: nodeId3 }, 1: { id: nodeId1b } });
-    expect(await nodes.getNodes(HashZero, false, 2, 10)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId1b } });
-    expect(await nodes.getNodes(HashZero, false, 3, 10)).to.shallowDeepEqual({ length: 0 });
-    expect(await nodes.getNodes(HashZero, false, 4, 10)).to.shallowDeepEqual({ length: 0 });
-    expect(await nodes.getNodes(HashZero, false, 5, 10)).to.shallowDeepEqual({ length: 0 });
+    expect(await nodes.getNodeCount(ZeroHash, false)).to.eq(3);
+    expect(await nodes.getNodes(ZeroHash, false, 0, 10)).to.shallowDeepEqual({ length: 3, 0: { id: nodeId2 }, 1: { id: nodeId3 }, 2: { id: nodeId1b } });
+    expect(await nodes.getNodes(ZeroHash, false, 1, 10)).to.shallowDeepEqual({ length: 2, 0: { id: nodeId3 }, 1: { id: nodeId1b } });
+    expect(await nodes.getNodes(ZeroHash, false, 2, 10)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId1b } });
+    expect(await nodes.getNodes(ZeroHash, false, 3, 10)).to.shallowDeepEqual({ length: 0 });
+    expect(await nodes.getNodes(ZeroHash, false, 4, 10)).to.shallowDeepEqual({ length: 0 });
+    expect(await nodes.getNodes(ZeroHash, false, 5, 10)).to.shallowDeepEqual({ length: 0 });
   });
 
   it("Should require topolgy nodes have a price of 0", async function () {
@@ -214,11 +213,11 @@ describe("ArmadaNodes", function () {
     const createNodes1 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [node3]));
     const createNodes1Result = await expectEvent(createNodes1, nodes, "NodeCreated");
     const { nodeId: nodeId1 } = createNodes1Result as Result;
-    expect(nodeId1).to.not.equal(HashZero);
+    expect(nodeId1).to.not.equal(ZeroHash);
 
     // Create project
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
     const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
@@ -249,14 +248,14 @@ describe("ArmadaNodes", function () {
     const createNodes1 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [node1]));
     const createNodes1Result = await expectEvent(createNodes1, nodes, "NodeCreated");
     const { nodeId: nodeId1 } = createNodes1Result as Result;
-    expect(nodeId1).to.not.equal(HashZero);
+    expect(nodeId1).to.not.equal(ZeroHash);
     expect(await nodes.getNodes(operatorId, false, 0, 10)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId1 } });
 
     // Create another
     const createNodes2 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [node2]));
     const createNodes2Result = await expectEvent(createNodes2, nodes, "NodeCreated");
     const { nodeId: nodeId2 } = createNodes2Result as Result;
-    expect(nodeId2).to.not.equal(HashZero);
+    expect(nodeId2).to.not.equal(ZeroHash);
     expect(await nodes.getNodes(operatorId, false, 0, 10)).to.shallowDeepEqual({ length: 2, 0: { id: nodeId1 }, 1: { id: nodeId2 } });
 
     // Save current node info
@@ -303,7 +302,7 @@ describe("ArmadaNodes", function () {
     const createNodes1 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [node1]));
     const createNodes1Result = await expectEvent(createNodes1, nodes, "NodeCreated");
     const { nodeId: nodeId1 } = createNodes1Result as Result;
-    expect(nodeId1).to.not.equal(HashZero);
+    expect(nodeId1).to.not.equal(ZeroHash);
 
     // Adjust price
     await expect(nodes.connect(operator).unsafeSetPrices(0, 1, 3, 2)).to.be.revertedWith("not admin");
@@ -401,35 +400,35 @@ describe("ArmadaNodes", function () {
     expect(await nodes.getNodes(operatorId2, false, 5, 9)).to.shallowDeepEqual({ length: 0 });
 
     // Global get
-    expect(await nodes.getNodeCount(HashZero, true)).to.eq(3);
-    expect(await nodes.getNodes(HashZero, true, 0, 9)).to.shallowDeepEqual({ length: 3, 0: { id: nodeId1 }, 1: { id: nodeId2 }, 2: { id: nodeId5 } });
-    expect(await nodes.getNodes(HashZero, true, 0, 3)).to.shallowDeepEqual({ length: 3, 0: { id: nodeId1 }, 1: { id: nodeId2 }, 2: { id: nodeId5 } });
-    expect(await nodes.getNodes(HashZero, true, 0, 2)).to.shallowDeepEqual({ length: 2, 0: { id: nodeId1 }, 1: { id: nodeId2 } });
-    expect(await nodes.getNodes(HashZero, true, 0, 1)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId1 } });
-    expect(await nodes.getNodes(HashZero, true, 0, 0)).to.shallowDeepEqual({ length: 0 });
-    expect(await nodes.getNodes(HashZero, true, 1, 9)).to.shallowDeepEqual({ length: 2, 0: { id: nodeId2 }, 1: { id: nodeId5 } });
-    expect(await nodes.getNodes(HashZero, true, 1, 2)).to.shallowDeepEqual({ length: 2, 0: { id: nodeId2 }, 1: { id: nodeId5 } });
-    expect(await nodes.getNodes(HashZero, true, 1, 1)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId2 } });
-    expect(await nodes.getNodes(HashZero, true, 1, 0)).to.shallowDeepEqual({ length: 0 });
-    expect(await nodes.getNodes(HashZero, true, 2, 9)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId5 } });
-    expect(await nodes.getNodes(HashZero, true, 2, 1)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId5 } });
-    expect(await nodes.getNodes(HashZero, true, 2, 0)).to.shallowDeepEqual({ length: 0 });
-    expect(await nodes.getNodes(HashZero, true, 3, 9)).to.shallowDeepEqual({ length: 0 });
-    expect(await nodes.getNodes(HashZero, true, 4, 9)).to.shallowDeepEqual({ length: 0 });
-    expect(await nodes.getNodes(HashZero, true, 5, 9)).to.shallowDeepEqual({ length: 0 });
+    expect(await nodes.getNodeCount(ZeroHash, true)).to.eq(3);
+    expect(await nodes.getNodes(ZeroHash, true, 0, 9)).to.shallowDeepEqual({ length: 3, 0: { id: nodeId1 }, 1: { id: nodeId2 }, 2: { id: nodeId5 } });
+    expect(await nodes.getNodes(ZeroHash, true, 0, 3)).to.shallowDeepEqual({ length: 3, 0: { id: nodeId1 }, 1: { id: nodeId2 }, 2: { id: nodeId5 } });
+    expect(await nodes.getNodes(ZeroHash, true, 0, 2)).to.shallowDeepEqual({ length: 2, 0: { id: nodeId1 }, 1: { id: nodeId2 } });
+    expect(await nodes.getNodes(ZeroHash, true, 0, 1)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId1 } });
+    expect(await nodes.getNodes(ZeroHash, true, 0, 0)).to.shallowDeepEqual({ length: 0 });
+    expect(await nodes.getNodes(ZeroHash, true, 1, 9)).to.shallowDeepEqual({ length: 2, 0: { id: nodeId2 }, 1: { id: nodeId5 } });
+    expect(await nodes.getNodes(ZeroHash, true, 1, 2)).to.shallowDeepEqual({ length: 2, 0: { id: nodeId2 }, 1: { id: nodeId5 } });
+    expect(await nodes.getNodes(ZeroHash, true, 1, 1)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId2 } });
+    expect(await nodes.getNodes(ZeroHash, true, 1, 0)).to.shallowDeepEqual({ length: 0 });
+    expect(await nodes.getNodes(ZeroHash, true, 2, 9)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId5 } });
+    expect(await nodes.getNodes(ZeroHash, true, 2, 1)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId5 } });
+    expect(await nodes.getNodes(ZeroHash, true, 2, 0)).to.shallowDeepEqual({ length: 0 });
+    expect(await nodes.getNodes(ZeroHash, true, 3, 9)).to.shallowDeepEqual({ length: 0 });
+    expect(await nodes.getNodes(ZeroHash, true, 4, 9)).to.shallowDeepEqual({ length: 0 });
+    expect(await nodes.getNodes(ZeroHash, true, 5, 9)).to.shallowDeepEqual({ length: 0 });
 
-    expect(await nodes.getNodeCount(HashZero, false)).to.eq(2);
-    expect(await nodes.getNodes(HashZero, false, 0, 9)).to.shallowDeepEqual({ length: 2, 0: { id: nodeId3 }, 1: { id: nodeId4 } });
-    expect(await nodes.getNodes(HashZero, false, 0, 2)).to.shallowDeepEqual({ length: 2, 0: { id: nodeId3 }, 1: { id: nodeId4 } });
-    expect(await nodes.getNodes(HashZero, false, 0, 1)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId3 } });
-    expect(await nodes.getNodes(HashZero, false, 0, 0)).to.shallowDeepEqual({ length: 0 });
-    expect(await nodes.getNodes(HashZero, false, 1, 9)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId4 } });
-    expect(await nodes.getNodes(HashZero, false, 1, 1)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId4 } });
-    expect(await nodes.getNodes(HashZero, false, 1, 0)).to.shallowDeepEqual({ length: 0 });
-    expect(await nodes.getNodes(HashZero, false, 2, 9)).to.shallowDeepEqual({ length: 0 });
-    expect(await nodes.getNodes(HashZero, false, 3, 9)).to.shallowDeepEqual({ length: 0 });
-    expect(await nodes.getNodes(HashZero, false, 4, 9)).to.shallowDeepEqual({ length: 0 });
-    expect(await nodes.getNodes(HashZero, false, 5, 9)).to.shallowDeepEqual({ length: 0 });
+    expect(await nodes.getNodeCount(ZeroHash, false)).to.eq(2);
+    expect(await nodes.getNodes(ZeroHash, false, 0, 9)).to.shallowDeepEqual({ length: 2, 0: { id: nodeId3 }, 1: { id: nodeId4 } });
+    expect(await nodes.getNodes(ZeroHash, false, 0, 2)).to.shallowDeepEqual({ length: 2, 0: { id: nodeId3 }, 1: { id: nodeId4 } });
+    expect(await nodes.getNodes(ZeroHash, false, 0, 1)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId3 } });
+    expect(await nodes.getNodes(ZeroHash, false, 0, 0)).to.shallowDeepEqual({ length: 0 });
+    expect(await nodes.getNodes(ZeroHash, false, 1, 9)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId4 } });
+    expect(await nodes.getNodes(ZeroHash, false, 1, 1)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId4 } });
+    expect(await nodes.getNodes(ZeroHash, false, 1, 0)).to.shallowDeepEqual({ length: 0 });
+    expect(await nodes.getNodes(ZeroHash, false, 2, 9)).to.shallowDeepEqual({ length: 0 });
+    expect(await nodes.getNodes(ZeroHash, false, 3, 9)).to.shallowDeepEqual({ length: 0 });
+    expect(await nodes.getNodes(ZeroHash, false, 4, 9)).to.shallowDeepEqual({ length: 0 });
+    expect(await nodes.getNodes(ZeroHash, false, 5, 9)).to.shallowDeepEqual({ length: 0 });
   });
 
   it("Should change node host", async function () {
@@ -448,7 +447,7 @@ describe("ArmadaNodes", function () {
     const createNodes = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [node]));
     const createNodesResult = await expectEvent(createNodes, nodes, "NodeCreated");
     const { nodeId } = createNodesResult as Result;
-    expect(nodeId).to.not.equal(HashZero);
+    expect(nodeId).to.not.equal(ZeroHash);
     expect(await nodes.getNodes(operatorId, false, 0, 10)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId } });
 
     // check inputs
@@ -458,9 +457,9 @@ describe("ArmadaNodes", function () {
     await expect(nodes.connect(operator).setNodeHosts(operatorId, [nodeId], [""], ["r2"])).to.be.revertedWith("empty host");
     await expect(nodes.connect(operator).setNodeHosts(operatorId, [nodeId], ["h2".repeat(1000)], ["r2"])).to.be.revertedWith("host too long");
     await expect(nodes.connect(operator).setNodeHosts(operatorId, [nodeId], ["h2"], ["r2".repeat(1000)])).to.be.revertedWith("region too long");
-    await expect(nodes.connect(operator).setNodeHosts(operatorId, [HashZero], ["h2"], ["r2"])).to.be.revertedWith("unknown node");
+    await expect(nodes.connect(operator).setNodeHosts(operatorId, [ZeroHash], ["h2"], ["r2"])).to.be.revertedWith("unknown node");
     await expect(nodes.connect(operator).setNodeHosts(operatorId2, [nodeId], ["h2"], ["r2"])).to.be.revertedWith("operator mismatch");
-    await expect(nodes.connect(operator).setNodeHosts(HashZero, [nodeId], ["h2"], ["r2"])).to.be.revertedWith("unknown operator");
+    await expect(nodes.connect(operator).setNodeHosts(ZeroHash, [nodeId], ["h2"], ["r2"])).to.be.revertedWith("unknown operator");
     const notAdminOrOperator = project;
     await expect(nodes.connect(notAdminOrOperator).setNodeHosts(operatorId, [nodeId], ["h2"], ["r2"])).to.be.revertedWith("not admin or operator");
 
@@ -489,7 +488,7 @@ describe("ArmadaNodes", function () {
     const createNodes = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [node]));
     const createNodesResult = await expectEvent(createNodes, nodes, "NodeCreated");
     const { nodeId } = createNodesResult as Result;
-    expect(nodeId).to.not.equal(HashZero);
+    expect(nodeId).to.not.equal(ZeroHash);
     expect(await nodes.getNodes(operatorId, false, 0, 10)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId } });
 
     // create a topology node
@@ -498,11 +497,11 @@ describe("ArmadaNodes", function () {
     const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, true, [n0]));
     const createNodes0Result = await expectEvent(createNodes0, nodes, "NodeCreated");
     const { nodeId: nodeId0 } = createNodes0Result as Result;
-    expect(nodeId0).to.not.equal(HashZero);
+    expect(nodeId0).to.not.equal(ZeroHash);
 
     // create project with escrow
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
     const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
@@ -510,7 +509,7 @@ describe("ArmadaNodes", function () {
 
     // check inputs
     await expect(nodes.connect(operator).setNodePrices(operatorId, [nodeId], [], { last: true, next: true })).to.be.revertedWith("length mismatch");
-    await expect(nodes.connect(operator).setNodePrices(operatorId, [HashZero], [parseUSDC("2")], { last: true, next: true })).to.be.revertedWith("unknown node");
+    await expect(nodes.connect(operator).setNodePrices(operatorId, [ZeroHash], [parseUSDC("2")], { last: true, next: true })).to.be.revertedWith("unknown node");
     await expect(nodes.connect(operator).setNodePrices(operatorId2, [nodeId], [parseUSDC("2")], { last: true, next: true })).to.be.revertedWith("operator mismatch");
     await expect(nodes.connect(operator).setNodePrices(operatorId, [nodeId0], [parseUSDC("2")], { last: true, next: true })).to.be.revertedWith("topology node");
 
@@ -542,12 +541,12 @@ describe("ArmadaNodes", function () {
     const createNodes = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [node]));
     const createNodesResult = await expectEvent(createNodes, nodes, "NodeCreated");
     const { nodeId } = createNodesResult as Result;
-    expect(nodeId).to.not.equal(HashZero);
+    expect(nodeId).to.not.equal(ZeroHash);
     expect(await nodes.getNodes(operatorId, false, 0, 10)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId } });
 
     // create project with escrow
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
     const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
@@ -573,12 +572,12 @@ describe("ArmadaNodes", function () {
     const createNodes = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [node]));
     const createNodesResult = await expectEvent(createNodes, nodes, "NodeCreated");
     const { nodeId } = createNodesResult as Result;
-    expect(nodeId).to.not.equal(HashZero);
+    expect(nodeId).to.not.equal(ZeroHash);
     expect(await nodes.getNodes(operatorId, false, 0, 10)).to.shallowDeepEqual({ length: 1, 0: { id: nodeId } });
 
     // check inputs
     await expect(nodes.connect(operator).setNodeDisabled(operatorId, [nodeId], [])).to.be.revertedWith("length mismatch");
-    await expect(nodes.connect(operator).setNodeDisabled(operatorId, [HashZero], [true])).to.be.revertedWith("unknown node");
+    await expect(nodes.connect(operator).setNodeDisabled(operatorId, [ZeroHash], [true])).to.be.revertedWith("unknown node");
     await expect(nodes.connect(operator).setNodeDisabled(operatorId2, [nodeId], [true])).to.be.revertedWith("operator mismatch");
 
     const setNodeDisabled = await expectReceipt(nodes.connect(operator).setNodeDisabled(operatorId, [nodeId], [true]));
@@ -620,14 +619,14 @@ describe("ArmadaNodes", function () {
 
   it("Should disallow impl calls from unauthorized senders", async function () {
     // implementation call is disallowed from EOA
-    await expect(nodes.setNodePriceImpl(HashZero, 0, 0)).to.be.revertedWith("not impl");
-    await expect(nodes.setNodeProjectImpl(HashZero, 0, HashZero)).to.be.revertedWith("not impl");
-    await expect(nodes.advanceNodeEpochImpl(HashZero)).to.be.revertedWith("not impl");
+    await expect(nodes.setNodePriceImpl(ZeroHash, 0, 0)).to.be.revertedWith("not impl");
+    await expect(nodes.setNodeProjectImpl(ZeroHash, 0, ZeroHash)).to.be.revertedWith("not impl");
+    await expect(nodes.advanceNodeEpochImpl(ZeroHash)).to.be.revertedWith("not impl");
 
     // implementation call is disallowed from unauthorized signer
-    await expect(nodes.connect(deployer).setNodePriceImpl(HashZero, 0, 0)).to.be.revertedWith("not impl");
-    await expect(nodes.connect(deployer).setNodeProjectImpl(HashZero, 0, HashZero)).to.be.revertedWith("not impl");
-    await expect(nodes.connect(deployer).advanceNodeEpochImpl(HashZero)).to.be.revertedWith("not impl");
+    await expect(nodes.connect(deployer).setNodePriceImpl(ZeroHash, 0, 0)).to.be.revertedWith("not impl");
+    await expect(nodes.connect(deployer).setNodeProjectImpl(ZeroHash, 0, ZeroHash)).to.be.revertedWith("not impl");
+    await expect(nodes.connect(deployer).advanceNodeEpochImpl(ZeroHash)).to.be.revertedWith("not impl");
   });
 
   it("Should check for valid inputs within the set price, set node, and advance epoch calls", async function () {
@@ -635,10 +634,10 @@ describe("ArmadaNodes", function () {
     const operatorsSigner = await hre.ethers.getSigner(operatorsAddress);
 
     // create operator
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
+    const o1: ArmadaOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     [o1.id] = await expectEvent(createOperator1, operators, "OperatorCreated");
-    expect(o1.id !== HashZero);
+    expect(o1.id !== ZeroHash);
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: o1 });
 
     // create topology node
@@ -647,11 +646,11 @@ describe("ArmadaNodes", function () {
     const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(o1.id, true, [n0]));
     const createNodes0Result = await expectEvent(createNodes0, nodes, "NodeCreated");
     const { nodeId: nodeId0 } = createNodes0Result as Result;
-    expect(nodeId0).to.not.equal(HashZero);
+    expect(nodeId0).to.not.equal(ZeroHash);
 
     // create project
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
     const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
@@ -688,7 +687,7 @@ describe("ArmadaNodes", function () {
     const nodesImplAddress = await nodesImpl.getAddress();
 
     const nodesFactory = await hre.ethers.getContractFactory("ArmadaNodes", { libraries: { ArmadaNodesImpl: nodesImplAddress } });
-    const nodesArgs = [[AddressZero], registryAddress, false];
+    const nodesArgs = [[ZeroAddress], registryAddress, false];
     await expect(hre.upgrades.deployProxy(nodesFactory, nodesArgs, { kind: "uups" })).to.be.revertedWith("zero admin");
   });
 });

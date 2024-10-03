@@ -1,6 +1,5 @@
-import { AddressZero, HashZero } from "@ethersproject/constants";
 import { expect } from "chai";
-import { Result, SignerWithAddress } from "ethers";
+import { Result, SignerWithAddress, ZeroAddress, ZeroHash } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine } from "../lib/test";
 import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
@@ -122,7 +121,7 @@ describe("ArmadaRegistry", function () {
 
   it("Should respect reconciliation order", async function () {
     // Create operator
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
+    const o1: ArmadaOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     const [operatorId1] = await expectEvent(createOperator1, operators, "OperatorCreated");
     const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
@@ -183,9 +182,9 @@ describe("ArmadaRegistry", function () {
     expect(await registry.connect(operator).getUSDC()).to.be.deep.equal(usdcAddress);
 
     // Should skip token approval if new projects is zero address
-    expect(await registry.connect(admin).unsafeSetProjects(AddressZero)).to.be.ok;
-    expect(await token.allowance(registryAddress, AddressZero)).to.be.deep.equal(0);
-    expect(await usdc.allowance(registryAddress, AddressZero)).to.be.deep.equal(0);
+    expect(await registry.connect(admin).unsafeSetProjects(ZeroAddress)).to.be.ok;
+    expect(await token.allowance(registryAddress, ZeroAddress)).to.be.deep.equal(0);
+    expect(await usdc.allowance(registryAddress, ZeroAddress)).to.be.deep.equal(0);
     expect(await registry.connect(admin).unsafeSetToken(tokenAddress)).to.be.ok;
     expect(await registry.connect(admin).unsafeSetUSDC(usdcAddress)).to.be.ok;
 
@@ -198,9 +197,9 @@ describe("ArmadaRegistry", function () {
     expect(await registry.connect(operator).getProjects()).to.be.deep.equal(newProjectsAddress);
 
     // Should skip token approval if new operators is zero address
-    expect(await registry.connect(admin).unsafeSetOperators(AddressZero)).to.be.ok;
-    expect(await token.allowance(registryAddress, AddressZero)).to.be.deep.equal(0);
-    expect(await usdc.allowance(registryAddress, AddressZero)).to.be.deep.equal(0);
+    expect(await registry.connect(admin).unsafeSetOperators(ZeroAddress)).to.be.ok;
+    expect(await token.allowance(registryAddress, ZeroAddress)).to.be.deep.equal(0);
+    expect(await usdc.allowance(registryAddress, ZeroAddress)).to.be.deep.equal(0);
     expect(await registry.connect(admin).unsafeSetToken(tokenAddress)).to.be.ok;
     expect(await registry.connect(admin).unsafeSetUSDC(usdcAddress)).to.be.ok;
 
@@ -325,12 +324,12 @@ describe("ArmadaRegistry", function () {
 
   it("Should not allow non-reconciler to advance epoch without topology node", async function () {
     // non-reconciler call should revert
-    await expect(registry.advanceEpoch(HashZero)).to.be.revertedWith("not reconciler");
-    await expect(registry.connect(admin).advanceEpoch(HashZero)).to.be.revertedWith("not reconciler");
+    await expect(registry.advanceEpoch(ZeroHash)).to.be.revertedWith("not reconciler");
+    await expect(registry.connect(admin).advanceEpoch(ZeroHash)).to.be.revertedWith("not reconciler");
 
     // reconciler call should pass "not reconciler" check and fail "not reconciling" check
     expect(await registry.connect(admin).grantRole(registry.RECONCILER_ROLE(), admin.address)).to.be.ok;
-    await expect(registry.connect(admin).advanceEpoch(HashZero)).to.be.revertedWith("not reconciling");
+    await expect(registry.connect(admin).advanceEpoch(ZeroHash)).to.be.revertedWith("not reconciling");
   });
 
   it("Should fail initialization if requirements aren't met", async function () {
@@ -374,7 +373,7 @@ describe("ArmadaRegistry", function () {
 
     // admin address is zero
     newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });
-    await expect(newRegistry.connect(admin).initialize([admin.address, AddressZero], registryArgs)).to.be.revertedWith("zero admin");
+    await expect(newRegistry.connect(admin).initialize([admin.address, ZeroAddress], registryArgs)).to.be.revertedWith("zero admin");
 
     // reused token
     newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });
@@ -383,19 +382,19 @@ describe("ArmadaRegistry", function () {
 
     // operators address is zero then token approval stays at 0
     newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });
-    newRegistryArgs = { ...registryArgs, operators: AddressZero };
+    newRegistryArgs = { ...registryArgs, operators: ZeroAddress };
     expect(await newRegistry.connect(admin).initialize([admin.address], newRegistryArgs)).to.be.ok;
     let newRegistryAddress = await newRegistry.getAddress();
-    expect(await token.allowance(newRegistryAddress, AddressZero)).to.be.equal(0);
-    expect(await usdc.allowance(newRegistryAddress, AddressZero)).to.be.equal(0);
+    expect(await token.allowance(newRegistryAddress, ZeroAddress)).to.be.equal(0);
+    expect(await usdc.allowance(newRegistryAddress, ZeroAddress)).to.be.equal(0);
 
     // projects address is zero then token approval stays at 0
     newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });
-    newRegistryArgs = { ...registryArgs, projects: AddressZero };
+    newRegistryArgs = { ...registryArgs, projects: ZeroAddress };
     expect(await newRegistry.connect(admin).initialize([admin.address], newRegistryArgs)).to.be.ok;
     newRegistryAddress = await newRegistry.getAddress();
-    expect(await token.allowance(newRegistryAddress, AddressZero)).to.be.equal(0);
-    expect(await usdc.allowance(newRegistryAddress, AddressZero)).to.be.equal(0);
+    expect(await token.allowance(newRegistryAddress, ZeroAddress)).to.be.equal(0);
+    expect(await usdc.allowance(newRegistryAddress, ZeroAddress)).to.be.equal(0);
   });
 
   // in mainnet the unsafeSetToken would be called in a single transaction with the token transfer to the registry

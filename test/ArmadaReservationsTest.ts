@@ -1,7 +1,6 @@
-import { AddressZero, HashZero } from "@ethersproject/constants";
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
-import { BigNumber, Result, SignerWithAddress } from "ethers";
+import { BigNumber, Result, SignerWithAddress, ZeroAddress, ZeroHash } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine, mineWith, newId } from "../lib/test";
 import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
@@ -71,7 +70,7 @@ describe("ArmadaReservations", function () {
     pricePerSec = price / epochLength; // Node price per second
 
     // Create operator
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
+    const o1: ArmadaOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     [operatorId1] = await expectEvent(createOperator1, operators, "OperatorCreated");
     const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
@@ -93,7 +92,7 @@ describe("ArmadaReservations", function () {
 
     // Create project
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
     const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
@@ -142,7 +141,7 @@ describe("ArmadaReservations", function () {
 
   it("Should disallow zero admin", async function () {
     const reservationsFactory = await hre.ethers.getContractFactory("ArmadaReservations");
-    const reservationsArgs = [[AddressZero], registryAddress, true];
+    const reservationsArgs = [[ZeroAddress], registryAddress, true];
     await expect(hre.upgrades.deployProxy(reservationsFactory, reservationsArgs, { kind: "uups" })).to.be.revertedWith("zero admin");
   });
 
@@ -170,7 +169,7 @@ describe("ArmadaReservations", function () {
     await expect(reservations.connect(project).createReservations(projectId1, [nodeId1], [price], { last: false, next: true })).to.be.revertedWith("node reserved");
     await expect(reservations.connect(project).createReservations(projectId1, [nodeId2], [price], { last: true, next: false })).to.be.revertedWith("node reserved");
     await expect(reservations.connect(project).createReservations(projectId1, [newId()], [price], { last: false, next: true })).to.be.revertedWith("unknown node");
-    await expect(reservations.connect(project).createReservations(projectId1, [HashZero], [price], { last: false, next: true })).to.be.revertedWith("unknown node");
+    await expect(reservations.connect(project).createReservations(projectId1, [ZeroHash], [price], { last: false, next: true })).to.be.revertedWith("unknown node");
     await expect(reservations.connect(project).deleteReservations(projectId1, [nodeId1], { last: false, next: false })).to.be.revertedWith("no slot");
     await expect(reservations.connect(operator).deleteReservations(projectId1, [nodeId1], { last: false, next: true })).to.be.revertedWith("not admin or project owner");
     expect(await reservations.connect(project).deleteReservations(projectId1, [nodeId1], { last: false, next: true })).to.be.ok;
@@ -369,11 +368,11 @@ describe("ArmadaReservations", function () {
 
   it("Should disallow impl calls from unauthorized senders", async function () {
     // implementation call is disallowed from EOA
-    await expect(reservations.removeProjectNodeIdImpl(HashZero, HashZero)).to.be.revertedWith("not impl");
-    await expect(reservations.deleteReservationImpl(AddressZero, AddressZero, HashZero, HashZero, { last: false, next: false })).to.be.revertedWith("not impl");
+    await expect(reservations.removeProjectNodeIdImpl(ZeroHash, ZeroHash)).to.be.revertedWith("not impl");
+    await expect(reservations.deleteReservationImpl(ZeroAddress, ZeroAddress, ZeroHash, ZeroHash, { last: false, next: false })).to.be.revertedWith("not impl");
 
     // implementation call is disallowed from unauthorized signer
-    await expect(reservations.connect(deployer).removeProjectNodeIdImpl(HashZero, HashZero)).to.be.revertedWith("not impl");
-    await expect(reservations.connect(deployer).deleteReservationImpl(AddressZero, AddressZero, HashZero, HashZero, { last: false, next: false })).to.be.revertedWith("not impl");
+    await expect(reservations.connect(deployer).removeProjectNodeIdImpl(ZeroHash, ZeroHash)).to.be.revertedWith("not impl");
+    await expect(reservations.connect(deployer).deleteReservationImpl(ZeroAddress, ZeroAddress, ZeroHash, ZeroHash, { last: false, next: false })).to.be.revertedWith("not impl");
   });
 });

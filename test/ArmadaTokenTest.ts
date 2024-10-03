@@ -1,6 +1,5 @@
-import { AddressZero } from "@ethersproject/constants";
 import { expect } from "chai";
-import { SignerWithAddress } from "ethers";
+import { SignerWithAddress, ZeroAddress } from "ethers";
 import hre from "hardhat";
 import { fixtures } from "../lib/test";
 import { parseTokens, signers } from "../lib/util";
@@ -34,9 +33,9 @@ describe("ArmadaToken", function () {
   it("Should check constructor args", async function () {
     const factory = await hre.ethers.getContractFactory("ArmadaToken");
     await expect(factory.deploy("Armada", "ARMADA", [], [admin.address], [admin.address])).to.be.revertedWith("no admins");
-    await expect(factory.deploy("Armada", "ARMADA", [AddressZero], [admin.address], [admin.address])).to.be.revertedWith("zero admin");
-    await expect(factory.deploy("Armada", "ARMADA", [admin.address], [AddressZero], [admin.address])).to.be.revertedWith("zero minter");
-    await expect(factory.deploy("Armada", "ARMADA", [admin.address], [admin.address], [AddressZero])).to.be.revertedWith("zero pauser");
+    await expect(factory.deploy("Armada", "ARMADA", [ZeroAddress], [admin.address], [admin.address])).to.be.revertedWith("zero admin");
+    await expect(factory.deploy("Armada", "ARMADA", [admin.address], [ZeroAddress], [admin.address])).to.be.revertedWith("zero minter");
+    await expect(factory.deploy("Armada", "ARMADA", [admin.address], [admin.address], [ZeroAddress])).to.be.revertedWith("zero pauser");
   });
 
   it("Should mint/burn ok", async function () {

@@ -1,7 +1,6 @@
-import { AddressZero, HashZero } from "@ethersproject/constants";
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
-import { BigNumber, Result, SignerWithAddress } from "ethers";
+import { BigNumber, Result, SignerWithAddress, ZeroAddress, ZeroHash } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine, mineWith } from "../lib/test";
 import { approve, formatUSDC, parseTokens, parseUSDC, signers } from "../lib/util";
@@ -72,7 +71,7 @@ describe("ArmadaBilling", function () {
     pricePerSec = price / epochLength; // Node price per second
 
     // Create operator
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
+    const o1: ArmadaOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     [operatorId1] = await expectEvent(createOperator1, operators, "OperatorCreated");
     const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
@@ -94,7 +93,7 @@ describe("ArmadaBilling", function () {
 
     // Create project
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
     const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
@@ -143,7 +142,7 @@ describe("ArmadaBilling", function () {
 
   it("Should disallow zero admin", async function () {
     const billingFactory = await hre.ethers.getContractFactory("ArmadaBilling");
-    const billingArgs = [[AddressZero], registryAddress];
+    const billingArgs = [[ZeroAddress], registryAddress];
     await expect(hre.upgrades.deployProxy(billingFactory, billingArgs, { kind: "uups" })).to.be.revertedWith("zero admin");
   });
 
@@ -169,35 +168,35 @@ describe("ArmadaBilling", function () {
   });
 
   it("Should not allow non-reconciler to reconcile without topology node", async function () {
-    await expect(billing.connect(project).processBilling(HashZero, [nodeId1, nodeId2], [10000, 10000])).to.be.revertedWith("not reconciler");
-    await expect(billing.connect(project).processRenewal(HashZero, [nodeId1, nodeId2])).to.be.revertedWith("not reconciler");
-    await expect(billing.connect(admin).processBilling(HashZero, [nodeId1, nodeId2], [10000, 10000])).to.be.revertedWith("not reconciler");
-    await expect(billing.connect(admin).processRenewal(HashZero, [nodeId1, nodeId2])).to.be.revertedWith("not reconciler");
+    await expect(billing.connect(project).processBilling(ZeroHash, [nodeId1, nodeId2], [10000, 10000])).to.be.revertedWith("not reconciler");
+    await expect(billing.connect(project).processRenewal(ZeroHash, [nodeId1, nodeId2])).to.be.revertedWith("not reconciler");
+    await expect(billing.connect(admin).processBilling(ZeroHash, [nodeId1, nodeId2], [10000, 10000])).to.be.revertedWith("not reconciler");
+    await expect(billing.connect(admin).processRenewal(ZeroHash, [nodeId1, nodeId2])).to.be.revertedWith("not reconciler");
   });
 
   it("Should allow reconciler to reconcile without topology node", async function () {
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
     await mine(hre, epochLength);
     expect(await billing.connect(admin).grantRole(billing.RECONCILER_ROLE(), admin.address)).to.be.ok;
-    expect(await billing.connect(admin).processBilling(HashZero, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    expect(await billing.connect(admin).processRenewal(HashZero, [nodeId1, nodeId2])).to.be.ok;
+    expect(await billing.connect(admin).processBilling(ZeroHash, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(admin).processRenewal(ZeroHash, [nodeId1, nodeId2])).to.be.ok;
   });
 
   it("Should check node reconcilication order", async function () {
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
     await mine(hre, epochLength);
     expect(await billing.connect(admin).grantRole(billing.RECONCILER_ROLE(), admin.address)).to.be.ok;
-    await expect(billing.connect(admin).processBilling(HashZero, [nodeId2, nodeId1], [10000, 10000])).to.be.revertedWith("order mismatch");
-    expect(await billing.connect(admin).processBilling(HashZero, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    await expect(billing.connect(admin).processRenewal(HashZero, [nodeId2, nodeId1])).to.be.revertedWith("order mismatch");
+    await expect(billing.connect(admin).processBilling(ZeroHash, [nodeId2, nodeId1], [10000, 10000])).to.be.revertedWith("order mismatch");
+    expect(await billing.connect(admin).processBilling(ZeroHash, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    await expect(billing.connect(admin).processRenewal(ZeroHash, [nodeId2, nodeId1])).to.be.revertedWith("order mismatch");
   });
 
   it("Should check node uptime bounds", async function () {
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
     await mine(hre, epochLength);
     expect(await billing.connect(admin).grantRole(billing.RECONCILER_ROLE(), admin.address)).to.be.ok;
-    await expect(billing.connect(admin).processBilling(HashZero, [nodeId1, nodeId2], [10001, 10001])).to.be.revertedWith("invalid uptime");
-    expect(await billing.connect(admin).processBilling(HashZero, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    await expect(billing.connect(admin).processBilling(ZeroHash, [nodeId1, nodeId2], [10001, 10001])).to.be.revertedWith("invalid uptime");
+    expect(await billing.connect(admin).processBilling(ZeroHash, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
   });
 
   it("Should allow admin to unsafe set registry", async function () {
@@ -429,7 +428,7 @@ describe("ArmadaBilling", function () {
     expect((await nodes.getNode(nodeId1)).projectIds[0]).to.equal(projectId1);
     expect((await nodes.getNode(nodeId2)).projectIds[0]).to.equal(projectId1);
     expect((await nodes.getNode(nodeId1)).projectIds[1]).to.equal(projectId1);
-    expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(HashZero);
+    expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(ZeroHash);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice * BigInt(2));
     expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("4.5") - proratedPrice * BigInt(2)); // 2.54
@@ -449,9 +448,9 @@ describe("ArmadaBilling", function () {
     expect((await nodes.getNode(nodeId1)).prices[1]).to.equal(price / BigInt(2));
     expect((await nodes.getNode(nodeId2)).prices[1]).to.equal(price / BigInt(2));
     expect((await nodes.getNode(nodeId1)).projectIds[0]).to.equal(projectId1);
-    expect((await nodes.getNode(nodeId2)).projectIds[0]).to.equal(HashZero);
-    expect((await nodes.getNode(nodeId1)).projectIds[1]).to.equal(HashZero);
-    expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(HashZero);
+    expect((await nodes.getNode(nodeId2)).projectIds[0]).to.equal(ZeroHash);
+    expect((await nodes.getNode(nodeId1)).projectIds[1]).to.equal(ZeroHash);
+    expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(ZeroHash);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await operators.getOperator(operatorId1)).balance).to.equal((proratedPrice + price) * BigInt(2));
     expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("4.5") - (proratedPrice + price) * BigInt(2)); // 0.54
@@ -470,10 +469,10 @@ describe("ArmadaBilling", function () {
     expect((await nodes.getNode(nodeId2)).prices[0]).to.equal(price / BigInt(2));
     expect((await nodes.getNode(nodeId1)).prices[1]).to.equal(price / BigInt(2));
     expect((await nodes.getNode(nodeId2)).prices[1]).to.equal(price / BigInt(2));
-    expect((await nodes.getNode(nodeId1)).projectIds[0]).to.equal(HashZero);
-    expect((await nodes.getNode(nodeId2)).projectIds[0]).to.equal(HashZero);
-    expect((await nodes.getNode(nodeId1)).projectIds[1]).to.equal(HashZero);
-    expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(HashZero);
+    expect((await nodes.getNode(nodeId1)).projectIds[0]).to.equal(ZeroHash);
+    expect((await nodes.getNode(nodeId2)).projectIds[0]).to.equal(ZeroHash);
+    expect((await nodes.getNode(nodeId1)).projectIds[1]).to.equal(ZeroHash);
+    expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(ZeroHash);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await operators.getOperator(operatorId1)).balance).to.equal((proratedPrice + price) * BigInt(2) + price / BigInt(2));
     expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("4.5") - ((proratedPrice + price) * BigInt(2) + price / BigInt(2))); // 0.04

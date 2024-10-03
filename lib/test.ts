@@ -1,7 +1,5 @@
-import { TransactionReceipt, TransactionResponse } from "@ethersproject/abstract-provider";
-import { AddressZero } from "@ethersproject/constants";
 import { expect } from "chai";
-import { Contract, ethers, randomBytes, Result } from "ethers";
+import { Contract, ethers, randomBytes, Result, TransactionReceipt, TransactionResponse, ZeroAddress } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { ArmadaBilling } from "../typechain-types/contracts/ArmadaBilling";
 import { ArmadaGovernor } from "../typechain-types/contracts/ArmadaGovernor";
@@ -82,7 +80,7 @@ export async function fixtures(hre: HardhatRuntimeEnvironment): Promise<{
   await tokenMint.wait();
 
   // timelockArgs: minDelay, admins, proposers, executors
-  const timelockArgs = [0, [deployer.address], [deployer.address], [AddressZero]];
+  const timelockArgs = [0, [deployer.address], [deployer.address], [ZeroAddress]];
   const timelockFactory = await hre.ethers.getContractFactory("ArmadaTimelock");
   const timelock = <ArmadaTimelock>await timelockFactory.deploy(...timelockArgs);
   const timelockAddress = await timelock.getAddress();

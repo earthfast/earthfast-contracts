@@ -1,7 +1,6 @@
-import { AddressZero, HashZero } from "@ethersproject/constants";
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
-import { Result, SignerWithAddress } from "ethers";
+import { Result, SignerWithAddress, ZeroAddress, ZeroHash } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, newId } from "../lib/test";
 import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
@@ -59,7 +58,7 @@ describe("ArmadaOperators", function () {
   it("Should disallow zero admin", async function () {
     const stakePerNode = parseTokens("1");
     const operatorsFactory = await hre.ethers.getContractFactory("ArmadaOperators");
-    const operatorsArgs = [[AddressZero], registryAddress, stakePerNode, true];
+    const operatorsArgs = [[ZeroAddress], registryAddress, stakePerNode, true];
     await expect(hre.upgrades.deployProxy(operatorsFactory, operatorsArgs, { kind: "uups" })).to.be.revertedWith("zero admin");
   });
 
@@ -96,12 +95,12 @@ describe("ArmadaOperators", function () {
 
     expect(await operators.requireTopologyNode(nodeId0, operator.address)).to.be.ok;
     await expect(operators.requireTopologyNode(nodeId0, deployer.address)).to.be.revertedWith("not operator");
-    await expect(operators.requireTopologyNode(nodeId0, AddressZero)).to.be.revertedWith("zero sender");
-    await expect(operators.requireTopologyNode(nodeId1, AddressZero)).to.be.revertedWith("not topology node");
+    await expect(operators.requireTopologyNode(nodeId0, ZeroAddress)).to.be.revertedWith("zero sender");
+    await expect(operators.requireTopologyNode(nodeId1, ZeroAddress)).to.be.revertedWith("not topology node");
   });
 
   it("Should check operator create parameters", async function () {
-    await expect(operators.connect(admin).createOperator(AddressZero, "", "@")).to.be.revertedWith("zero owner");
+    await expect(operators.connect(admin).createOperator(ZeroAddress, "", "@")).to.be.revertedWith("zero owner");
     await expect(operators.connect(admin).createOperator(operator.address, "", "@")).to.be.revertedWith("empty name");
     await expect(operators.connect(admin).createOperator(operator.address, "x".repeat(257), "@")).to.be.revertedWith("name too long");
     await expect(operators.connect(admin).createOperator(operator.address, "o", "x".repeat(257))).to.be.revertedWith("email too long");
@@ -109,21 +108,21 @@ describe("ArmadaOperators", function () {
 
   it("Should create/delete operators", async function () {
     // Create operator
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
+    const o1: ArmadaOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     [o1.id] = await expectEvent(createOperator1, operators, "OperatorCreated");
-    expect(o1.id !== HashZero);
+    expect(o1.id !== ZeroHash);
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: o1 });
 
     // Get operator
-    await expect(operators.getOperator(HashZero)).to.be.revertedWith("unknown operator");
+    await expect(operators.getOperator(ZeroHash)).to.be.revertedWith("unknown operator");
     expect(await operators.getOperator(o1.id)).to.be.shallowDeepEqual(o1);
 
     // Create identical operator
     const o2: ArmadaOperatorStruct = { ...o1 };
     const createOperator2 = await expectReceipt(operators.connect(admin).createOperator(o2.owner, o2.name, o2.email));
     [o2.id] = await expectEvent(createOperator2, operators, "OperatorCreated");
-    expect(o2.id !== HashZero);
+    expect(o2.id !== ZeroHash);
     expect(o2.id !== o1.id);
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 2, 0: o1, 1: o2 });
 
@@ -134,13 +133,13 @@ describe("ArmadaOperators", function () {
     // Delete missing operator
     await expect(operators.connect(admin).deleteOperator(o1.id)).to.be.revertedWith("unknown operator");
     await expect(operators.connect(admin).deleteOperator(newId())).to.be.revertedWith("unknown operator");
-    await expect(operators.connect(admin).deleteOperator(HashZero)).to.be.revertedWith("unknown operator");
+    await expect(operators.connect(admin).deleteOperator(ZeroHash)).to.be.revertedWith("unknown operator");
 
     // Create previously deleted operator
     const o3: ArmadaOperatorStruct = { ...o1 };
     const createOperator3 = await expectReceipt(operators.connect(admin).createOperator(o3.owner, o3.name, o3.email));
     [o3.id] = await expectEvent(createOperator3, operators, "OperatorCreated");
-    expect(o3.id !== HashZero);
+    expect(o3.id !== ZeroHash);
     expect(o3.id !== o1.id);
     expect(o3.id !== o2.id);
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 2, 0: o2, 1: o3 });
@@ -149,15 +148,15 @@ describe("ArmadaOperators", function () {
 
   it("Should change operator details", async function () {
     // Create operator
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
+    const o1: ArmadaOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     [o1.id] = await expectEvent(createOperator1, operators, "OperatorCreated");
-    expect(o1.id).to.not.eq(HashZero);
+    expect(o1.id).to.not.eq(ZeroHash);
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: o1 });
 
     const newEmail = "hello@gmail.com";
     const newName = "hello";
-    await expect(operators.setOperatorProps(HashZero, newName, newEmail)).to.be.revertedWith("unknown operator");
+    await expect(operators.setOperatorProps(ZeroHash, newName, newEmail)).to.be.revertedWith("unknown operator");
     await expect(operators.setOperatorProps(o1.id, newName, newEmail)).to.be.revertedWith("not operator");
     await expect(operators.connect(operator).setOperatorProps(o1.id, "", newEmail)).to.be.revertedWith("empty name");
     await expect(operators.connect(operator).setOperatorProps(o1.id, "x".repeat(257), newEmail)).to.be.revertedWith("name too long");
@@ -171,14 +170,14 @@ describe("ArmadaOperators", function () {
 
   it("Should change operator owner", async function () {
     // Create operator
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
+    const o1: ArmadaOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     [o1.id] = await expectEvent(createOperator1, operators, "OperatorCreated");
-    expect(o1.id !== HashZero);
+    expect(o1.id !== ZeroHash);
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: o1 });
 
-    await expect(operators.connect(operator).setOperatorOwner(o1.id, AddressZero)).to.be.revertedWith("zero owner");
-    await expect(operators.connect(operator).setOperatorOwner(HashZero, deployer.address)).to.be.revertedWith("unknown operator");
+    await expect(operators.connect(operator).setOperatorOwner(o1.id, ZeroAddress)).to.be.revertedWith("zero owner");
+    await expect(operators.connect(operator).setOperatorOwner(ZeroHash, deployer.address)).to.be.revertedWith("unknown operator");
     await expect(operators.setOperatorOwner(o1.id, deployer.address)).to.be.revertedWith("not admin or operator");
     expect(await operators.connect(admin).setOperatorOwner(o1.id, admin.address)).to.be.ok;
     const operatorDetails = await operators.getOperator(o1.id);
@@ -187,10 +186,10 @@ describe("ArmadaOperators", function () {
 
   it("Should deposit/withdraw stake", async function () {
     // Create operator
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
+    const o1: ArmadaOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     [o1.id] = await expectEvent(createOperator1, operators, "OperatorCreated");
-    expect(o1.id !== HashZero);
+    expect(o1.id !== ZeroHash);
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: o1 });
 
     // Create topology node as non-admin
@@ -202,7 +201,7 @@ describe("ArmadaOperators", function () {
     const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(o1.id, true, [n0]));
     const createNodes0Result = await expectEvent(createNodes0, nodes, "NodeCreated");
     const { nodeId: nodeId0 } = createNodes0Result as Result;
-    expect(nodeId0).to.not.equal(HashZero);
+    expect(nodeId0).to.not.equal(ZeroHash);
 
     // Create content nodes without stake
     const n1: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseUSDC("1") };
@@ -211,7 +210,7 @@ describe("ArmadaOperators", function () {
 
     // Deposit stake
     const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
-    await expect(operators.connect(admin).depositOperatorStake(HashZero, parseTokens("100"), ...operatorsPermit)).to.be.revertedWith("unknown operator");
+    await expect(operators.connect(admin).depositOperatorStake(ZeroHash, parseTokens("100"), ...operatorsPermit)).to.be.revertedWith("unknown operator");
     expect(await operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), ...operatorsPermit)).to.be.ok;
     expect(await token.connect(admin).balanceOf(operator.address)).to.equal(parseTokens("0"));
     expect(await token.connect(admin).balanceOf(registryAddress)).to.equal(parseTokens("100"));
@@ -222,12 +221,12 @@ describe("ArmadaOperators", function () {
     const createNodes12Result = await expectEvent(createNodes12, nodes, "NodeCreated");
     const { length: createNodes12Length, 0: { nodeId: nodeId1 }, 1: { nodeId: nodeId2 } } = createNodes12Result; // prettier-ignore
     expect(createNodes12Length).to.equal(2);
-    expect(nodeId1).to.not.equal(HashZero);
-    expect(nodeId2).to.not.equal(HashZero);
+    expect(nodeId1).to.not.equal(ZeroHash);
+    expect(nodeId2).to.not.equal(ZeroHash);
 
     // Withdraw stake with nodes
     await expect(operators.withdrawOperatorStake(o1.id, parseTokens("100"), operator.address)).to.be.revertedWith("not operator");
-    await expect(operators.connect(operator).withdrawOperatorStake(HashZero, parseTokens("100"), operator.address)).to.be.revertedWith("unknown operator");
+    await expect(operators.connect(operator).withdrawOperatorStake(ZeroHash, parseTokens("100"), operator.address)).to.be.revertedWith("unknown operator");
     await expect(operators.connect(operator).withdrawOperatorStake(o1.id, parseTokens("100"), operator.address)).to.be.revertedWith("not enough stake");
     expect(await operators.connect(operator).withdrawOperatorStake(o1.id, parseTokens("98"), operator.address)).to.be.ok;
     expect(await token.connect(admin).balanceOf(operator.address)).to.equal(parseTokens("98"));
@@ -263,39 +262,39 @@ describe("ArmadaOperators", function () {
 
   it("Should deposit stake with token allowance", async function () {
     // Create operator
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
+    const o1: ArmadaOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     [o1.id] = await expectEvent(createOperator1, operators, "OperatorCreated");
-    expect(o1.id !== HashZero);
+    expect(o1.id !== ZeroHash);
 
     // Check invalid permits
-    await expect(operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), 1, 0, HashZero, HashZero)).to.be.revertedWith("invalid permit");
-    await expect(operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), 0, 1, HashZero, HashZero)).to.be.revertedWith("invalid permit");
-    await expect(operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), 0, 0, o1.id, HashZero)).to.be.revertedWith("invalid permit");
+    await expect(operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), 1, 0, ZeroHash, ZeroHash)).to.be.revertedWith("invalid permit");
+    await expect(operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), 0, 1, ZeroHash, ZeroHash)).to.be.revertedWith("invalid permit");
+    await expect(operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), 0, 0, o1.id, ZeroHash)).to.be.revertedWith("invalid permit");
 
     // Deposit with allowance
-    await expect(operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), 0, 0, HashZero, HashZero)).to.be.revertedWith("ERC20: insufficient allowance");
+    await expect(operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), 0, 0, ZeroHash, ZeroHash)).to.be.revertedWith("ERC20: insufficient allowance");
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: o1 });
     expect(await token.connect(admin).approve(operatorsAddress, parseTokens("100"))).to.be.ok;
-    expect(await operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), 0, 0, HashZero, HashZero)).to.be.ok;
+    expect(await operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), 0, 0, ZeroHash, ZeroHash)).to.be.ok;
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: { ...o1, stake: parseTokens("100") } });
   });
 
   it("Should deposit/withdraw balance", async function () {
     // Create operators
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
-    const o2: ArmadaOperatorStruct = { id: HashZero, name: "o2", owner: operator.address, email: "e2", stake: 0, balance: 0 };
+    const o1: ArmadaOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
+    const o2: ArmadaOperatorStruct = { id: ZeroHash, name: "o2", owner: operator.address, email: "e2", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     const createOperator2 = await expectReceipt(operators.connect(admin).createOperator(o2.owner, o2.name, o2.email));
     [o1.id] = await expectEvent(createOperator1, operators, "OperatorCreated");
     [o2.id] = await expectEvent(createOperator2, operators, "OperatorCreated");
-    expect(o1.id !== HashZero);
-    expect(o2.id !== HashZero);
+    expect(o1.id !== ZeroHash);
+    expect(o2.id !== ZeroHash);
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 2, 0: o1, 1: o2 });
 
     // Deposit balance
     const operatorsPermit = await approve(hre, usdc, admin.address, operatorsAddress, parseUSDC("2"));
-    await expect(operators.connect(admin).depositOperatorBalance(HashZero, parseUSDC("2"), ...operatorsPermit)).to.be.revertedWith("unknown operator");
+    await expect(operators.connect(admin).depositOperatorBalance(ZeroHash, parseUSDC("2"), ...operatorsPermit)).to.be.revertedWith("unknown operator");
     expect(await operators.connect(admin).depositOperatorBalance(o1.id, parseUSDC("2"), ...operatorsPermit)).to.be.ok;
     expect(await usdc.connect(admin).balanceOf(operator.address)).to.equal(parseUSDC("0"));
     expect(await usdc.connect(admin).balanceOf(registryAddress)).to.equal(parseUSDC("2"));
@@ -321,37 +320,37 @@ describe("ArmadaOperators", function () {
 
   it("Should deposit stake with token allowance", async function () {
     // Create operator
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
+    const o1: ArmadaOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     [o1.id] = await expectEvent(createOperator1, operators, "OperatorCreated");
-    expect(o1.id !== HashZero);
+    expect(o1.id !== ZeroHash);
 
     // Check invalid permits
-    await expect(operators.connect(admin).depositOperatorBalance(o1.id, parseTokens("100"), 1, 0, HashZero, HashZero)).to.be.revertedWith("invalid permit");
-    await expect(operators.connect(admin).depositOperatorBalance(o1.id, parseTokens("100"), 0, 1, HashZero, HashZero)).to.be.revertedWith("invalid permit");
-    await expect(operators.connect(admin).depositOperatorBalance(o1.id, parseTokens("100"), 0, 0, o1.id, HashZero)).to.be.revertedWith("invalid permit");
+    await expect(operators.connect(admin).depositOperatorBalance(o1.id, parseTokens("100"), 1, 0, ZeroHash, ZeroHash)).to.be.revertedWith("invalid permit");
+    await expect(operators.connect(admin).depositOperatorBalance(o1.id, parseTokens("100"), 0, 1, ZeroHash, ZeroHash)).to.be.revertedWith("invalid permit");
+    await expect(operators.connect(admin).depositOperatorBalance(o1.id, parseTokens("100"), 0, 0, o1.id, ZeroHash)).to.be.revertedWith("invalid permit");
 
     // Deposit with allowance
-    await expect(operators.connect(admin).depositOperatorBalance(o1.id, parseTokens("100"), 0, 0, HashZero, HashZero)).to.be.revertedWith("ERC20: insufficient allowance");
+    await expect(operators.connect(admin).depositOperatorBalance(o1.id, parseTokens("100"), 0, 0, ZeroHash, ZeroHash)).to.be.revertedWith("ERC20: insufficient allowance");
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: o1 });
     expect(await usdc.connect(admin).approve(operatorsAddress, parseTokens("100"))).to.be.ok;
-    expect(await operators.connect(admin).depositOperatorBalance(o1.id, parseTokens("100"), 0, 0, HashZero, HashZero)).to.be.ok;
+    expect(await operators.connect(admin).depositOperatorBalance(o1.id, parseTokens("100"), 0, 0, ZeroHash, ZeroHash)).to.be.ok;
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: { ...o1, balance: parseTokens("100") } });
   });
 
   it("Should allow importer to unsafeImportData", async function () {
     // Create operator
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
+    const o1: ArmadaOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     [o1.id] = await expectEvent(createOperator1, operators, "OperatorCreated");
-    expect(o1.id !== HashZero);
+    expect(o1.id !== ZeroHash);
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: o1 });
 
     // Create identical operator
     const o2: ArmadaOperatorStruct = { ...o1 };
     const createOperator2 = await expectReceipt(operators.connect(admin).createOperator(o2.owner, o2.name, o2.email));
     [o2.id] = await expectEvent(createOperator2, operators, "OperatorCreated");
-    expect(o2.id !== HashZero);
+    expect(o2.id !== ZeroHash);
     expect(o2.id !== o1.id);
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 2, 0: o1, 1: o2 });
 
@@ -411,10 +410,10 @@ describe("ArmadaOperators", function () {
 
   it("Should allow admin to adjust balances", async function () {
     // Create operator
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
+    const o1: ArmadaOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     [o1.id] = await expectEvent(createOperator1, operators, "OperatorCreated");
-    expect(o1.id !== HashZero);
+    expect(o1.id !== ZeroHash);
 
     // Deposit balance
     const operatorsPermit = await approve(hre, usdc, admin.address, operatorsAddress, parseUSDC("2"));
@@ -445,9 +444,9 @@ describe("ArmadaOperators", function () {
     const nodesSigner = await hre.ethers.getSigner(nodesAddress);
 
     // unknown operator id is disallowed
-    await expect(operators.connect(nodesSigner).setOperatorBalanceImpl(HashZero, 0, 0, { gasPrice: 0 })).to.be.revertedWith("unknown operator");
+    await expect(operators.connect(nodesSigner).setOperatorBalanceImpl(ZeroHash, 0, 0, { gasPrice: 0 })).to.be.revertedWith("unknown operator");
 
     // implementation call is disallowed from unauthorized address
-    await expect(operators.setOperatorBalanceImpl(HashZero, 0, 0)).to.be.revertedWith("not impl");
+    await expect(operators.setOperatorBalanceImpl(ZeroHash, 0, 0)).to.be.revertedWith("not impl");
   });
 });

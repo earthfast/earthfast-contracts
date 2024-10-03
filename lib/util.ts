@@ -1,6 +1,4 @@
 import { promises as fs } from "fs";
-import { TransactionReceipt, TransactionResponse } from "@ethersproject/abstract-provider";
-import { TypedDataSigner } from "@ethersproject/abstract-signer";
 import * as ethutil from "ethereumjs-util";
 import * as ethwallet from "ethereumjs-wallet";
 import {
@@ -12,7 +10,10 @@ import {
   parseUnits,
   Result,
   SignerWithAddress,
+  TransactionReceipt,
+  TransactionResponse,
   TypedDataField,
+  TypedDataSigner,
 } from "ethers";
 import { HardhatRuntimeEnvironment, Libraries } from "hardhat/types";
 import { keyIn } from "readline-sync";

@@ -1,8 +1,7 @@
-import { AddressZero } from "@ethersproject/constants";
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
 import { keccak256 } from "ethereumjs-util";
-import { parseEther, SignerWithAddress } from "ethers";
+import { parseEther, SignerWithAddress, ZeroAddress } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine } from "../lib/test";
 import { parseTokens, signers } from "../lib/util";
@@ -57,7 +56,7 @@ describe("ArmadaGovernor", function () {
 
   it("Should allow zero admin", async function () {
     const factory = await hre.ethers.getContractFactory("ArmadaGovernor");
-    const governor = <ArmadaGovernor>await factory.deploy(AddressZero, tokenAddress, timelockAddress, 0, 25, 0, 51);
+    const governor = <ArmadaGovernor>await factory.deploy(ZeroAddress, tokenAddress, timelockAddress, 0, 25, 0, 51);
     expect(await governor.hasRole(governor.DEFAULT_ADMIN_ROLE(), deployer.address)).to.be.false;
   });
 
