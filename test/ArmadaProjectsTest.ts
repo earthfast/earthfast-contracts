@@ -207,12 +207,7 @@ describe("ArmadaProjects", function () {
     // Use unsafeImportData
     const existingProjects = await projects.getProjects(0, 10);
     expect(existingProjects.length).to.equal(1);
-    const projectsToImport = existingProjects.map((p) => (mapProjectsToNewStruct(p)));
-    function mapProjectsToNewStruct(p: ArmadaProjectStruct): ArmadaProjectStruct{
-      const struct = p.toObject(true);
-      struct.id = newId();
-      return struct
-    }
+    const projectsToImport = existingProjects.map((p) => ({ ...p.toObject(true), id: newId() }));
 
     const newCreatorAddr = operator.address;
     expect(await projects.connect(deployer).unsafeImportData(projectsToImport, [newCreatorAddr], false)).to.be.ok;

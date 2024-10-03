@@ -5,7 +5,7 @@ import shallowDeepEqual from "chai-shallow-deep-equal";
 import { Result } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, newId } from "../lib/test";
-import { approve, parseTokens, parseUSDC, signers, getAddress } from '../lib/util';
+import { approve, getAddress, parseTokens, parseUSDC, signers } from "../lib/util";
 import { ArmadaCreateNodeDataStruct, ArmadaNodes, ArmadaNodeStruct } from "../typechain-types/contracts/ArmadaNodes";
 import { ArmadaOperators, ArmadaOperatorStruct } from "../typechain-types/contracts/ArmadaOperators";
 import { ArmadaCreateProjectDataStruct, ArmadaProjects } from "../typechain-types/contracts/ArmadaProjects";
@@ -41,7 +41,7 @@ describe("ArmadaNodes", function () {
   async function fixture() {
     ({ admin, deployer, operator, project } = await signers(hre));
     ({ usdc, token, nodes, operators, registry, projects } = await fixtures(hre));
-  
+
     // set contract addresses as string
     usdcAddress = await usdc.getAddress();
     tokenAddress = await token.getAddress();
@@ -268,7 +268,7 @@ describe("ArmadaNodes", function () {
 
     // Save current node info
     const preImportNodes = await nodes.getNodes(operatorId, false, 0, 10);
-    const nodesToImport = preImportNodes.map((n: ArmadaNodeStruct) => (nodeStructMap(n)));
+    const nodesToImport = preImportNodes.map((n: ArmadaNodeStruct) => nodeStructMap(n));
     function nodeStructMap(n: ArmadaNodeStruct) {
       return {
         id: newId(),
@@ -278,7 +278,7 @@ describe("ArmadaNodes", function () {
         topology: n.topology,
         disabled: n.disabled,
         prices: [price, price],
-        projectIds: [newId(), newId()]
+        projectIds: [newId(), newId()],
       };
     }
 

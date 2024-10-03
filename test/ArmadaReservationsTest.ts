@@ -2,8 +2,7 @@ import { AddressZero, HashZero } from "@ethersproject/constants";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
-import { BigNumber } from "ethers";
-import { Result } from "ethers";
+import { BigNumber, Result } from "ethers";
 import hre from "hardhat";
 import { automine, expectEvent, expectReceipt, fixtures, mine, mineWith, newId } from "../lib/test";
 import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
@@ -241,7 +240,7 @@ describe("ArmadaReservations", function () {
     if (hre.network.tags.ganache) await mine(hre, 0);
     expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
     if (hre.network.tags.ganache) await mine(hre, 0);
-    let proratedPrice = pricePerSec * await epochRemainder();
+    const proratedPrice = pricePerSec * (await epochRemainder());
     expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok;
     if (hre.network.tags.ganache) await mine(hre, 0);
     if (!hre.network.tags.ganache) await mine(hre, 1);
@@ -259,12 +258,12 @@ describe("ArmadaReservations", function () {
     expect(await reservations.getReservationCount(projectId1)).to.equal(0);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice * BigInt(2));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(100) - (proratedPrice * BigInt(2)));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(100) - proratedPrice * BigInt(2));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(0));
   });
 
   it("Should not reserve nodes while reconciling", async function () {
-    let proratedPrice = pricePerSec * await epochRemainder();
+    let proratedPrice = pricePerSec * (await epochRemainder());
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice * BigInt(2));
@@ -280,7 +279,7 @@ describe("ArmadaReservations", function () {
     expect(await reservations.getReservationCount(projectId1)).to.equal(0);
     expect((await projects.getProject(projectId1)).reserve).to.equal(0);
 
-    proratedPrice = pricePerSec * await epochRemainder();
+    proratedPrice = pricePerSec * (await epochRemainder());
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice * BigInt(2));
@@ -314,30 +313,8 @@ describe("ArmadaReservations", function () {
     expect(await reservations.getReservations(projectId1, 0, 10)).to.have.length(0);
 
     // importer role calls unsafeImportData and reinstates the reservations
-    // FIXME: why is this requiring the projectId to be duplicated?
-    const newReservationsStructs = [
-      {
-        id: newReservations[0].id,
-        operatorId: newReservations[0].operatorId,
-        host: newReservations[0].host,
-        region: newReservations[0].region,
-        topology: newReservations[0].topology,
-        disabled: newReservations[0].disabled,
-        prices: [price, 0],
-        projectIds: [projectId1, projectId1]
-      },
-      {
-        id: newReservations[1].id,
-        operatorId: newReservations[1].operatorId,
-        host: newReservations[1].host,
-        region: newReservations[1].region,
-        topology: newReservations[1].topology,
-        disabled: newReservations[1].disabled,
-        prices: [price, 0],
-        projectIds: [projectId1, projectId1]
-      }
-    ]
-    expect(await reservations.connect(deployer).unsafeImportData(newReservationsStructs, false)).to.be.ok;
+    const reservationsToImport = newReservations.map((r) => ({ ...r.toObject(true) }));
+    expect(await reservations.connect(deployer).unsafeImportData(reservationsToImport, false)).to.be.ok;
 
     const importedReservations = await reservations.getReservations(projectId1, 0, 10);
     expect(importedReservations.length).to.equal(2);

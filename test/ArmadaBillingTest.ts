@@ -2,8 +2,7 @@ import { AddressZero, HashZero } from "@ethersproject/constants";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
-import { BigNumber } from "ethers";
-import { Result } from "ethers";
+import { BigNumber, Result } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine, mineWith } from "../lib/test";
 import { approve, formatUSDC, parseTokens, parseUSDC, signers } from "../lib/util";
@@ -160,7 +159,7 @@ describe("ArmadaBilling", function () {
   });
 
   it("Should auto-release non-renew nodes", async function () {
-    const proratedPrice = pricePerSec * await epochRemainder();
+    const proratedPrice = pricePerSec * (await epochRemainder());
     expect(Number.parseFloat(formatUSDC(proratedPrice))).to.be.equal(1);
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
     expect(await reservations.getReservationCount(projectId1)).to.equal(BigInt(2));
@@ -176,7 +175,7 @@ describe("ArmadaBilling", function () {
     expect(await reservations.getReservationCount(projectId1)).to.equal(0);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice * BigInt(2));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(100) - (proratedPrice * BigInt(2)));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(100) - proratedPrice * BigInt(2));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(0));
   });
 
@@ -229,7 +228,7 @@ describe("ArmadaBilling", function () {
   });
 
   it("Should auto-release nodes that were disabled by operator", async function () {
-    const proratedPrice = pricePerSec * await epochRemainder();
+    const proratedPrice = pricePerSec * (await epochRemainder());
     expect(Number.parseFloat(formatUSDC(proratedPrice))).to.be.equal(1);
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok);
     expect(await reservations.getReservationCount(projectId1)).to.equal(BigInt(2));
@@ -249,12 +248,12 @@ describe("ArmadaBilling", function () {
     expect(await reservations.getReservationCount(projectId1)).to.equal(0);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice * BigInt(2));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(100) - (proratedPrice * BigInt(2)));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(100) - proratedPrice * BigInt(2));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(0));
   });
 
   it("Should auto-release nodes that were repriced by operator", async function () {
-    const proratedPrice = pricePerSec * await epochRemainder();
+    const proratedPrice = pricePerSec * (await epochRemainder());
     expect(Number.parseFloat(formatUSDC(proratedPrice))).to.be.equal(1);
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok);
     expect(await reservations.getReservationCount(projectId1)).to.equal(BigInt(2));
@@ -274,14 +273,14 @@ describe("ArmadaBilling", function () {
     expect(await reservations.getReservationCount(projectId1)).to.equal(0);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice * BigInt(2));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(100) - (proratedPrice * BigInt(2)));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(100) - proratedPrice * BigInt(2));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(0));
   });
 
   it("Should auto-release nodes if project runs out of escrow", async function () {
     await mineWith(hre, async () => expect(await projects.connect(project).withdrawProjectEscrow(projectId1, price * BigInt(94), project.address)).to.be.ok);
 
-    const proratedPrice = pricePerSec * await epochRemainder();
+    const proratedPrice = pricePerSec * (await epochRemainder());
     expect(Number.parseFloat(formatUSDC(proratedPrice))).to.be.equal(0.99);
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok);
     expect(await reservations.getReservationCount(projectId1)).to.equal(BigInt(2));
@@ -293,7 +292,7 @@ describe("ArmadaBilling", function () {
     expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
     expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
     expect(await reservations.getReservationCount(projectId1)).to.equal(BigInt(2));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(6) - (proratedPrice * BigInt(2)));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(6) - proratedPrice * BigInt(2));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(4));
 
     await mine(hre, epochLength);
@@ -301,7 +300,7 @@ describe("ArmadaBilling", function () {
     expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
     expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
     expect(await reservations.getReservationCount(projectId1)).to.equal(BigInt(2));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(4) - (proratedPrice * BigInt(2)));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(4) - proratedPrice * BigInt(2));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(2));
 
     await mine(hre, epochLength);
@@ -309,14 +308,14 @@ describe("ArmadaBilling", function () {
     expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
     expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
     expect(await reservations.getReservationCount(projectId1)).to.equal(0);
-    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(2) - (proratedPrice * BigInt(2)));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(2) - proratedPrice * BigInt(2));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(0));
   });
 
   it("Should increase epoch duration", async function () {
     await mineWith(hre, async () => expect(await registry.connect(admin).setCuedEpochLength(epochLength * BigInt(2))).to.be.ok);
 
-    const proratedPrice = pricePerSec * await epochRemainder();
+    const proratedPrice = pricePerSec * (await epochRemainder());
     expect(Number.parseFloat(formatUSDC(proratedPrice))).to.be.equal(0.99);
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok);
     expect(await registry.getLastEpochLength()).to.equal(BigInt(100));
@@ -354,7 +353,7 @@ describe("ArmadaBilling", function () {
     expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(projectId1);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice * BigInt(2));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(100) - (proratedPrice * BigInt(2)));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(100) - proratedPrice * BigInt(2));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(6));
 
     // Reconcile next epoch
@@ -376,7 +375,7 @@ describe("ArmadaBilling", function () {
     expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(projectId1);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await operators.getOperator(operatorId1)).balance).to.equal((proratedPrice + price) * BigInt(2));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(98) - (proratedPrice * BigInt(2)));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(98) - proratedPrice * BigInt(2));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(8));
 
     // Reconcile cued epoch
@@ -397,8 +396,8 @@ describe("ArmadaBilling", function () {
     expect((await nodes.getNode(nodeId1)).projectIds[1]).to.equal(projectId1);
     expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(projectId1);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
-    expect((await operators.getOperator(operatorId1)).balance).to.equal(price * BigInt(6) + (proratedPrice * BigInt(2)));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(94) - (proratedPrice * BigInt(2)));
+    expect((await operators.getOperator(operatorId1)).balance).to.equal(price * BigInt(6) + proratedPrice * BigInt(2));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(94) - proratedPrice * BigInt(2));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(8));
   });
 
@@ -406,7 +405,7 @@ describe("ArmadaBilling", function () {
     expect(await projects.connect(project).withdrawProjectEscrow(projectId1, parseUSDC("95.5"), project.address)).to.be.ok;
     await mineWith(hre, async () => expect(await registry.connect(admin).setCuedEpochLength(epochLength / BigInt(2))).to.be.ok);
 
-    const proratedPrice = pricePerSec * await epochRemainder();
+    const proratedPrice = pricePerSec * (await epochRemainder());
     expect(Number.parseFloat(formatUSDC(proratedPrice))).to.be.equal(0.98);
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok);
     expect(await registry.getLastEpochLength()).to.equal(BigInt(100));
@@ -444,8 +443,8 @@ describe("ArmadaBilling", function () {
     expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(HashZero);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice * BigInt(2));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("4.5") - (proratedPrice * BigInt(2))); // 2.54
-    expect((await projects.getProject(projectId1)).reserve).to.equal(parseUSDC("1") * BigInt(2) + (parseUSDC("0.5")));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("4.5") - proratedPrice * BigInt(2)); // 2.54
+    expect((await projects.getProject(projectId1)).reserve).to.equal(parseUSDC("1") * BigInt(2) + parseUSDC("0.5"));
 
     // Reconcile next epoch - node #1 loses renewal, node #2 gets released
     await mine(hre, epochLength);
@@ -487,8 +486,8 @@ describe("ArmadaBilling", function () {
     expect((await nodes.getNode(nodeId1)).projectIds[1]).to.equal(HashZero);
     expect((await nodes.getNode(nodeId2)).projectIds[1]).to.equal(HashZero);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
-    expect((await operators.getOperator(operatorId1)).balance).to.equal((proratedPrice + price) * BigInt(2) + (price / BigInt(2)));
-    expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("4.5") - ((proratedPrice + price) * BigInt(2) + (price / BigInt(2)))); // 0.04
+    expect((await operators.getOperator(operatorId1)).balance).to.equal((proratedPrice + price) * BigInt(2) + price / BigInt(2));
+    expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("4.5") - ((proratedPrice + price) * BigInt(2) + price / BigInt(2))); // 0.04
     expect((await projects.getProject(projectId1)).reserve).to.equal(0);
   });
 

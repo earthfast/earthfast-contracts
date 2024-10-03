@@ -1,10 +1,8 @@
 import "@nomicfoundation/hardhat-ethers";
-import "@openzeppelin/defender-sdk";
+import { AdminClient, fromChainId } from "@openzeppelin/defender-sdk";
 import "@openzeppelin/hardhat-upgrades";
 import "hardhat-deploy";
-import { AdminClient } from "@openzeppelin/defender-sdk";
 import { ProposalFunctionInputs } from "@openzeppelin/defender-sdk/lib/models/proposal";
-import { fromChainId } from "@openzeppelin/defender-sdk";
 import { Contract } from "ethers";
 import { Create2DeployOptions, DeployOptions } from "hardhat-deploy/dist/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";

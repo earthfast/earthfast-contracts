@@ -1,8 +1,7 @@
 import { TransactionReceipt, TransactionResponse } from "@ethersproject/abstract-provider";
 import { AddressZero } from "@ethersproject/constants";
 import { expect } from "chai";
-import { Contract } from "ethers";
-import { ethers, randomBytes, Result } from "ethers";
+import { Contract, ethers, randomBytes, Result } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { ArmadaBilling } from "../typechain-types/contracts/ArmadaBilling";
 import { ArmadaGovernor } from "../typechain-types/contracts/ArmadaGovernor";
@@ -15,7 +14,7 @@ import { ArmadaReservations } from "../typechain-types/contracts/ArmadaReservati
 import { ArmadaTimelock } from "../typechain-types/contracts/ArmadaTimelock";
 import { ArmadaToken } from "../typechain-types/contracts/ArmadaToken";
 import { USDC } from "../typechain-types/contracts/test/USDC";
-import { decodeEvent, parseTokens, signers, toHexString, getAddress } from './util';
+import { decodeEvent, getAddress, parseTokens, signers, toHexString } from "./util";
 
 export const newId = (): string => ethers.zeroPadValue(randomBytes(32), 32);
 
