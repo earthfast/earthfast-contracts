@@ -1,11 +1,10 @@
 import { AddressZero, HashZero } from "@ethersproject/constants";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
-import { Result } from "ethers";
+import { Result, SignerWithAddress } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, newId } from "../lib/test";
-import { approve, getAddress, parseTokens, parseUSDC, signers } from "../lib/util";
+import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
 import { ArmadaCreateNodeDataStruct, ArmadaNodes, ArmadaNodeStruct } from "../typechain-types/contracts/ArmadaNodes";
 import { ArmadaOperators, ArmadaOperatorStruct } from "../typechain-types/contracts/ArmadaOperators";
 import { ArmadaCreateProjectDataStruct, ArmadaProjects } from "../typechain-types/contracts/ArmadaProjects";
@@ -31,9 +30,6 @@ describe("ArmadaNodes", function () {
   let snapshotId: string;
 
   // store contract addresses after awaiting fixture
-  let usdcAddress: string;
-  let tokenAddress: string;
-  let nodesAddress: string;
   let operatorsAddress: string;
   let registryAddress: string;
   let projectsAddress: string;
@@ -43,9 +39,6 @@ describe("ArmadaNodes", function () {
     ({ usdc, token, nodes, operators, registry, projects } = await fixtures(hre));
 
     // set contract addresses as string
-    usdcAddress = await usdc.getAddress();
-    tokenAddress = await token.getAddress();
-    nodesAddress = await nodes.getAddress();
     operatorsAddress = await operators.getAddress();
     registryAddress = await registry.getAddress();
     projectsAddress = await projects.getAddress();
@@ -626,10 +619,6 @@ describe("ArmadaNodes", function () {
   });
 
   it("Should disallow impl calls from unauthorized senders", async function () {
-    // deploy another registry
-    const registryFactory = await hre.ethers.getContractFactory("ArmadaRegistry");
-    const newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });
-
     // implementation call is disallowed from EOA
     await expect(nodes.setNodePriceImpl(HashZero, 0, 0)).to.be.revertedWith("not impl");
     await expect(nodes.setNodeProjectImpl(HashZero, 0, HashZero)).to.be.revertedWith("not impl");

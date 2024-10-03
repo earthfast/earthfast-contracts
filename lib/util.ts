@@ -1,8 +1,6 @@
 import { promises as fs } from "fs";
 import { TransactionReceipt, TransactionResponse } from "@ethersproject/abstract-provider";
 import { TypedDataSigner } from "@ethersproject/abstract-signer";
-import { Zero } from "@ethersproject/constants";
-import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import * as ethutil from "ethereumjs-util";
 import * as ethwallet from "ethereumjs-wallet";
 import {
@@ -11,9 +9,9 @@ import {
   Contract,
   ethers,
   formatUnits,
-  Interface,
   parseUnits,
   Result,
+  SignerWithAddress,
   TypedDataField,
 } from "ethers";
 import { HardhatRuntimeEnvironment, Libraries } from "hardhat/types";

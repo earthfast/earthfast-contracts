@@ -1,8 +1,7 @@
 import { AddressZero, HashZero } from "@ethersproject/constants";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
-import { Result } from "ethers";
+import { Result, SignerWithAddress } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, newId } from "../lib/test";
 import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
@@ -31,13 +30,10 @@ describe("ArmadaProjects", function () {
   let reservations: ArmadaReservations;
 
   // store contract addresses after awaiting fixture
-  let usdcAddress: string;
-  let tokenAddress: string;
   let registryAddress: string;
   let nodesAddress: string;
   let operatorsAddress: string;
   let projectsAddress: string;
-  let reservationsAddress: string;
 
   let snapshotId: string;
 
@@ -46,13 +42,10 @@ describe("ArmadaProjects", function () {
     ({ usdc, token, operators, projects, reservations, nodes, registry } = await fixtures(hre));
 
     // set contract addresses as string
-    usdcAddress = await usdc.getAddress();
-    tokenAddress = await token.getAddress();
     registryAddress = await registry.getAddress();
     nodesAddress = await nodes.getAddress();
     operatorsAddress = await operators.getAddress();
     projectsAddress = await projects.getAddress();
-    reservationsAddress = await reservations.getAddress();
   }
 
   before(async function () {

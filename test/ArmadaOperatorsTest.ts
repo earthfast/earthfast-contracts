@@ -1,8 +1,7 @@
 import { AddressZero, HashZero } from "@ethersproject/constants";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
-import { Result } from "ethers";
+import { Result, SignerWithAddress } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, newId } from "../lib/test";
 import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
@@ -25,8 +24,6 @@ describe("ArmadaOperators", function () {
   let nodes: ArmadaNodes;
   let operators: ArmadaOperators;
 
-  let usdcAddress: string;
-  let tokenAddress: string;
   let registryAddress: string;
   let nodesAddress: string;
   let operatorsAddress: string;
@@ -37,8 +34,6 @@ describe("ArmadaOperators", function () {
     ({ admin, operator, deployer } = await signers(hre));
     ({ usdc, token, registry, nodes, operators } = await fixtures(hre));
 
-    usdcAddress = await usdc.getAddress();
-    tokenAddress = await token.getAddress();
     registryAddress = await registry.getAddress();
     nodesAddress = await nodes.getAddress();
     operatorsAddress = await operators.getAddress();

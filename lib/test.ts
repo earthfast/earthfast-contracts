@@ -14,7 +14,7 @@ import { ArmadaReservations } from "../typechain-types/contracts/ArmadaReservati
 import { ArmadaTimelock } from "../typechain-types/contracts/ArmadaTimelock";
 import { ArmadaToken } from "../typechain-types/contracts/ArmadaToken";
 import { USDC } from "../typechain-types/contracts/test/USDC";
-import { decodeEvent, getAddress, parseTokens, signers, toHexString } from "./util";
+import { decodeEvent, parseTokens, signers, toHexString } from "./util";
 
 export const newId = (): string => ethers.zeroPadValue(randomBytes(32), 32);
 

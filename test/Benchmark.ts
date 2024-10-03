@@ -1,7 +1,6 @@
 import { HashZero } from "@ethersproject/constants";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { Result } from "ethers";
+import { Result, SignerWithAddress } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine } from "../lib/test";
 import { approve, parseTokens, parseUSDC, signers } from "../lib/util";

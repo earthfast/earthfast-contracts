@@ -8,8 +8,8 @@ import "./tasks/node";
 import "./tasks/seed";
 import "./tasks/upgrade";
 
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import dotenv from "dotenv";
+import { SignerWithAddress } from "ethers";
 import { extendEnvironment, HardhatUserConfig } from "hardhat/config";
 import { attach, getAddress, wait } from "./lib/util";
 

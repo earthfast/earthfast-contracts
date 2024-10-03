@@ -1,17 +1,14 @@
 import { AddressZero } from "@ethersproject/constants";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
 import { keccak256 } from "ethereumjs-util";
-import { parseEther } from "ethers";
+import { parseEther, SignerWithAddress } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine } from "../lib/test";
 import { parseTokens, signers } from "../lib/util";
 import { ArmadaGovernor } from "../typechain-types/contracts/ArmadaGovernor";
 import { ArmadaTimelock } from "../typechain-types/contracts/ArmadaTimelock";
 import { ArmadaToken } from "../typechain-types/contracts/ArmadaToken";
-import { IGovernor__factory } from "../typechain-types/factories/@openzeppelin/contracts/governance/IGovernor__factory"; // eslint-disable-line camelcase
-import { IERC165__factory } from "../typechain-types/factories/@openzeppelin/contracts/utils/introspection/IERC165__factory"; // eslint-disable-line camelcase
 
 chai.use(shallowDeepEqual);
 
@@ -26,7 +23,6 @@ describe("ArmadaGovernor", function () {
   let timelock: ArmadaTimelock;
 
   let tokenAddress: string;
-  let governorAddress: string;
   let timelockAddress: string;
 
   let snapshotId: string;
@@ -36,7 +32,6 @@ describe("ArmadaGovernor", function () {
     ({ token, governor, timelock } = await fixtures(hre));
 
     tokenAddress = await token.getAddress();
-    governorAddress = await governor.getAddress();
     timelockAddress = await timelock.getAddress();
   }
 

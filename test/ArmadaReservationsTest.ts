@@ -1,10 +1,9 @@
 import { AddressZero, HashZero } from "@ethersproject/constants";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
-import { BigNumber, Result } from "ethers";
+import { BigNumber, Result, SignerWithAddress } from "ethers";
 import hre from "hardhat";
-import { automine, expectEvent, expectReceipt, fixtures, mine, mineWith, newId } from "../lib/test";
+import { expectEvent, expectReceipt, fixtures, mine, mineWith, newId } from "../lib/test";
 import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
 import { ArmadaBilling } from "../typechain-types/contracts/ArmadaBilling";
 import { ArmadaCreateNodeDataStruct, ArmadaNodes } from "../typechain-types/contracts/ArmadaNodes";
@@ -32,14 +31,9 @@ describe("ArmadaReservations", function () {
   let projects: ArmadaProjects;
   let reservations: ArmadaReservations;
 
-  let usdcAddress: string;
-  let tokenAddress: string;
   let registryAddress: string;
-  let billingAddress: string;
-  let nodesAddress: string;
   let operatorsAddress: string;
   let projectsAddress: string;
-  let reservationsAddress: string;
 
   let nodeId0: string;
   let nodeId1: string;
@@ -69,14 +63,9 @@ describe("ArmadaReservations", function () {
     ({ admin, operator, project, deployer } = await signers(hre));
     ({ usdc, token, billing, nodes, operators, projects, reservations, registry } = await fixtures(hre));
 
-    usdcAddress = await usdc.getAddress();
-    tokenAddress = await token.getAddress();
     registryAddress = await registry.getAddress();
-    billingAddress = await billing.getAddress();
-    nodesAddress = await nodes.getAddress();
     operatorsAddress = await operators.getAddress();
     projectsAddress = await projects.getAddress();
-    reservationsAddress = await reservations.getAddress();
 
     epochLength = await registry.getLastEpochLength();
     pricePerSec = price / epochLength; // Node price per second
@@ -379,10 +368,6 @@ describe("ArmadaReservations", function () {
   });
 
   it("Should disallow impl calls from unauthorized senders", async function () {
-    // deploy another registry
-    const registryFactory = await hre.ethers.getContractFactory("ArmadaRegistry");
-    const newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });
-
     // implementation call is disallowed from EOA
     await expect(reservations.removeProjectNodeIdImpl(HashZero, HashZero)).to.be.revertedWith("not impl");
     await expect(reservations.deleteReservationImpl(AddressZero, AddressZero, HashZero, HashZero, { last: false, next: false })).to.be.revertedWith("not impl");

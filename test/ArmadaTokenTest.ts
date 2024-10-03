@@ -1,6 +1,6 @@
 import { AddressZero } from "@ethersproject/constants";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
+import { SignerWithAddress } from "ethers";
 import hre from "hardhat";
 import { fixtures } from "../lib/test";
 import { parseTokens, signers } from "../lib/util";
