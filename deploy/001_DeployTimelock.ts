@@ -11,7 +11,7 @@ async function main() {
   const proposers = [guardian.address] as const;
   const executors = [ZeroAddress]; // everyone
   const args = [minDelay, admins, proposers, executors];
-  const salt = hre.ethers.utils.id(hre.network.name);
+  const salt = hre.ethers.id(hre.network.name);
   await deployDeterministic(hre, "ArmadaTimelock", { args, from: deployer.address, salt });
 }
 

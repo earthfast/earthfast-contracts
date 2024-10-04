@@ -15,7 +15,7 @@ async function main() {
 
   const { deployer, admin } = await signers(hre);
   const args = [admin.address];
-  const salt = hre.ethers.utils.id(hre.network.name);
+  const salt = hre.ethers.id(hre.network.name);
   await deployDeterministic(hre, "USDC", { args, from: deployer.address, salt });
 
   // Transfer USDC to to registry

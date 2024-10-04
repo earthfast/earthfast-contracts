@@ -13,7 +13,7 @@ async function main() {
   const quorumNumerator = 51; // percentage
   const admin = guardian.address;
   const args = [admin, token.address, timelock.address, votingDelay, votingPeriod, proposalThreshold, quorumNumerator];
-  const salt = hre.ethers.utils.id(hre.network.name);
+  const salt = hre.ethers.id(hre.network.name);
   await deployDeterministic(hre, "ArmadaGovernor", { args, from: deployer.address, salt });
 }
 

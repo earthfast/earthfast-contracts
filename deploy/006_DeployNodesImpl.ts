@@ -5,7 +5,7 @@ import { signers } from "../lib/util";
 export default main;
 async function main() {
   const { deployer } = await signers(hre);
-  const salt = hre.ethers.utils.id(hre.network.name);
+  const salt = hre.ethers.id(hre.network.name);
   await deployDeterministic(hre, "ArmadaNodesImpl", { from: deployer.address, salt });
 }
 

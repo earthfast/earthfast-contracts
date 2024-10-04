@@ -2,5 +2,5 @@
 import * as ethers from "ethers";
 const text = process.argv[2];
 console.log(`keccak256(${text})`);
-const id = ethers.utils.solidityKeccak256(["string"], [text]);
+const id = ethers.solidityKeccak256(["string"], [text]);
 console.log(id);

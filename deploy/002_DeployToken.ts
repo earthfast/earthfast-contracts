@@ -12,7 +12,7 @@ async function main() {
   const name = hre.network.name === "mainnet" ? "Armada Access" : "Armada";
   const symbol = hre.network.name === "mainnet" ? "ACCESS" : "ARMADA";
   const args = [name, symbol, admins, minters, pausers];
-  const salt = hre.ethers.utils.id(hre.network.name);
+  const salt = hre.ethers.id(hre.network.name);
   await deployDeterministic(hre, "ArmadaToken", { args, from: deployer.address, salt });
 }
 
