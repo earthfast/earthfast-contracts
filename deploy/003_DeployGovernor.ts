@@ -6,13 +6,15 @@ export default main;
 async function main() {
   const { deployer, guardian } = await signers(hre);
   const token = await attach(hre, "ArmadaToken");
+  const tokenAddress = await token.getAddress();
   const timelock = await attach(hre, "ArmadaTimelock");
+  const timelockAddress = await timelock.getAddress();
   const votingDelay = 0; // blocks
   const votingPeriod = 25; // blocks
   const proposalThreshold = 0; // votes
   const quorumNumerator = 51; // percentage
   const admin = guardian.address;
-  const args = [admin, token.address, timelock.address, votingDelay, votingPeriod, proposalThreshold, quorumNumerator];
+  const args = [admin, tokenAddress, timelockAddress, votingDelay, votingPeriod, proposalThreshold, quorumNumerator];
   const salt = hre.ethers.id(hre.network.name);
   await deployDeterministic(hre, "ArmadaGovernor", { args, from: deployer.address, salt });
 }

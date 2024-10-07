@@ -15,7 +15,8 @@ export default main;
 async function main() {
   const { guardian } = await signers(hre);
   const timelock = await attach(hre, "ArmadaTimelock");
-  const admins = [guardian.address, timelock.address];
+  const timelockAddress = await timelock.getAddress();
+  const admins = [guardian.address, timelockAddress];
 
   const data = await loadData(hre);
   const token = await attach(hre, "ArmadaToken");
@@ -26,11 +27,19 @@ async function main() {
   const reservations = await attach(hre, "ArmadaReservations");
   const registry = <ArmadaRegistry>await attach(hre, "ArmadaRegistry");
 
+  // get addresses of deployed contracts
+  const tokenAddress = await token.getAddress();
+  const billingAddress = await billing.getAddress();
+  const nodesAddress = await nodes.getAddress();
+  const operatorsAddress = await operators.getAddress();
+  const projectsAddress = await projects.getAddress();
+  const reservationsAddress = await reservations.getAddress();
+
   const nodesData = data?.ArmadaNodes?.nodes ?? [];
   const operatorsData = data?.ArmadaOperators?.operators ?? [];
   const projectsData = data?.ArmadaProjects?.projects ?? [];
   const idCount = nodesData.length + operatorsData.length + projectsData.length;
-  if (!BigNumber.from(data?.ArmadaRegistry?.nonce ?? "0").eq(idCount)) {
+  if (BigInt(data?.ArmadaRegistry?.nonce ?? "0") != idCount) {
     throw Error("Mismatched nonce");
   }
 
@@ -65,6 +74,7 @@ async function main() {
   } else {
     throw Error("Unexpected network");
   }
+  const usdcAddress = await usdc.getAddress();
 
   const args = [
     admins,
@@ -75,13 +85,13 @@ async function main() {
       lastEpochLength,
       nextEpochLength,
       gracePeriod: data?.ArmadaRegistry?.gracePeriod ?? "86400", // 1 day
-      usdc: usdc.address,
-      token: token.address,
-      billing: billing.address,
-      nodes: nodes.address,
-      operators: operators.address,
-      projects: projects.address,
-      reservations: reservations.address,
+      usdc: usdcAddress,
+      token: tokenAddress,
+      billing: billingAddress,
+      nodes: nodesAddress,
+      operators: operatorsAddress,
+      projects: projectsAddress,
+      reservations: reservationsAddress,
     },
   ] as const;
 

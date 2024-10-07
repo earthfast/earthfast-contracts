@@ -124,7 +124,8 @@ export async function attach(
 ): Promise<Contract> {
   const deployment = await hre.deployments.get(name);
   const contract = await hre.ethers.getContractAt(name, deployment.address, signer);
-  console.log(`...attached ${name} at ${contract.address}`);
+  const contractAddress = await contract.getAddress();
+  console.log(`...attached ${name} at ${contractAddress}`);
   return contract;
 }
 
@@ -136,8 +137,9 @@ export async function resolve(hre: HardhatRuntimeEnvironment, names?: string[]):
   for (const name of names) {
     const deployment = await hre.deployments.get(name);
     const contract = await hre.ethers.getContractAt(name, deployment.address);
-    console.log(`...resolved ${name} at ${contract.address}`);
-    libraries[name] = contract.address;
+    const contractAddress = await contract.getAddress();
+    console.log(`...resolved ${name} at ${contractAddress}`);
+    libraries[name] = contractAddress;
   }
   return libraries;
 }

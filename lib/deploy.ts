@@ -4,7 +4,7 @@ import "hardhat-deploy";
 import { Contract } from "ethers";
 import { Create2DeployOptions, DeployOptions } from "hardhat-deploy/dist/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { confirm, resolve, stringify } from "./util";
+import { confirm, resolve, stringify } from './util';
 
 // Deploys a contract
 export async function deploy(hre: HardhatRuntimeEnvironment, name: string, opts: DeployOptions): Promise<void> {
@@ -53,13 +53,14 @@ export async function deployProxy(
       kind: "uups",
       initializer: opts.initializer,
     });
-    console.log(`...transaction ${contract.deployTransaction.hash}`);
-    await contract.deployed();
-    console.log(`...deployed at ${contract.address}`);
+    console.log(`...transaction ${contract.deploymentTransaction().hash}`);
+    await contract.deploymentTransaction().wait();
+    const contractAddress = await contract.getAddress();
+    console.log(`...deployed at ${contractAddress}`);
     if (hre.config.defender) {
-      await updateDefender(hre, name, name, contract.address);
+      await updateDefender(hre, name, name, contractAddress);
     }
-    await saveDeployment(hre, name, contract.address, name, contract);
+    await saveDeployment(hre, name, contractAddress, name, contract);
   }
 }
 
@@ -89,11 +90,12 @@ export async function deployUpgrade(
     const factory = await hre.ethers.getContractFactory(opts.contract, { signer, libraries });
     console.log(`...deploying ${opts.contract}`);
     const contract = await hre.upgrades.upgradeProxy(deployment.address, factory);
+    const contractAddress = await contract.getAddress();
     console.log(`...transaction ${contract.deployTransaction.hash}`);
-    await contract.deployed();
-    console.log(`...deployed at ${contract.address}`);
+    await contract.waitForDeployment();
+    console.log(`...deployed at ${contractAddress}`);
     if (hre.config.defender) {
-      await updateDefender(hre, name, opts.contract, contract.address);
+      await updateDefender(hre, name, opts.contract, contractAddress);
     }
     await saveDeployment(hre, name, deployment.address, opts.contract, contract);
   }

@@ -10,8 +10,9 @@ async function main() {
   const data = await loadData(hre);
   const token = <ArmadaToken>await attach(hre, "ArmadaToken");
   const registry = await attach(hre, "ArmadaRegistry");
+  const registryAddress = await registry.getAddress();
   const holders = data?.ArmadaToken?.holders ?? [];
-  if (!(await token.totalSupply()).isZero()) {
+  if (!(await token.totalSupply()) == 0) {
     console.log(`\n---SKIPPED ArmadaToken.mint ...`);
   } else if (!holders.length) {
     const initialSupply = parseTokens("1000000000").toString();
@@ -25,7 +26,7 @@ async function main() {
       if (holders[i].address.startsWith("0x")) {
         address = holders[i].address;
       } else if (holders[i].address === "ArmadaRegistry") {
-        address = registry.address;
+        address = registryAddress;
       } else {
         throw Error("Invalid address format");
       }

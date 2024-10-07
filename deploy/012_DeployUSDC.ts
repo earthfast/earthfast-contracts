@@ -19,19 +19,20 @@ async function main() {
   await deployDeterministic(hre, "USDC", { args, from: deployer.address, salt });
 
   // Transfer USDC to to registry
-  let amount = BigNumber.from(0);
+  let amount = 0;
   const data = await loadData(hre);
   const usdc = <USDC>await attach(hre, "USDC");
   const registry = await attach(hre, "ArmadaRegistry");
+  const registryAddress = await registry.getAddress();
   const projectsData = data?.ArmadaProjects?.projects ?? [];
   const operatorsData = data?.ArmadaOperators?.operators ?? [];
   for (const project of projectsData) {
-    amount = amount.add(parseUSDC(project.escrow ?? "0"));
+    amount = amount + (parseUSDC(project.escrow ?? "0"));
   }
   for (const operator of operatorsData) {
-    amount = amount.add(parseUSDC(operator.balance ?? "0"));
+    amount = amount + (parseUSDC(operator.balance ?? "0"));
   }
-  const transferArgs = [registry.address, amount] as const;
+  const transferArgs = [registryAddress, amount] as const;
   if (confirm(hre, `Execute USDC.transfer ${stringify(transferArgs)}`)) {
     await wait(usdc.connect(admin).transfer(...transferArgs));
   }
