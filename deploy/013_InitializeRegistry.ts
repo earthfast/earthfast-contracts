@@ -1,4 +1,3 @@
-import { BigNumber } from "ethers";
 import hre from "hardhat";
 import { attach, confirm, loadData, signers, stringify, wait } from "../lib/util";
 
@@ -39,7 +38,7 @@ async function main() {
   const operatorsData = data?.ArmadaOperators?.operators ?? [];
   const projectsData = data?.ArmadaProjects?.projects ?? [];
   const idCount = nodesData.length + operatorsData.length + projectsData.length;
-  if (BigInt(data?.ArmadaRegistry?.nonce ?? "0") != idCount) {
+  if (BigInt(data?.ArmadaRegistry?.nonce ?? "0") !== idCount) {
     throw Error("Mismatched nonce");
   }
 

@@ -4,7 +4,7 @@ import "hardhat-deploy";
 import { Contract } from "ethers";
 import { Create2DeployOptions, DeployOptions } from "hardhat-deploy/dist/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { confirm, resolve, stringify } from './util';
+import { confirm, resolve, stringify } from "./util";
 
 // Deploys a contract
 export async function deploy(hre: HardhatRuntimeEnvironment, name: string, opts: DeployOptions): Promise<void> {

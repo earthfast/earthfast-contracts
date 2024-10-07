@@ -12,7 +12,7 @@ async function main() {
   const registry = await attach(hre, "ArmadaRegistry");
   const registryAddress = await registry.getAddress();
   const holders = data?.ArmadaToken?.holders ?? [];
-  if (!(await token.totalSupply()) == 0) {
+  if (!(await token.totalSupply()) === 0) {
     console.log(`\n---SKIPPED ArmadaToken.mint ...`);
   } else if (!holders.length) {
     const initialSupply = parseTokens("1000000000").toString();
