@@ -38,7 +38,7 @@ async function main() {
   const operatorsData = data?.ArmadaOperators?.operators ?? [];
   const projectsData = data?.ArmadaProjects?.projects ?? [];
   const idCount = nodesData.length + operatorsData.length + projectsData.length;
-  if (BigInt(data?.ArmadaRegistry?.nonce ?? "0") !== idCount) {
+  if (BigInt(data?.ArmadaRegistry?.nonce ?? "0") !== BigInt(idCount)) {
     throw Error("Mismatched nonce");
   }
 
