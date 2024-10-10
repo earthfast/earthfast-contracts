@@ -1,6 +1,6 @@
 import hre from "hardhat";
 import { deployDeterministic } from "../lib/deploy";
-import { attach, confirm, loadData, parseUSDC, signers, stringify, wait } from "../lib/util";
+import { attach, confirm, loadData, parseUSDC, signers, wait } from "../lib/util";
 
 // @ts-ignore Type created during hardhat compile
 type USDC = import("../typechain-types").USDC;
