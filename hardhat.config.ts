@@ -28,6 +28,7 @@ const config: HardhatUserConfig = {
   networks: {
     localhost: {
       tags: ["local"],
+      gasPrice: 1000000,
     },
     hardhat: {
       tags: ["local"],
