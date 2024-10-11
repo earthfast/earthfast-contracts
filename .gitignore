@@ -8,3 +8,5 @@ coverage.json
 deployments/hardhat
 deployments/localhost
 node_modules
+cache_forge
+out/
