@@ -14,7 +14,7 @@ const provider = new ethers.providers.JsonRpcProvider(sepoliaUrl);
 const wallet = new ethers.Wallet(privateKey, provider);
 const contract = new ethers.Contract(contractAddress, abi, wallet);
 
-const role = ethers.utils.id("RECONCILER_ROLE"); // role identifier
+const role = ethers.id("RECONCILER_ROLE"); // role identifier
 const account = "0x0000000000000000000000000000000000000000"; // address to grant the role to
 
 async function grantRole() {

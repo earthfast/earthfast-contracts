@@ -1,4 +1,4 @@
-import { HashZero } from "@ethersproject/constants";
+import { ZeroHash } from "ethers";
 import { task } from "hardhat/config";
 import { approve, attach, decodeEvent, parseTokens, parseUSDC, signers, wait } from "../lib/util";
 
@@ -46,10 +46,11 @@ task("seed", "Uploads dummy programmatic contract data").setAction(async (_args,
   const price1 = parseUSDC("1");
 
   // Create operator
-  const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "", stake: 0 };
+  const o1: ArmadaOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "", stake: 0 };
   const createOperator1 = await wait(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
   const [operatorId1] = await decodeEvent(createOperator1, operators, "OperatorCreated");
-  const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+  const operatorsAddress = await operators.getAddress();
+  const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
   await wait(operators.connect(admin).depositOperatorStake(operatorId1, parseTokens("100"), ...operatorsPermit));
 
   // Create nodes
@@ -62,10 +63,11 @@ task("seed", "Uploads dummy programmatic contract data").setAction(async (_args,
 
   // Create project
   await wait(projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address));
-  const p1: ArmadaCreateProjectDataStruct = { owner: project.address, name: "p1", email: "", content: "", checksum: HashZero, metadata: "" }; // prettier-ignore
+  const p1: ArmadaCreateProjectDataStruct = { owner: project.address, name: "p1", email: "", content: "", checksum: ZeroHash, metadata: "" }; // prettier-ignore
   const createProject1 = await wait(projects.connect(project).createProject(p1));
   const [projectId1] = await decodeEvent(createProject1, projects, "ProjectCreated");
-  const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));
+  const projectsAddress = await projects.getAddress();
+  const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
   await wait(projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit));
 
   // Create reservation

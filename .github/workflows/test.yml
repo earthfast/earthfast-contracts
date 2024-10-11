@@ -26,3 +26,9 @@ jobs:
       - name: Hardhat tests
         run: |
           npx hardhat test
+
+      - name: Hardhat node
+        run: |
+          npx hardhat node &
+          sleep 40
+          kill %1

@@ -3,42 +3,29 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
-} from "ethers";
-import type {
   FunctionFragment,
   Result,
+  Interface,
   EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
+} from "ethers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
-  PromiseOrValue,
+  TypedContractMethod,
 } from "../../../../common";
 
-export interface IVotesInterface extends utils.Interface {
-  functions: {
-    "delegate(address)": FunctionFragment;
-    "delegateBySig(address,uint256,uint256,uint8,bytes32,bytes32)": FunctionFragment;
-    "delegates(address)": FunctionFragment;
-    "getPastTotalSupply(uint256)": FunctionFragment;
-    "getPastVotes(address,uint256)": FunctionFragment;
-    "getVotes(address)": FunctionFragment;
-  };
-
+export interface IVotesInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "delegate"
       | "delegateBySig"
       | "delegates"
@@ -47,36 +34,40 @@ export interface IVotesInterface extends utils.Interface {
       | "getVotes"
   ): FunctionFragment;
 
+  getEvent(
+    nameOrSignatureOrTopic: "DelegateChanged" | "DelegateVotesChanged"
+  ): EventFragment;
+
   encodeFunctionData(
     functionFragment: "delegate",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "delegateBySig",
     values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BytesLike>
+      AddressLike,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BytesLike,
+      BytesLike
     ]
   ): string;
   encodeFunctionData(
     functionFragment: "delegates",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getPastTotalSupply",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getPastVotes",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getVotes",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
 
   decodeFunctionResult(functionFragment: "delegate", data: BytesLike): Result;
@@ -94,276 +85,200 @@ export interface IVotesInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getVotes", data: BytesLike): Result;
-
-  events: {
-    "DelegateChanged(address,address,address)": EventFragment;
-    "DelegateVotesChanged(address,uint256,uint256)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "DelegateChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "DelegateVotesChanged"): EventFragment;
 }
 
-export interface DelegateChangedEventObject {
-  delegator: string;
-  fromDelegate: string;
-  toDelegate: string;
+export namespace DelegateChangedEvent {
+  export type InputTuple = [
+    delegator: AddressLike,
+    fromDelegate: AddressLike,
+    toDelegate: AddressLike
+  ];
+  export type OutputTuple = [
+    delegator: string,
+    fromDelegate: string,
+    toDelegate: string
+  ];
+  export interface OutputObject {
+    delegator: string;
+    fromDelegate: string;
+    toDelegate: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type DelegateChangedEvent = TypedEvent<
-  [string, string, string],
-  DelegateChangedEventObject
->;
 
-export type DelegateChangedEventFilter = TypedEventFilter<DelegateChangedEvent>;
-
-export interface DelegateVotesChangedEventObject {
-  delegate: string;
-  previousBalance: BigNumber;
-  newBalance: BigNumber;
+export namespace DelegateVotesChangedEvent {
+  export type InputTuple = [
+    delegate: AddressLike,
+    previousBalance: BigNumberish,
+    newBalance: BigNumberish
+  ];
+  export type OutputTuple = [
+    delegate: string,
+    previousBalance: bigint,
+    newBalance: bigint
+  ];
+  export interface OutputObject {
+    delegate: string;
+    previousBalance: bigint;
+    newBalance: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type DelegateVotesChangedEvent = TypedEvent<
-  [string, BigNumber, BigNumber],
-  DelegateVotesChangedEventObject
->;
-
-export type DelegateVotesChangedEventFilter =
-  TypedEventFilter<DelegateVotesChangedEvent>;
 
 export interface IVotes extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+  connect(runner?: ContractRunner | null): IVotes;
+  waitForDeployment(): Promise<this>;
 
   interface: IVotesInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
 
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-  functions: {
-    delegate(
-      delegatee: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-    delegateBySig(
-      delegatee: PromiseOrValue<string>,
-      nonce: PromiseOrValue<BigNumberish>,
-      expiry: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
 
-    delegates(
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
+  delegate: TypedContractMethod<[delegatee: AddressLike], [void], "nonpayable">;
 
-    getPastTotalSupply(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+  delegateBySig: TypedContractMethod<
+    [
+      delegatee: AddressLike,
+      nonce: BigNumberish,
+      expiry: BigNumberish,
+      v: BigNumberish,
+      r: BytesLike,
+      s: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    getPastVotes(
-      account: PromiseOrValue<string>,
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+  delegates: TypedContractMethod<[account: AddressLike], [string], "view">;
 
-    getVotes(
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-  };
+  getPastTotalSupply: TypedContractMethod<
+    [blockNumber: BigNumberish],
+    [bigint],
+    "view"
+  >;
 
-  delegate(
-    delegatee: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  getPastVotes: TypedContractMethod<
+    [account: AddressLike, blockNumber: BigNumberish],
+    [bigint],
+    "view"
+  >;
 
-  delegateBySig(
-    delegatee: PromiseOrValue<string>,
-    nonce: PromiseOrValue<BigNumberish>,
-    expiry: PromiseOrValue<BigNumberish>,
-    v: PromiseOrValue<BigNumberish>,
-    r: PromiseOrValue<BytesLike>,
-    s: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  getVotes: TypedContractMethod<[account: AddressLike], [bigint], "view">;
 
-  delegates(
-    account: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<string>;
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
 
-  getPastTotalSupply(
-    blockNumber: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
+  getFunction(
+    nameOrSignature: "delegate"
+  ): TypedContractMethod<[delegatee: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "delegateBySig"
+  ): TypedContractMethod<
+    [
+      delegatee: AddressLike,
+      nonce: BigNumberish,
+      expiry: BigNumberish,
+      v: BigNumberish,
+      r: BytesLike,
+      s: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "delegates"
+  ): TypedContractMethod<[account: AddressLike], [string], "view">;
+  getFunction(
+    nameOrSignature: "getPastTotalSupply"
+  ): TypedContractMethod<[blockNumber: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getPastVotes"
+  ): TypedContractMethod<
+    [account: AddressLike, blockNumber: BigNumberish],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getVotes"
+  ): TypedContractMethod<[account: AddressLike], [bigint], "view">;
 
-  getPastVotes(
-    account: PromiseOrValue<string>,
-    blockNumber: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  getVotes(
-    account: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  callStatic: {
-    delegate(
-      delegatee: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    delegateBySig(
-      delegatee: PromiseOrValue<string>,
-      nonce: PromiseOrValue<BigNumberish>,
-      expiry: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    delegates(
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    getPastTotalSupply(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getPastVotes(
-      account: PromiseOrValue<string>,
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getVotes(
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-  };
+  getEvent(
+    key: "DelegateChanged"
+  ): TypedContractEvent<
+    DelegateChangedEvent.InputTuple,
+    DelegateChangedEvent.OutputTuple,
+    DelegateChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "DelegateVotesChanged"
+  ): TypedContractEvent<
+    DelegateVotesChangedEvent.InputTuple,
+    DelegateVotesChangedEvent.OutputTuple,
+    DelegateVotesChangedEvent.OutputObject
+  >;
 
   filters: {
-    "DelegateChanged(address,address,address)"(
-      delegator?: PromiseOrValue<string> | null,
-      fromDelegate?: PromiseOrValue<string> | null,
-      toDelegate?: PromiseOrValue<string> | null
-    ): DelegateChangedEventFilter;
-    DelegateChanged(
-      delegator?: PromiseOrValue<string> | null,
-      fromDelegate?: PromiseOrValue<string> | null,
-      toDelegate?: PromiseOrValue<string> | null
-    ): DelegateChangedEventFilter;
+    "DelegateChanged(address,address,address)": TypedContractEvent<
+      DelegateChangedEvent.InputTuple,
+      DelegateChangedEvent.OutputTuple,
+      DelegateChangedEvent.OutputObject
+    >;
+    DelegateChanged: TypedContractEvent<
+      DelegateChangedEvent.InputTuple,
+      DelegateChangedEvent.OutputTuple,
+      DelegateChangedEvent.OutputObject
+    >;
 
-    "DelegateVotesChanged(address,uint256,uint256)"(
-      delegate?: PromiseOrValue<string> | null,
-      previousBalance?: null,
-      newBalance?: null
-    ): DelegateVotesChangedEventFilter;
-    DelegateVotesChanged(
-      delegate?: PromiseOrValue<string> | null,
-      previousBalance?: null,
-      newBalance?: null
-    ): DelegateVotesChangedEventFilter;
-  };
-
-  estimateGas: {
-    delegate(
-      delegatee: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    delegateBySig(
-      delegatee: PromiseOrValue<string>,
-      nonce: PromiseOrValue<BigNumberish>,
-      expiry: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    delegates(
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getPastTotalSupply(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getPastVotes(
-      account: PromiseOrValue<string>,
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getVotes(
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    delegate(
-      delegatee: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    delegateBySig(
-      delegatee: PromiseOrValue<string>,
-      nonce: PromiseOrValue<BigNumberish>,
-      expiry: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    delegates(
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getPastTotalSupply(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getPastVotes(
-      account: PromiseOrValue<string>,
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getVotes(
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+    "DelegateVotesChanged(address,uint256,uint256)": TypedContractEvent<
+      DelegateVotesChangedEvent.InputTuple,
+      DelegateVotesChangedEvent.OutputTuple,
+      DelegateVotesChangedEvent.OutputObject
+    >;
+    DelegateVotesChanged: TypedContractEvent<
+      DelegateVotesChangedEvent.InputTuple,
+      DelegateVotesChangedEvent.OutputTuple,
+      DelegateVotesChangedEvent.OutputObject
+    >;
   };
 }

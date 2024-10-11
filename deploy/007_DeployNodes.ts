@@ -9,9 +9,11 @@ export default main;
 async function main() {
   const { deployer, guardian } = await signers(hre);
   const timelock = await attach(hre, "ArmadaTimelock");
-  const admins = [guardian.address, timelock.address];
+  const timelockAddress = await timelock.getAddress();
+  const admins = [guardian.address, timelockAddress];
   const registry = await attach(hre, "ArmadaRegistry");
-  const args = [admins, registry.address, true];
+  const registryAddress = await registry.getAddress();
+  const args = [admins, registryAddress, true];
   await deployProxy(hre, "ArmadaNodes", { args, from: deployer.address, libraries: ["ArmadaNodesImpl"] });
   const data = await loadData(hre);
   const nodes = <ArmadaNodes>await attach(hre, "ArmadaNodes");

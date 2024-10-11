@@ -9,8 +9,9 @@ async function main() {
   const { deployer } = await signers(hre);
   const timelock = <ArmadaTimelock>await attach(hre, "ArmadaTimelock");
   const governor = await attach(hre, "ArmadaGovernor");
+  const governorAddress = await governor.getAddress();
 
-  const grantArgs = [await timelock.PROPOSER_ROLE(), governor.address] as const;
+  const grantArgs = [await timelock.PROPOSER_ROLE(), governorAddress] as const;
   if (await timelock.hasRole(...grantArgs)) {
     console.log(`\n---SKIPPED ArmadaTimelock.grantRole ${stringify(grantArgs)}`);
   } else {

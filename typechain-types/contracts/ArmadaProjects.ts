@@ -3,47 +3,42 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PayableOverrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
-} from "ethers";
-import type {
   FunctionFragment,
   Result,
+  Interface,
   EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
+} from "ethers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
-  PromiseOrValue,
+  TypedContractMethod,
 } from "../common";
 
 export type ArmadaCreateProjectDataStruct = {
-  owner: PromiseOrValue<string>;
-  name: PromiseOrValue<string>;
-  email: PromiseOrValue<string>;
-  content: PromiseOrValue<string>;
-  checksum: PromiseOrValue<BytesLike>;
-  metadata: PromiseOrValue<string>;
+  owner: AddressLike;
+  name: string;
+  email: string;
+  content: string;
+  checksum: BytesLike;
+  metadata: string;
 };
 
 export type ArmadaCreateProjectDataStructOutput = [
-  string,
-  string,
-  string,
-  string,
-  string,
-  string
+  owner: string,
+  name: string,
+  email: string,
+  content: string,
+  checksum: string,
+  metadata: string
 ] & {
   owner: string;
   name: string;
@@ -54,78 +49,42 @@ export type ArmadaCreateProjectDataStructOutput = [
 };
 
 export type ArmadaProjectStruct = {
-  id: PromiseOrValue<BytesLike>;
-  owner: PromiseOrValue<string>;
-  name: PromiseOrValue<string>;
-  email: PromiseOrValue<string>;
-  escrow: PromiseOrValue<BigNumberish>;
-  reserve: PromiseOrValue<BigNumberish>;
-  content: PromiseOrValue<string>;
-  checksum: PromiseOrValue<BytesLike>;
-  metadata: PromiseOrValue<string>;
+  id: BytesLike;
+  owner: AddressLike;
+  name: string;
+  email: string;
+  escrow: BigNumberish;
+  reserve: BigNumberish;
+  content: string;
+  checksum: BytesLike;
+  metadata: string;
 };
 
 export type ArmadaProjectStructOutput = [
-  string,
-  string,
-  string,
-  string,
-  BigNumber,
-  BigNumber,
-  string,
-  string,
-  string
+  id: string,
+  owner: string,
+  name: string,
+  email: string,
+  escrow: bigint,
+  reserve: bigint,
+  content: string,
+  checksum: string,
+  metadata: string
 ] & {
   id: string;
   owner: string;
   name: string;
   email: string;
-  escrow: BigNumber;
-  reserve: BigNumber;
+  escrow: bigint;
+  reserve: bigint;
   content: string;
   checksum: string;
   metadata: string;
 };
 
-export interface ArmadaProjectsInterface extends utils.Interface {
-  functions: {
-    "DEFAULT_ADMIN_ROLE()": FunctionFragment;
-    "IMPORTER_ROLE()": FunctionFragment;
-    "PROJECT_CREATOR_ROLE()": FunctionFragment;
-    "createProject((address,string,string,string,bytes32,string))": FunctionFragment;
-    "deleteProject(bytes32)": FunctionFragment;
-    "depositProjectEscrow(bytes32,uint256,uint256,uint8,bytes32,bytes32)": FunctionFragment;
-    "getProject(bytes32)": FunctionFragment;
-    "getProjectCount()": FunctionFragment;
-    "getProjects(uint256,uint256)": FunctionFragment;
-    "getRegistry()": FunctionFragment;
-    "getRoleAdmin(bytes32)": FunctionFragment;
-    "grantRole(bytes32,address)": FunctionFragment;
-    "hasRole(bytes32,address)": FunctionFragment;
-    "initialize(address[],address,bool)": FunctionFragment;
-    "pause()": FunctionFragment;
-    "paused()": FunctionFragment;
-    "proxiableUUID()": FunctionFragment;
-    "renounceRole(bytes32,address)": FunctionFragment;
-    "revokeRole(bytes32,address)": FunctionFragment;
-    "setProjectContent(bytes32,string,bytes32)": FunctionFragment;
-    "setProjectEscrowImpl(bytes32,uint256,uint256)": FunctionFragment;
-    "setProjectMetadata(bytes32,string)": FunctionFragment;
-    "setProjectOwner(bytes32,address)": FunctionFragment;
-    "setProjectProps(bytes32,string,string)": FunctionFragment;
-    "setProjectReserveImpl(bytes32,uint256,uint256)": FunctionFragment;
-    "supportsInterface(bytes4)": FunctionFragment;
-    "unpause()": FunctionFragment;
-    "unsafeImportData((bytes32,address,string,string,uint256,uint256,string,bytes32,string)[],address[],bool)": FunctionFragment;
-    "unsafeSetEscrows(uint256,uint256,uint256,uint256)": FunctionFragment;
-    "unsafeSetRegistry(address)": FunctionFragment;
-    "upgradeTo(address)": FunctionFragment;
-    "upgradeToAndCall(address,bytes)": FunctionFragment;
-    "withdrawProjectEscrow(bytes32,uint256,address)": FunctionFragment;
-  };
-
+export interface ArmadaProjectsInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "DEFAULT_ADMIN_ROLE"
       | "IMPORTER_ROLE"
       | "PROJECT_CREATOR_ROLE"
@@ -161,6 +120,26 @@ export interface ArmadaProjectsInterface extends utils.Interface {
       | "withdrawProjectEscrow"
   ): FunctionFragment;
 
+  getEvent(
+    nameOrSignatureOrTopic:
+      | "AdminChanged"
+      | "BeaconUpgraded"
+      | "Initialized"
+      | "Paused"
+      | "ProjectContentChanged"
+      | "ProjectCreated"
+      | "ProjectDeleted"
+      | "ProjectEscrowChanged"
+      | "ProjectMetadataChanged"
+      | "ProjectOwnerChanged"
+      | "ProjectPropsChanged"
+      | "RoleAdminChanged"
+      | "RoleGranted"
+      | "RoleRevoked"
+      | "Unpaused"
+      | "Upgraded"
+  ): EventFragment;
+
   encodeFunctionData(
     functionFragment: "DEFAULT_ADMIN_ROLE",
     values?: undefined
@@ -179,22 +158,22 @@ export interface ArmadaProjectsInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "deleteProject",
-    values: [PromiseOrValue<BytesLike>]
+    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "depositProjectEscrow",
     values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BytesLike>
+      BytesLike,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BytesLike,
+      BytesLike
     ]
   ): string;
   encodeFunctionData(
     functionFragment: "getProject",
-    values: [PromiseOrValue<BytesLike>]
+    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getProjectCount",
@@ -202,7 +181,7 @@ export interface ArmadaProjectsInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getProjects",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+    values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getRegistry",
@@ -210,23 +189,19 @@ export interface ArmadaProjectsInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getRoleAdmin",
-    values: [PromiseOrValue<BytesLike>]
+    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "grantRole",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "hasRole",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [
-      PromiseOrValue<string>[],
-      PromiseOrValue<string>,
-      PromiseOrValue<boolean>
-    ]
+    values: [AddressLike[], AddressLike, boolean]
   ): string;
   encodeFunctionData(functionFragment: "pause", values?: undefined): string;
   encodeFunctionData(functionFragment: "paused", values?: undefined): string;
@@ -236,93 +211,64 @@ export interface ArmadaProjectsInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "renounceRole",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "revokeRole",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setProjectContent",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BytesLike>
-    ]
+    values: [BytesLike, string, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setProjectEscrowImpl",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [BytesLike, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setProjectMetadata",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, string]
   ): string;
   encodeFunctionData(
     functionFragment: "setProjectOwner",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setProjectProps",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>
-    ]
+    values: [BytesLike, string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "setProjectReserveImpl",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [BytesLike, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "supportsInterface",
-    values: [PromiseOrValue<BytesLike>]
+    values: [BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "unsafeImportData",
-    values: [
-      ArmadaProjectStruct[],
-      PromiseOrValue<string>[],
-      PromiseOrValue<boolean>
-    ]
+    values: [ArmadaProjectStruct[], AddressLike[], boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "unsafeSetEscrows",
-    values: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "unsafeSetRegistry",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "upgradeTo",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "upgradeToAndCall",
-    values: [PromiseOrValue<string>, PromiseOrValue<BytesLike>]
+    values: [AddressLike, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawProjectEscrow",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<string>
-    ]
+    values: [BytesLike, BigNumberish, AddressLike]
   ): string;
 
   decodeFunctionResult(
@@ -430,1292 +376,1034 @@ export interface ArmadaProjectsInterface extends utils.Interface {
     functionFragment: "withdrawProjectEscrow",
     data: BytesLike
   ): Result;
-
-  events: {
-    "AdminChanged(address,address)": EventFragment;
-    "BeaconUpgraded(address)": EventFragment;
-    "Initialized(uint8)": EventFragment;
-    "Paused(address)": EventFragment;
-    "ProjectContentChanged(bytes32,string,bytes32,string,bytes32)": EventFragment;
-    "ProjectCreated(bytes32,address,string,string,string,bytes32,string)": EventFragment;
-    "ProjectDeleted(bytes32,address,string,string,string,bytes32,string)": EventFragment;
-    "ProjectEscrowChanged(bytes32,uint256,uint256)": EventFragment;
-    "ProjectMetadataChanged(bytes32,string,string)": EventFragment;
-    "ProjectOwnerChanged(bytes32,address,address)": EventFragment;
-    "ProjectPropsChanged(bytes32,string,string,string,string)": EventFragment;
-    "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
-    "RoleGranted(bytes32,address,address)": EventFragment;
-    "RoleRevoked(bytes32,address,address)": EventFragment;
-    "Unpaused(address)": EventFragment;
-    "Upgraded(address)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "AdminChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "BeaconUpgraded"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ProjectContentChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ProjectCreated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ProjectDeleted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ProjectEscrowChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ProjectMetadataChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ProjectOwnerChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ProjectPropsChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RoleAdminChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RoleGranted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RoleRevoked"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Upgraded"): EventFragment;
 }
 
-export interface AdminChangedEventObject {
-  previousAdmin: string;
-  newAdmin: string;
+export namespace AdminChangedEvent {
+  export type InputTuple = [previousAdmin: AddressLike, newAdmin: AddressLike];
+  export type OutputTuple = [previousAdmin: string, newAdmin: string];
+  export interface OutputObject {
+    previousAdmin: string;
+    newAdmin: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type AdminChangedEvent = TypedEvent<
-  [string, string],
-  AdminChangedEventObject
->;
 
-export type AdminChangedEventFilter = TypedEventFilter<AdminChangedEvent>;
-
-export interface BeaconUpgradedEventObject {
-  beacon: string;
+export namespace BeaconUpgradedEvent {
+  export type InputTuple = [beacon: AddressLike];
+  export type OutputTuple = [beacon: string];
+  export interface OutputObject {
+    beacon: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type BeaconUpgradedEvent = TypedEvent<
-  [string],
-  BeaconUpgradedEventObject
->;
 
-export type BeaconUpgradedEventFilter = TypedEventFilter<BeaconUpgradedEvent>;
-
-export interface InitializedEventObject {
-  version: number;
+export namespace InitializedEvent {
+  export type InputTuple = [version: BigNumberish];
+  export type OutputTuple = [version: bigint];
+  export interface OutputObject {
+    version: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type InitializedEvent = TypedEvent<[number], InitializedEventObject>;
 
-export type InitializedEventFilter = TypedEventFilter<InitializedEvent>;
-
-export interface PausedEventObject {
-  account: string;
+export namespace PausedEvent {
+  export type InputTuple = [account: AddressLike];
+  export type OutputTuple = [account: string];
+  export interface OutputObject {
+    account: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type PausedEvent = TypedEvent<[string], PausedEventObject>;
 
-export type PausedEventFilter = TypedEventFilter<PausedEvent>;
-
-export interface ProjectContentChangedEventObject {
-  projectId: string;
-  oldContent: string;
-  oldChecksum: string;
-  newContent: string;
-  newChecksum: string;
+export namespace ProjectContentChangedEvent {
+  export type InputTuple = [
+    projectId: BytesLike,
+    oldContent: string,
+    oldChecksum: BytesLike,
+    newContent: string,
+    newChecksum: BytesLike
+  ];
+  export type OutputTuple = [
+    projectId: string,
+    oldContent: string,
+    oldChecksum: string,
+    newContent: string,
+    newChecksum: string
+  ];
+  export interface OutputObject {
+    projectId: string;
+    oldContent: string;
+    oldChecksum: string;
+    newContent: string;
+    newChecksum: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ProjectContentChangedEvent = TypedEvent<
-  [string, string, string, string, string],
-  ProjectContentChangedEventObject
->;
 
-export type ProjectContentChangedEventFilter =
-  TypedEventFilter<ProjectContentChangedEvent>;
-
-export interface ProjectCreatedEventObject {
-  projectId: string;
-  owner: string;
-  name: string;
-  email: string;
-  content: string;
-  checksum: string;
-  metadata: string;
+export namespace ProjectCreatedEvent {
+  export type InputTuple = [
+    projectId: BytesLike,
+    owner: AddressLike,
+    name: string,
+    email: string,
+    content: string,
+    checksum: BytesLike,
+    metadata: string
+  ];
+  export type OutputTuple = [
+    projectId: string,
+    owner: string,
+    name: string,
+    email: string,
+    content: string,
+    checksum: string,
+    metadata: string
+  ];
+  export interface OutputObject {
+    projectId: string;
+    owner: string;
+    name: string;
+    email: string;
+    content: string;
+    checksum: string;
+    metadata: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ProjectCreatedEvent = TypedEvent<
-  [string, string, string, string, string, string, string],
-  ProjectCreatedEventObject
->;
 
-export type ProjectCreatedEventFilter = TypedEventFilter<ProjectCreatedEvent>;
-
-export interface ProjectDeletedEventObject {
-  projectId: string;
-  owner: string;
-  name: string;
-  email: string;
-  content: string;
-  checksum: string;
-  metadata: string;
+export namespace ProjectDeletedEvent {
+  export type InputTuple = [
+    projectId: BytesLike,
+    owner: AddressLike,
+    name: string,
+    email: string,
+    content: string,
+    checksum: BytesLike,
+    metadata: string
+  ];
+  export type OutputTuple = [
+    projectId: string,
+    owner: string,
+    name: string,
+    email: string,
+    content: string,
+    checksum: string,
+    metadata: string
+  ];
+  export interface OutputObject {
+    projectId: string;
+    owner: string;
+    name: string;
+    email: string;
+    content: string;
+    checksum: string;
+    metadata: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ProjectDeletedEvent = TypedEvent<
-  [string, string, string, string, string, string, string],
-  ProjectDeletedEventObject
->;
 
-export type ProjectDeletedEventFilter = TypedEventFilter<ProjectDeletedEvent>;
-
-export interface ProjectEscrowChangedEventObject {
-  projectId: string;
-  oldEscrow: BigNumber;
-  newEscrow: BigNumber;
+export namespace ProjectEscrowChangedEvent {
+  export type InputTuple = [
+    projectId: BytesLike,
+    oldEscrow: BigNumberish,
+    newEscrow: BigNumberish
+  ];
+  export type OutputTuple = [
+    projectId: string,
+    oldEscrow: bigint,
+    newEscrow: bigint
+  ];
+  export interface OutputObject {
+    projectId: string;
+    oldEscrow: bigint;
+    newEscrow: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ProjectEscrowChangedEvent = TypedEvent<
-  [string, BigNumber, BigNumber],
-  ProjectEscrowChangedEventObject
->;
 
-export type ProjectEscrowChangedEventFilter =
-  TypedEventFilter<ProjectEscrowChangedEvent>;
-
-export interface ProjectMetadataChangedEventObject {
-  projectId: string;
-  oldMetadata: string;
-  newMetadata: string;
+export namespace ProjectMetadataChangedEvent {
+  export type InputTuple = [
+    projectId: BytesLike,
+    oldMetadata: string,
+    newMetadata: string
+  ];
+  export type OutputTuple = [
+    projectId: string,
+    oldMetadata: string,
+    newMetadata: string
+  ];
+  export interface OutputObject {
+    projectId: string;
+    oldMetadata: string;
+    newMetadata: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ProjectMetadataChangedEvent = TypedEvent<
-  [string, string, string],
-  ProjectMetadataChangedEventObject
->;
 
-export type ProjectMetadataChangedEventFilter =
-  TypedEventFilter<ProjectMetadataChangedEvent>;
-
-export interface ProjectOwnerChangedEventObject {
-  projectId: string;
-  oldOwner: string;
-  newOwner: string;
+export namespace ProjectOwnerChangedEvent {
+  export type InputTuple = [
+    projectId: BytesLike,
+    oldOwner: AddressLike,
+    newOwner: AddressLike
+  ];
+  export type OutputTuple = [
+    projectId: string,
+    oldOwner: string,
+    newOwner: string
+  ];
+  export interface OutputObject {
+    projectId: string;
+    oldOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ProjectOwnerChangedEvent = TypedEvent<
-  [string, string, string],
-  ProjectOwnerChangedEventObject
->;
 
-export type ProjectOwnerChangedEventFilter =
-  TypedEventFilter<ProjectOwnerChangedEvent>;
-
-export interface ProjectPropsChangedEventObject {
-  projectId: string;
-  oldName: string;
-  oldEmail: string;
-  newName: string;
-  newEmail: string;
+export namespace ProjectPropsChangedEvent {
+  export type InputTuple = [
+    projectId: BytesLike,
+    oldName: string,
+    oldEmail: string,
+    newName: string,
+    newEmail: string
+  ];
+  export type OutputTuple = [
+    projectId: string,
+    oldName: string,
+    oldEmail: string,
+    newName: string,
+    newEmail: string
+  ];
+  export interface OutputObject {
+    projectId: string;
+    oldName: string;
+    oldEmail: string;
+    newName: string;
+    newEmail: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ProjectPropsChangedEvent = TypedEvent<
-  [string, string, string, string, string],
-  ProjectPropsChangedEventObject
->;
 
-export type ProjectPropsChangedEventFilter =
-  TypedEventFilter<ProjectPropsChangedEvent>;
-
-export interface RoleAdminChangedEventObject {
-  role: string;
-  previousAdminRole: string;
-  newAdminRole: string;
+export namespace RoleAdminChangedEvent {
+  export type InputTuple = [
+    role: BytesLike,
+    previousAdminRole: BytesLike,
+    newAdminRole: BytesLike
+  ];
+  export type OutputTuple = [
+    role: string,
+    previousAdminRole: string,
+    newAdminRole: string
+  ];
+  export interface OutputObject {
+    role: string;
+    previousAdminRole: string;
+    newAdminRole: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RoleAdminChangedEvent = TypedEvent<
-  [string, string, string],
-  RoleAdminChangedEventObject
->;
 
-export type RoleAdminChangedEventFilter =
-  TypedEventFilter<RoleAdminChangedEvent>;
-
-export interface RoleGrantedEventObject {
-  role: string;
-  account: string;
-  sender: string;
+export namespace RoleGrantedEvent {
+  export type InputTuple = [
+    role: BytesLike,
+    account: AddressLike,
+    sender: AddressLike
+  ];
+  export type OutputTuple = [role: string, account: string, sender: string];
+  export interface OutputObject {
+    role: string;
+    account: string;
+    sender: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RoleGrantedEvent = TypedEvent<
-  [string, string, string],
-  RoleGrantedEventObject
->;
 
-export type RoleGrantedEventFilter = TypedEventFilter<RoleGrantedEvent>;
-
-export interface RoleRevokedEventObject {
-  role: string;
-  account: string;
-  sender: string;
+export namespace RoleRevokedEvent {
+  export type InputTuple = [
+    role: BytesLike,
+    account: AddressLike,
+    sender: AddressLike
+  ];
+  export type OutputTuple = [role: string, account: string, sender: string];
+  export interface OutputObject {
+    role: string;
+    account: string;
+    sender: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RoleRevokedEvent = TypedEvent<
-  [string, string, string],
-  RoleRevokedEventObject
->;
 
-export type RoleRevokedEventFilter = TypedEventFilter<RoleRevokedEvent>;
-
-export interface UnpausedEventObject {
-  account: string;
+export namespace UnpausedEvent {
+  export type InputTuple = [account: AddressLike];
+  export type OutputTuple = [account: string];
+  export interface OutputObject {
+    account: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UnpausedEvent = TypedEvent<[string], UnpausedEventObject>;
 
-export type UnpausedEventFilter = TypedEventFilter<UnpausedEvent>;
-
-export interface UpgradedEventObject {
-  implementation: string;
+export namespace UpgradedEvent {
+  export type InputTuple = [implementation: AddressLike];
+  export type OutputTuple = [implementation: string];
+  export interface OutputObject {
+    implementation: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpgradedEvent = TypedEvent<[string], UpgradedEventObject>;
-
-export type UpgradedEventFilter = TypedEventFilter<UpgradedEvent>;
 
 export interface ArmadaProjects extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+  connect(runner?: ContractRunner | null): ArmadaProjects;
+  waitForDeployment(): Promise<this>;
 
   interface: ArmadaProjectsInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
 
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-  functions: {
-    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<[string]>;
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-    IMPORTER_ROLE(overrides?: CallOverrides): Promise<[string]>;
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
 
-    PROJECT_CREATOR_ROLE(overrides?: CallOverrides): Promise<[string]>;
+  DEFAULT_ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
 
-    createProject(
-      project: ArmadaCreateProjectDataStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  IMPORTER_ROLE: TypedContractMethod<[], [string], "view">;
 
-    deleteProject(
-      projectId: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  PROJECT_CREATOR_ROLE: TypedContractMethod<[], [string], "view">;
 
-    depositProjectEscrow(
-      projectId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  createProject: TypedContractMethod<
+    [project: ArmadaCreateProjectDataStruct],
+    [string],
+    "nonpayable"
+  >;
 
-    getProject(
-      projectId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[ArmadaProjectStructOutput]>;
+  deleteProject: TypedContractMethod<
+    [projectId: BytesLike],
+    [void],
+    "nonpayable"
+  >;
 
-    getProjectCount(overrides?: CallOverrides): Promise<[BigNumber]>;
+  depositProjectEscrow: TypedContractMethod<
+    [
+      projectId: BytesLike,
+      amount: BigNumberish,
+      deadline: BigNumberish,
+      v: BigNumberish,
+      r: BytesLike,
+      s: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    getProjects(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [ArmadaProjectStructOutput[]] & { values: ArmadaProjectStructOutput[] }
-    >;
+  getProject: TypedContractMethod<
+    [projectId: BytesLike],
+    [ArmadaProjectStructOutput],
+    "view"
+  >;
 
-    getRegistry(overrides?: CallOverrides): Promise<[string]>;
+  getProjectCount: TypedContractMethod<[], [bigint], "view">;
 
-    getRoleAdmin(
-      role: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
+  getProjects: TypedContractMethod<
+    [skip: BigNumberish, size: BigNumberish],
+    [ArmadaProjectStructOutput[]],
+    "view"
+  >;
 
-    grantRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  getRegistry: TypedContractMethod<[], [string], "view">;
 
-    hasRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
+  getRoleAdmin: TypedContractMethod<[role: BytesLike], [string], "view">;
 
-    initialize(
-      admins: PromiseOrValue<string>[],
-      registry: PromiseOrValue<string>,
-      grantImporterRole: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  grantRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    pause(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  hasRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [boolean],
+    "view"
+  >;
 
-    paused(overrides?: CallOverrides): Promise<[boolean]>;
+  initialize: TypedContractMethod<
+    [admins: AddressLike[], registry: AddressLike, grantImporterRole: boolean],
+    [void],
+    "nonpayable"
+  >;
 
-    proxiableUUID(overrides?: CallOverrides): Promise<[string]>;
+  pause: TypedContractMethod<[], [void], "nonpayable">;
 
-    renounceRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  paused: TypedContractMethod<[], [boolean], "view">;
 
-    revokeRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  proxiableUUID: TypedContractMethod<[], [string], "view">;
 
-    setProjectContent(
-      projectId: PromiseOrValue<BytesLike>,
-      content: PromiseOrValue<string>,
-      checksum: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  renounceRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    setProjectEscrowImpl(
-      projectId: PromiseOrValue<BytesLike>,
-      decrease: PromiseOrValue<BigNumberish>,
-      increase: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  revokeRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    setProjectMetadata(
-      projectId: PromiseOrValue<BytesLike>,
-      metadata: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  setProjectContent: TypedContractMethod<
+    [projectId: BytesLike, content: string, checksum: BytesLike],
+    [void],
+    "nonpayable"
+  >;
 
-    setProjectOwner(
-      projectId: PromiseOrValue<BytesLike>,
-      owner: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  setProjectEscrowImpl: TypedContractMethod<
+    [projectId: BytesLike, decrease: BigNumberish, increase: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    setProjectProps(
-      projectId: PromiseOrValue<BytesLike>,
-      name: PromiseOrValue<string>,
-      email: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  setProjectMetadata: TypedContractMethod<
+    [projectId: BytesLike, metadata: string],
+    [void],
+    "nonpayable"
+  >;
 
-    setProjectReserveImpl(
-      projectId: PromiseOrValue<BytesLike>,
-      decrease: PromiseOrValue<BigNumberish>,
-      increase: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  setProjectOwner: TypedContractMethod<
+    [projectId: BytesLike, owner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
+  setProjectProps: TypedContractMethod<
+    [projectId: BytesLike, name: string, email: string],
+    [void],
+    "nonpayable"
+  >;
 
-    unpause(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  setProjectReserveImpl: TypedContractMethod<
+    [projectId: BytesLike, decrease: BigNumberish, increase: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    unsafeImportData(
+  supportsInterface: TypedContractMethod<
+    [interfaceId: BytesLike],
+    [boolean],
+    "view"
+  >;
+
+  unpause: TypedContractMethod<[], [void], "nonpayable">;
+
+  unsafeImportData: TypedContractMethod<
+    [
       projects: ArmadaProjectStruct[],
-      creators: PromiseOrValue<string>[],
-      revokeImporterRole: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    unsafeSetEscrows(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      mul: PromiseOrValue<BigNumberish>,
-      div: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    unsafeSetRegistry(
-      registry: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    upgradeToAndCall(
-      newImplementation: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    withdrawProjectEscrow(
-      projectId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      to: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-  };
-
-  DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
-
-  IMPORTER_ROLE(overrides?: CallOverrides): Promise<string>;
-
-  PROJECT_CREATOR_ROLE(overrides?: CallOverrides): Promise<string>;
-
-  createProject(
-    project: ArmadaCreateProjectDataStruct,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  deleteProject(
-    projectId: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  depositProjectEscrow(
-    projectId: PromiseOrValue<BytesLike>,
-    amount: PromiseOrValue<BigNumberish>,
-    deadline: PromiseOrValue<BigNumberish>,
-    v: PromiseOrValue<BigNumberish>,
-    r: PromiseOrValue<BytesLike>,
-    s: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  getProject(
-    projectId: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<ArmadaProjectStructOutput>;
-
-  getProjectCount(overrides?: CallOverrides): Promise<BigNumber>;
-
-  getProjects(
-    skip: PromiseOrValue<BigNumberish>,
-    size: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<ArmadaProjectStructOutput[]>;
-
-  getRegistry(overrides?: CallOverrides): Promise<string>;
-
-  getRoleAdmin(
-    role: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  grantRole(
-    role: PromiseOrValue<BytesLike>,
-    account: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  hasRole(
-    role: PromiseOrValue<BytesLike>,
-    account: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  initialize(
-    admins: PromiseOrValue<string>[],
-    registry: PromiseOrValue<string>,
-    grantImporterRole: PromiseOrValue<boolean>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  pause(
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  paused(overrides?: CallOverrides): Promise<boolean>;
-
-  proxiableUUID(overrides?: CallOverrides): Promise<string>;
-
-  renounceRole(
-    role: PromiseOrValue<BytesLike>,
-    account: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  revokeRole(
-    role: PromiseOrValue<BytesLike>,
-    account: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setProjectContent(
-    projectId: PromiseOrValue<BytesLike>,
-    content: PromiseOrValue<string>,
-    checksum: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setProjectEscrowImpl(
-    projectId: PromiseOrValue<BytesLike>,
-    decrease: PromiseOrValue<BigNumberish>,
-    increase: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setProjectMetadata(
-    projectId: PromiseOrValue<BytesLike>,
-    metadata: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setProjectOwner(
-    projectId: PromiseOrValue<BytesLike>,
-    owner: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setProjectProps(
-    projectId: PromiseOrValue<BytesLike>,
-    name: PromiseOrValue<string>,
-    email: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setProjectReserveImpl(
-    projectId: PromiseOrValue<BytesLike>,
-    decrease: PromiseOrValue<BigNumberish>,
-    increase: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  supportsInterface(
-    interfaceId: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  unpause(
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  unsafeImportData(
-    projects: ArmadaProjectStruct[],
-    creators: PromiseOrValue<string>[],
-    revokeImporterRole: PromiseOrValue<boolean>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  unsafeSetEscrows(
-    skip: PromiseOrValue<BigNumberish>,
-    size: PromiseOrValue<BigNumberish>,
-    mul: PromiseOrValue<BigNumberish>,
-    div: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  unsafeSetRegistry(
-    registry: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  upgradeTo(
-    newImplementation: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  upgradeToAndCall(
-    newImplementation: PromiseOrValue<string>,
-    data: PromiseOrValue<BytesLike>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  withdrawProjectEscrow(
-    projectId: PromiseOrValue<BytesLike>,
-    amount: PromiseOrValue<BigNumberish>,
-    to: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  callStatic: {
-    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
-
-    IMPORTER_ROLE(overrides?: CallOverrides): Promise<string>;
-
-    PROJECT_CREATOR_ROLE(overrides?: CallOverrides): Promise<string>;
-
-    createProject(
-      project: ArmadaCreateProjectDataStruct,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    deleteProject(
-      projectId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    depositProjectEscrow(
-      projectId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    getProject(
-      projectId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<ArmadaProjectStructOutput>;
-
-    getProjectCount(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getProjects(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<ArmadaProjectStructOutput[]>;
-
-    getRegistry(overrides?: CallOverrides): Promise<string>;
-
-    getRoleAdmin(
-      role: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    grantRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    hasRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    initialize(
-      admins: PromiseOrValue<string>[],
-      registry: PromiseOrValue<string>,
-      grantImporterRole: PromiseOrValue<boolean>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    pause(overrides?: CallOverrides): Promise<void>;
-
-    paused(overrides?: CallOverrides): Promise<boolean>;
-
-    proxiableUUID(overrides?: CallOverrides): Promise<string>;
-
-    renounceRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    revokeRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setProjectContent(
-      projectId: PromiseOrValue<BytesLike>,
-      content: PromiseOrValue<string>,
-      checksum: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setProjectEscrowImpl(
-      projectId: PromiseOrValue<BytesLike>,
-      decrease: PromiseOrValue<BigNumberish>,
-      increase: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setProjectMetadata(
-      projectId: PromiseOrValue<BytesLike>,
-      metadata: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setProjectOwner(
-      projectId: PromiseOrValue<BytesLike>,
-      owner: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setProjectProps(
-      projectId: PromiseOrValue<BytesLike>,
-      name: PromiseOrValue<string>,
-      email: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setProjectReserveImpl(
-      projectId: PromiseOrValue<BytesLike>,
-      decrease: PromiseOrValue<BigNumberish>,
-      increase: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    unpause(overrides?: CallOverrides): Promise<void>;
-
-    unsafeImportData(
+      creators: AddressLike[],
+      revokeImporterRole: boolean
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  unsafeSetEscrows: TypedContractMethod<
+    [
+      skip: BigNumberish,
+      size: BigNumberish,
+      mul: BigNumberish,
+      div: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  unsafeSetRegistry: TypedContractMethod<
+    [registry: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  upgradeTo: TypedContractMethod<
+    [newImplementation: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  upgradeToAndCall: TypedContractMethod<
+    [newImplementation: AddressLike, data: BytesLike],
+    [void],
+    "payable"
+  >;
+
+  withdrawProjectEscrow: TypedContractMethod<
+    [projectId: BytesLike, amount: BigNumberish, to: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
+
+  getFunction(
+    nameOrSignature: "DEFAULT_ADMIN_ROLE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "IMPORTER_ROLE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "PROJECT_CREATOR_ROLE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "createProject"
+  ): TypedContractMethod<
+    [project: ArmadaCreateProjectDataStruct],
+    [string],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "deleteProject"
+  ): TypedContractMethod<[projectId: BytesLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "depositProjectEscrow"
+  ): TypedContractMethod<
+    [
+      projectId: BytesLike,
+      amount: BigNumberish,
+      deadline: BigNumberish,
+      v: BigNumberish,
+      r: BytesLike,
+      s: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "getProject"
+  ): TypedContractMethod<
+    [projectId: BytesLike],
+    [ArmadaProjectStructOutput],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getProjectCount"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getProjects"
+  ): TypedContractMethod<
+    [skip: BigNumberish, size: BigNumberish],
+    [ArmadaProjectStructOutput[]],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getRegistry"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "getRoleAdmin"
+  ): TypedContractMethod<[role: BytesLike], [string], "view">;
+  getFunction(
+    nameOrSignature: "grantRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "hasRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [boolean],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "initialize"
+  ): TypedContractMethod<
+    [admins: AddressLike[], registry: AddressLike, grantImporterRole: boolean],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "pause"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "paused"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "proxiableUUID"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "renounceRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "revokeRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setProjectContent"
+  ): TypedContractMethod<
+    [projectId: BytesLike, content: string, checksum: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setProjectEscrowImpl"
+  ): TypedContractMethod<
+    [projectId: BytesLike, decrease: BigNumberish, increase: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setProjectMetadata"
+  ): TypedContractMethod<
+    [projectId: BytesLike, metadata: string],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setProjectOwner"
+  ): TypedContractMethod<
+    [projectId: BytesLike, owner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setProjectProps"
+  ): TypedContractMethod<
+    [projectId: BytesLike, name: string, email: string],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setProjectReserveImpl"
+  ): TypedContractMethod<
+    [projectId: BytesLike, decrease: BigNumberish, increase: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "supportsInterface"
+  ): TypedContractMethod<[interfaceId: BytesLike], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "unpause"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "unsafeImportData"
+  ): TypedContractMethod<
+    [
       projects: ArmadaProjectStruct[],
-      creators: PromiseOrValue<string>[],
-      revokeImporterRole: PromiseOrValue<boolean>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      creators: AddressLike[],
+      revokeImporterRole: boolean
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "unsafeSetEscrows"
+  ): TypedContractMethod<
+    [
+      skip: BigNumberish,
+      size: BigNumberish,
+      mul: BigNumberish,
+      div: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "unsafeSetRegistry"
+  ): TypedContractMethod<[registry: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "upgradeTo"
+  ): TypedContractMethod<
+    [newImplementation: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "upgradeToAndCall"
+  ): TypedContractMethod<
+    [newImplementation: AddressLike, data: BytesLike],
+    [void],
+    "payable"
+  >;
+  getFunction(
+    nameOrSignature: "withdrawProjectEscrow"
+  ): TypedContractMethod<
+    [projectId: BytesLike, amount: BigNumberish, to: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    unsafeSetEscrows(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      mul: PromiseOrValue<BigNumberish>,
-      div: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    unsafeSetRegistry(
-      registry: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    upgradeToAndCall(
-      newImplementation: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    withdrawProjectEscrow(
-      projectId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      to: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-  };
+  getEvent(
+    key: "AdminChanged"
+  ): TypedContractEvent<
+    AdminChangedEvent.InputTuple,
+    AdminChangedEvent.OutputTuple,
+    AdminChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "BeaconUpgraded"
+  ): TypedContractEvent<
+    BeaconUpgradedEvent.InputTuple,
+    BeaconUpgradedEvent.OutputTuple,
+    BeaconUpgradedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Initialized"
+  ): TypedContractEvent<
+    InitializedEvent.InputTuple,
+    InitializedEvent.OutputTuple,
+    InitializedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Paused"
+  ): TypedContractEvent<
+    PausedEvent.InputTuple,
+    PausedEvent.OutputTuple,
+    PausedEvent.OutputObject
+  >;
+  getEvent(
+    key: "ProjectContentChanged"
+  ): TypedContractEvent<
+    ProjectContentChangedEvent.InputTuple,
+    ProjectContentChangedEvent.OutputTuple,
+    ProjectContentChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "ProjectCreated"
+  ): TypedContractEvent<
+    ProjectCreatedEvent.InputTuple,
+    ProjectCreatedEvent.OutputTuple,
+    ProjectCreatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "ProjectDeleted"
+  ): TypedContractEvent<
+    ProjectDeletedEvent.InputTuple,
+    ProjectDeletedEvent.OutputTuple,
+    ProjectDeletedEvent.OutputObject
+  >;
+  getEvent(
+    key: "ProjectEscrowChanged"
+  ): TypedContractEvent<
+    ProjectEscrowChangedEvent.InputTuple,
+    ProjectEscrowChangedEvent.OutputTuple,
+    ProjectEscrowChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "ProjectMetadataChanged"
+  ): TypedContractEvent<
+    ProjectMetadataChangedEvent.InputTuple,
+    ProjectMetadataChangedEvent.OutputTuple,
+    ProjectMetadataChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "ProjectOwnerChanged"
+  ): TypedContractEvent<
+    ProjectOwnerChangedEvent.InputTuple,
+    ProjectOwnerChangedEvent.OutputTuple,
+    ProjectOwnerChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "ProjectPropsChanged"
+  ): TypedContractEvent<
+    ProjectPropsChangedEvent.InputTuple,
+    ProjectPropsChangedEvent.OutputTuple,
+    ProjectPropsChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RoleAdminChanged"
+  ): TypedContractEvent<
+    RoleAdminChangedEvent.InputTuple,
+    RoleAdminChangedEvent.OutputTuple,
+    RoleAdminChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RoleGranted"
+  ): TypedContractEvent<
+    RoleGrantedEvent.InputTuple,
+    RoleGrantedEvent.OutputTuple,
+    RoleGrantedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RoleRevoked"
+  ): TypedContractEvent<
+    RoleRevokedEvent.InputTuple,
+    RoleRevokedEvent.OutputTuple,
+    RoleRevokedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Unpaused"
+  ): TypedContractEvent<
+    UnpausedEvent.InputTuple,
+    UnpausedEvent.OutputTuple,
+    UnpausedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Upgraded"
+  ): TypedContractEvent<
+    UpgradedEvent.InputTuple,
+    UpgradedEvent.OutputTuple,
+    UpgradedEvent.OutputObject
+  >;
 
   filters: {
-    "AdminChanged(address,address)"(
-      previousAdmin?: null,
-      newAdmin?: null
-    ): AdminChangedEventFilter;
-    AdminChanged(
-      previousAdmin?: null,
-      newAdmin?: null
-    ): AdminChangedEventFilter;
-
-    "BeaconUpgraded(address)"(
-      beacon?: PromiseOrValue<string> | null
-    ): BeaconUpgradedEventFilter;
-    BeaconUpgraded(
-      beacon?: PromiseOrValue<string> | null
-    ): BeaconUpgradedEventFilter;
-
-    "Initialized(uint8)"(version?: null): InitializedEventFilter;
-    Initialized(version?: null): InitializedEventFilter;
-
-    "Paused(address)"(account?: null): PausedEventFilter;
-    Paused(account?: null): PausedEventFilter;
-
-    "ProjectContentChanged(bytes32,string,bytes32,string,bytes32)"(
-      projectId?: PromiseOrValue<BytesLike> | null,
-      oldContent?: null,
-      oldChecksum?: null,
-      newContent?: null,
-      newChecksum?: null
-    ): ProjectContentChangedEventFilter;
-    ProjectContentChanged(
-      projectId?: PromiseOrValue<BytesLike> | null,
-      oldContent?: null,
-      oldChecksum?: null,
-      newContent?: null,
-      newChecksum?: null
-    ): ProjectContentChangedEventFilter;
-
-    "ProjectCreated(bytes32,address,string,string,string,bytes32,string)"(
-      projectId?: PromiseOrValue<BytesLike> | null,
-      owner?: PromiseOrValue<string> | null,
-      name?: null,
-      email?: null,
-      content?: null,
-      checksum?: null,
-      metadata?: null
-    ): ProjectCreatedEventFilter;
-    ProjectCreated(
-      projectId?: PromiseOrValue<BytesLike> | null,
-      owner?: PromiseOrValue<string> | null,
-      name?: null,
-      email?: null,
-      content?: null,
-      checksum?: null,
-      metadata?: null
-    ): ProjectCreatedEventFilter;
-
-    "ProjectDeleted(bytes32,address,string,string,string,bytes32,string)"(
-      projectId?: PromiseOrValue<BytesLike> | null,
-      owner?: PromiseOrValue<string> | null,
-      name?: null,
-      email?: null,
-      content?: null,
-      checksum?: null,
-      metadata?: null
-    ): ProjectDeletedEventFilter;
-    ProjectDeleted(
-      projectId?: PromiseOrValue<BytesLike> | null,
-      owner?: PromiseOrValue<string> | null,
-      name?: null,
-      email?: null,
-      content?: null,
-      checksum?: null,
-      metadata?: null
-    ): ProjectDeletedEventFilter;
-
-    "ProjectEscrowChanged(bytes32,uint256,uint256)"(
-      projectId?: PromiseOrValue<BytesLike> | null,
-      oldEscrow?: null,
-      newEscrow?: null
-    ): ProjectEscrowChangedEventFilter;
-    ProjectEscrowChanged(
-      projectId?: PromiseOrValue<BytesLike> | null,
-      oldEscrow?: null,
-      newEscrow?: null
-    ): ProjectEscrowChangedEventFilter;
-
-    "ProjectMetadataChanged(bytes32,string,string)"(
-      projectId?: PromiseOrValue<BytesLike> | null,
-      oldMetadata?: null,
-      newMetadata?: null
-    ): ProjectMetadataChangedEventFilter;
-    ProjectMetadataChanged(
-      projectId?: PromiseOrValue<BytesLike> | null,
-      oldMetadata?: null,
-      newMetadata?: null
-    ): ProjectMetadataChangedEventFilter;
-
-    "ProjectOwnerChanged(bytes32,address,address)"(
-      projectId?: PromiseOrValue<BytesLike> | null,
-      oldOwner?: PromiseOrValue<string> | null,
-      newOwner?: PromiseOrValue<string> | null
-    ): ProjectOwnerChangedEventFilter;
-    ProjectOwnerChanged(
-      projectId?: PromiseOrValue<BytesLike> | null,
-      oldOwner?: PromiseOrValue<string> | null,
-      newOwner?: PromiseOrValue<string> | null
-    ): ProjectOwnerChangedEventFilter;
-
-    "ProjectPropsChanged(bytes32,string,string,string,string)"(
-      projectId?: PromiseOrValue<BytesLike> | null,
-      oldName?: null,
-      oldEmail?: null,
-      newName?: null,
-      newEmail?: null
-    ): ProjectPropsChangedEventFilter;
-    ProjectPropsChanged(
-      projectId?: PromiseOrValue<BytesLike> | null,
-      oldName?: null,
-      oldEmail?: null,
-      newName?: null,
-      newEmail?: null
-    ): ProjectPropsChangedEventFilter;
-
-    "RoleAdminChanged(bytes32,bytes32,bytes32)"(
-      role?: PromiseOrValue<BytesLike> | null,
-      previousAdminRole?: PromiseOrValue<BytesLike> | null,
-      newAdminRole?: PromiseOrValue<BytesLike> | null
-    ): RoleAdminChangedEventFilter;
-    RoleAdminChanged(
-      role?: PromiseOrValue<BytesLike> | null,
-      previousAdminRole?: PromiseOrValue<BytesLike> | null,
-      newAdminRole?: PromiseOrValue<BytesLike> | null
-    ): RoleAdminChangedEventFilter;
-
-    "RoleGranted(bytes32,address,address)"(
-      role?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      sender?: PromiseOrValue<string> | null
-    ): RoleGrantedEventFilter;
-    RoleGranted(
-      role?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      sender?: PromiseOrValue<string> | null
-    ): RoleGrantedEventFilter;
-
-    "RoleRevoked(bytes32,address,address)"(
-      role?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      sender?: PromiseOrValue<string> | null
-    ): RoleRevokedEventFilter;
-    RoleRevoked(
-      role?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      sender?: PromiseOrValue<string> | null
-    ): RoleRevokedEventFilter;
-
-    "Unpaused(address)"(account?: null): UnpausedEventFilter;
-    Unpaused(account?: null): UnpausedEventFilter;
-
-    "Upgraded(address)"(
-      implementation?: PromiseOrValue<string> | null
-    ): UpgradedEventFilter;
-    Upgraded(
-      implementation?: PromiseOrValue<string> | null
-    ): UpgradedEventFilter;
-  };
-
-  estimateGas: {
-    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
-
-    IMPORTER_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
-
-    PROJECT_CREATOR_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
-
-    createProject(
-      project: ArmadaCreateProjectDataStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    deleteProject(
-      projectId: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    depositProjectEscrow(
-      projectId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    getProject(
-      projectId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getProjectCount(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getProjects(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getRegistry(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getRoleAdmin(
-      role: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    grantRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    hasRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    initialize(
-      admins: PromiseOrValue<string>[],
-      registry: PromiseOrValue<string>,
-      grantImporterRole: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    pause(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    paused(overrides?: CallOverrides): Promise<BigNumber>;
-
-    proxiableUUID(overrides?: CallOverrides): Promise<BigNumber>;
-
-    renounceRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    revokeRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setProjectContent(
-      projectId: PromiseOrValue<BytesLike>,
-      content: PromiseOrValue<string>,
-      checksum: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setProjectEscrowImpl(
-      projectId: PromiseOrValue<BytesLike>,
-      decrease: PromiseOrValue<BigNumberish>,
-      increase: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setProjectMetadata(
-      projectId: PromiseOrValue<BytesLike>,
-      metadata: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setProjectOwner(
-      projectId: PromiseOrValue<BytesLike>,
-      owner: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setProjectProps(
-      projectId: PromiseOrValue<BytesLike>,
-      name: PromiseOrValue<string>,
-      email: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setProjectReserveImpl(
-      projectId: PromiseOrValue<BytesLike>,
-      decrease: PromiseOrValue<BigNumberish>,
-      increase: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    unpause(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    unsafeImportData(
-      projects: ArmadaProjectStruct[],
-      creators: PromiseOrValue<string>[],
-      revokeImporterRole: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    unsafeSetEscrows(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      mul: PromiseOrValue<BigNumberish>,
-      div: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    unsafeSetRegistry(
-      registry: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    upgradeToAndCall(
-      newImplementation: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    withdrawProjectEscrow(
-      projectId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      to: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    DEFAULT_ADMIN_ROLE(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    IMPORTER_ROLE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    PROJECT_CREATOR_ROLE(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    createProject(
-      project: ArmadaCreateProjectDataStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    deleteProject(
-      projectId: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    depositProjectEscrow(
-      projectId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    getProject(
-      projectId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getProjectCount(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getProjects(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getRegistry(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getRoleAdmin(
-      role: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    grantRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    hasRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    initialize(
-      admins: PromiseOrValue<string>[],
-      registry: PromiseOrValue<string>,
-      grantImporterRole: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    pause(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    paused(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    proxiableUUID(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    renounceRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    revokeRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setProjectContent(
-      projectId: PromiseOrValue<BytesLike>,
-      content: PromiseOrValue<string>,
-      checksum: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setProjectEscrowImpl(
-      projectId: PromiseOrValue<BytesLike>,
-      decrease: PromiseOrValue<BigNumberish>,
-      increase: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setProjectMetadata(
-      projectId: PromiseOrValue<BytesLike>,
-      metadata: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setProjectOwner(
-      projectId: PromiseOrValue<BytesLike>,
-      owner: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setProjectProps(
-      projectId: PromiseOrValue<BytesLike>,
-      name: PromiseOrValue<string>,
-      email: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setProjectReserveImpl(
-      projectId: PromiseOrValue<BytesLike>,
-      decrease: PromiseOrValue<BigNumberish>,
-      increase: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    unpause(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    unsafeImportData(
-      projects: ArmadaProjectStruct[],
-      creators: PromiseOrValue<string>[],
-      revokeImporterRole: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    unsafeSetEscrows(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      mul: PromiseOrValue<BigNumberish>,
-      div: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    unsafeSetRegistry(
-      registry: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    upgradeToAndCall(
-      newImplementation: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    withdrawProjectEscrow(
-      projectId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      to: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
+    "AdminChanged(address,address)": TypedContractEvent<
+      AdminChangedEvent.InputTuple,
+      AdminChangedEvent.OutputTuple,
+      AdminChangedEvent.OutputObject
+    >;
+    AdminChanged: TypedContractEvent<
+      AdminChangedEvent.InputTuple,
+      AdminChangedEvent.OutputTuple,
+      AdminChangedEvent.OutputObject
+    >;
+
+    "BeaconUpgraded(address)": TypedContractEvent<
+      BeaconUpgradedEvent.InputTuple,
+      BeaconUpgradedEvent.OutputTuple,
+      BeaconUpgradedEvent.OutputObject
+    >;
+    BeaconUpgraded: TypedContractEvent<
+      BeaconUpgradedEvent.InputTuple,
+      BeaconUpgradedEvent.OutputTuple,
+      BeaconUpgradedEvent.OutputObject
+    >;
+
+    "Initialized(uint8)": TypedContractEvent<
+      InitializedEvent.InputTuple,
+      InitializedEvent.OutputTuple,
+      InitializedEvent.OutputObject
+    >;
+    Initialized: TypedContractEvent<
+      InitializedEvent.InputTuple,
+      InitializedEvent.OutputTuple,
+      InitializedEvent.OutputObject
+    >;
+
+    "Paused(address)": TypedContractEvent<
+      PausedEvent.InputTuple,
+      PausedEvent.OutputTuple,
+      PausedEvent.OutputObject
+    >;
+    Paused: TypedContractEvent<
+      PausedEvent.InputTuple,
+      PausedEvent.OutputTuple,
+      PausedEvent.OutputObject
+    >;
+
+    "ProjectContentChanged(bytes32,string,bytes32,string,bytes32)": TypedContractEvent<
+      ProjectContentChangedEvent.InputTuple,
+      ProjectContentChangedEvent.OutputTuple,
+      ProjectContentChangedEvent.OutputObject
+    >;
+    ProjectContentChanged: TypedContractEvent<
+      ProjectContentChangedEvent.InputTuple,
+      ProjectContentChangedEvent.OutputTuple,
+      ProjectContentChangedEvent.OutputObject
+    >;
+
+    "ProjectCreated(bytes32,address,string,string,string,bytes32,string)": TypedContractEvent<
+      ProjectCreatedEvent.InputTuple,
+      ProjectCreatedEvent.OutputTuple,
+      ProjectCreatedEvent.OutputObject
+    >;
+    ProjectCreated: TypedContractEvent<
+      ProjectCreatedEvent.InputTuple,
+      ProjectCreatedEvent.OutputTuple,
+      ProjectCreatedEvent.OutputObject
+    >;
+
+    "ProjectDeleted(bytes32,address,string,string,string,bytes32,string)": TypedContractEvent<
+      ProjectDeletedEvent.InputTuple,
+      ProjectDeletedEvent.OutputTuple,
+      ProjectDeletedEvent.OutputObject
+    >;
+    ProjectDeleted: TypedContractEvent<
+      ProjectDeletedEvent.InputTuple,
+      ProjectDeletedEvent.OutputTuple,
+      ProjectDeletedEvent.OutputObject
+    >;
+
+    "ProjectEscrowChanged(bytes32,uint256,uint256)": TypedContractEvent<
+      ProjectEscrowChangedEvent.InputTuple,
+      ProjectEscrowChangedEvent.OutputTuple,
+      ProjectEscrowChangedEvent.OutputObject
+    >;
+    ProjectEscrowChanged: TypedContractEvent<
+      ProjectEscrowChangedEvent.InputTuple,
+      ProjectEscrowChangedEvent.OutputTuple,
+      ProjectEscrowChangedEvent.OutputObject
+    >;
+
+    "ProjectMetadataChanged(bytes32,string,string)": TypedContractEvent<
+      ProjectMetadataChangedEvent.InputTuple,
+      ProjectMetadataChangedEvent.OutputTuple,
+      ProjectMetadataChangedEvent.OutputObject
+    >;
+    ProjectMetadataChanged: TypedContractEvent<
+      ProjectMetadataChangedEvent.InputTuple,
+      ProjectMetadataChangedEvent.OutputTuple,
+      ProjectMetadataChangedEvent.OutputObject
+    >;
+
+    "ProjectOwnerChanged(bytes32,address,address)": TypedContractEvent<
+      ProjectOwnerChangedEvent.InputTuple,
+      ProjectOwnerChangedEvent.OutputTuple,
+      ProjectOwnerChangedEvent.OutputObject
+    >;
+    ProjectOwnerChanged: TypedContractEvent<
+      ProjectOwnerChangedEvent.InputTuple,
+      ProjectOwnerChangedEvent.OutputTuple,
+      ProjectOwnerChangedEvent.OutputObject
+    >;
+
+    "ProjectPropsChanged(bytes32,string,string,string,string)": TypedContractEvent<
+      ProjectPropsChangedEvent.InputTuple,
+      ProjectPropsChangedEvent.OutputTuple,
+      ProjectPropsChangedEvent.OutputObject
+    >;
+    ProjectPropsChanged: TypedContractEvent<
+      ProjectPropsChangedEvent.InputTuple,
+      ProjectPropsChangedEvent.OutputTuple,
+      ProjectPropsChangedEvent.OutputObject
+    >;
+
+    "RoleAdminChanged(bytes32,bytes32,bytes32)": TypedContractEvent<
+      RoleAdminChangedEvent.InputTuple,
+      RoleAdminChangedEvent.OutputTuple,
+      RoleAdminChangedEvent.OutputObject
+    >;
+    RoleAdminChanged: TypedContractEvent<
+      RoleAdminChangedEvent.InputTuple,
+      RoleAdminChangedEvent.OutputTuple,
+      RoleAdminChangedEvent.OutputObject
+    >;
+
+    "RoleGranted(bytes32,address,address)": TypedContractEvent<
+      RoleGrantedEvent.InputTuple,
+      RoleGrantedEvent.OutputTuple,
+      RoleGrantedEvent.OutputObject
+    >;
+    RoleGranted: TypedContractEvent<
+      RoleGrantedEvent.InputTuple,
+      RoleGrantedEvent.OutputTuple,
+      RoleGrantedEvent.OutputObject
+    >;
+
+    "RoleRevoked(bytes32,address,address)": TypedContractEvent<
+      RoleRevokedEvent.InputTuple,
+      RoleRevokedEvent.OutputTuple,
+      RoleRevokedEvent.OutputObject
+    >;
+    RoleRevoked: TypedContractEvent<
+      RoleRevokedEvent.InputTuple,
+      RoleRevokedEvent.OutputTuple,
+      RoleRevokedEvent.OutputObject
+    >;
+
+    "Unpaused(address)": TypedContractEvent<
+      UnpausedEvent.InputTuple,
+      UnpausedEvent.OutputTuple,
+      UnpausedEvent.OutputObject
+    >;
+    Unpaused: TypedContractEvent<
+      UnpausedEvent.InputTuple,
+      UnpausedEvent.OutputTuple,
+      UnpausedEvent.OutputObject
+    >;
+
+    "Upgraded(address)": TypedContractEvent<
+      UpgradedEvent.InputTuple,
+      UpgradedEvent.OutputTuple,
+      UpgradedEvent.OutputObject
+    >;
+    Upgraded: TypedContractEvent<
+      UpgradedEvent.InputTuple,
+      UpgradedEvent.OutputTuple,
+      UpgradedEvent.OutputObject
+    >;
   };
 }

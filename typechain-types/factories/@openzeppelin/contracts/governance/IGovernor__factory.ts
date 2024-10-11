@@ -2,8 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { Contract, Signer, utils } from "ethers";
-import type { Provider } from "@ethersproject/providers";
+import { Contract, Interface, type ContractRunner } from "ethers";
 import type {
   IGovernor,
   IGovernorInterface,
@@ -691,17 +690,14 @@ const _abi = [
     stateMutability: "view",
     type: "function",
   },
-];
+] as const;
 
 export class IGovernor__factory {
   static readonly abi = _abi;
   static createInterface(): IGovernorInterface {
-    return new utils.Interface(_abi) as IGovernorInterface;
+    return new Interface(_abi) as IGovernorInterface;
   }
-  static connect(
-    address: string,
-    signerOrProvider: Signer | Provider
-  ): IGovernor {
-    return new Contract(address, _abi, signerOrProvider) as IGovernor;
+  static connect(address: string, runner?: ContractRunner | null): IGovernor {
+    return new Contract(address, _abi, runner) as unknown as IGovernor;
   }
 }

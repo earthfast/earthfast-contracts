@@ -1,20 +1,15 @@
-import "@nomiclabs/hardhat-ethers";
-import "@nomiclabs/hardhat-etherscan";
-import "@nomiclabs/hardhat-waffle";
-import "@openzeppelin/hardhat-defender";
+import "@nomicfoundation/hardhat-toolbox";
+import "@openzeppelin/defender-sdk";
 import "@openzeppelin/hardhat-upgrades";
-import "@typechain/hardhat";
 import "hardhat-deploy";
-import "hardhat-gas-reporter";
-import "solidity-coverage";
 
 import "./tasks/deploy";
 import "./tasks/node";
 import "./tasks/seed";
 import "./tasks/upgrade";
 
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import dotenv from "dotenv";
+import { SignerWithAddress } from "ethers";
 import { extendEnvironment, HardhatUserConfig } from "hardhat/config";
 import { attach, getAddress, wait } from "./lib/util";
 
@@ -33,6 +28,7 @@ const config: HardhatUserConfig = {
   networks: {
     localhost: {
       tags: ["local"],
+      gasPrice: 1000000,
     },
     hardhat: {
       tags: ["local"],

@@ -3,96 +3,54 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PayableOverrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
-} from "ethers";
-import type {
   FunctionFragment,
   Result,
+  Interface,
   EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
+} from "ethers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
-  PromiseOrValue,
+  TypedContractMethod,
 } from "../common";
 
 export type ArmadaOperatorStruct = {
-  id: PromiseOrValue<BytesLike>;
-  owner: PromiseOrValue<string>;
-  name: PromiseOrValue<string>;
-  email: PromiseOrValue<string>;
-  stake: PromiseOrValue<BigNumberish>;
-  balance: PromiseOrValue<BigNumberish>;
+  id: BytesLike;
+  owner: AddressLike;
+  name: string;
+  email: string;
+  stake: BigNumberish;
+  balance: BigNumberish;
 };
 
 export type ArmadaOperatorStructOutput = [
-  string,
-  string,
-  string,
-  string,
-  BigNumber,
-  BigNumber
+  id: string,
+  owner: string,
+  name: string,
+  email: string,
+  stake: bigint,
+  balance: bigint
 ] & {
   id: string;
   owner: string;
   name: string;
   email: string;
-  stake: BigNumber;
-  balance: BigNumber;
+  stake: bigint;
+  balance: bigint;
 };
 
-export interface ArmadaOperatorsInterface extends utils.Interface {
-  functions: {
-    "DEFAULT_ADMIN_ROLE()": FunctionFragment;
-    "IMPORTER_ROLE()": FunctionFragment;
-    "createOperator(address,string,string)": FunctionFragment;
-    "deleteOperator(bytes32)": FunctionFragment;
-    "depositOperatorBalance(bytes32,uint256,uint256,uint8,bytes32,bytes32)": FunctionFragment;
-    "depositOperatorStake(bytes32,uint256,uint256,uint8,bytes32,bytes32)": FunctionFragment;
-    "getOperator(bytes32)": FunctionFragment;
-    "getOperatorCount()": FunctionFragment;
-    "getOperators(uint256,uint256)": FunctionFragment;
-    "getRegistry()": FunctionFragment;
-    "getRoleAdmin(bytes32)": FunctionFragment;
-    "getStakePerNode()": FunctionFragment;
-    "grantRole(bytes32,address)": FunctionFragment;
-    "hasRole(bytes32,address)": FunctionFragment;
-    "initialize(address[],address,uint256,bool)": FunctionFragment;
-    "pause()": FunctionFragment;
-    "paused()": FunctionFragment;
-    "proxiableUUID()": FunctionFragment;
-    "renounceRole(bytes32,address)": FunctionFragment;
-    "requireTopologyNode(bytes32,address)": FunctionFragment;
-    "revokeRole(bytes32,address)": FunctionFragment;
-    "setOperatorBalanceImpl(bytes32,uint256,uint256)": FunctionFragment;
-    "setOperatorOwner(bytes32,address)": FunctionFragment;
-    "setOperatorProps(bytes32,string,string)": FunctionFragment;
-    "setStakePerNode(uint256)": FunctionFragment;
-    "supportsInterface(bytes4)": FunctionFragment;
-    "unpause()": FunctionFragment;
-    "unsafeImportData((bytes32,address,string,string,uint256,uint256)[],bool)": FunctionFragment;
-    "unsafeSetBalances(uint256,uint256,uint256,uint256)": FunctionFragment;
-    "unsafeSetRegistry(address)": FunctionFragment;
-    "upgradeTo(address)": FunctionFragment;
-    "upgradeToAndCall(address,bytes)": FunctionFragment;
-    "withdrawOperatorBalance(bytes32,uint256,address)": FunctionFragment;
-    "withdrawOperatorStake(bytes32,uint256,address)": FunctionFragment;
-  };
-
+export interface ArmadaOperatorsInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "DEFAULT_ADMIN_ROLE"
       | "IMPORTER_ROLE"
       | "createOperator"
@@ -129,6 +87,25 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
       | "withdrawOperatorStake"
   ): FunctionFragment;
 
+  getEvent(
+    nameOrSignatureOrTopic:
+      | "AdminChanged"
+      | "BeaconUpgraded"
+      | "Initialized"
+      | "OperatorBalanceChanged"
+      | "OperatorCreated"
+      | "OperatorDeleted"
+      | "OperatorOwnerChanged"
+      | "OperatorPropsChanged"
+      | "OperatorStakeChanged"
+      | "Paused"
+      | "RoleAdminChanged"
+      | "RoleGranted"
+      | "RoleRevoked"
+      | "Unpaused"
+      | "Upgraded"
+  ): EventFragment;
+
   encodeFunctionData(
     functionFragment: "DEFAULT_ADMIN_ROLE",
     values?: undefined
@@ -139,41 +116,37 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "createOperator",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>
-    ]
+    values: [AddressLike, string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "deleteOperator",
-    values: [PromiseOrValue<BytesLike>]
+    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "depositOperatorBalance",
     values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BytesLike>
+      BytesLike,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BytesLike,
+      BytesLike
     ]
   ): string;
   encodeFunctionData(
     functionFragment: "depositOperatorStake",
     values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BytesLike>
+      BytesLike,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BytesLike,
+      BytesLike
     ]
   ): string;
   encodeFunctionData(
     functionFragment: "getOperator",
-    values: [PromiseOrValue<BytesLike>]
+    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getOperatorCount",
@@ -181,7 +154,7 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getOperators",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+    values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getRegistry",
@@ -189,7 +162,7 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getRoleAdmin",
-    values: [PromiseOrValue<BytesLike>]
+    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getStakePerNode",
@@ -197,20 +170,15 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "grantRole",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "hasRole",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [
-      PromiseOrValue<string>[],
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<boolean>
-    ]
+    values: [AddressLike[], AddressLike, BigNumberish, boolean]
   ): string;
   encodeFunctionData(functionFragment: "pause", values?: undefined): string;
   encodeFunctionData(functionFragment: "paused", values?: undefined): string;
@@ -220,85 +188,64 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "renounceRole",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "requireTopologyNode",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "revokeRole",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setOperatorBalanceImpl",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [BytesLike, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setOperatorOwner",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setOperatorProps",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>
-    ]
+    values: [BytesLike, string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "setStakePerNode",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "supportsInterface",
-    values: [PromiseOrValue<BytesLike>]
+    values: [BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "unsafeImportData",
-    values: [ArmadaOperatorStruct[], PromiseOrValue<boolean>]
+    values: [ArmadaOperatorStruct[], boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "unsafeSetBalances",
-    values: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "unsafeSetRegistry",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "upgradeTo",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "upgradeToAndCall",
-    values: [PromiseOrValue<string>, PromiseOrValue<BytesLike>]
+    values: [AddressLike, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawOperatorBalance",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<string>
-    ]
+    values: [BytesLike, BigNumberish, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawOperatorStake",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<string>
-    ]
+    values: [BytesLike, BigNumberish, AddressLike]
   ): string;
 
   decodeFunctionResult(
@@ -413,1290 +360,995 @@ export interface ArmadaOperatorsInterface extends utils.Interface {
     functionFragment: "withdrawOperatorStake",
     data: BytesLike
   ): Result;
-
-  events: {
-    "AdminChanged(address,address)": EventFragment;
-    "BeaconUpgraded(address)": EventFragment;
-    "Initialized(uint8)": EventFragment;
-    "OperatorBalanceChanged(bytes32,uint256,uint256)": EventFragment;
-    "OperatorCreated(bytes32,address,string,string)": EventFragment;
-    "OperatorDeleted(bytes32,address,string,string)": EventFragment;
-    "OperatorOwnerChanged(bytes32,address,address)": EventFragment;
-    "OperatorPropsChanged(bytes32,string,string,string,string)": EventFragment;
-    "OperatorStakeChanged(bytes32,uint256,uint256)": EventFragment;
-    "Paused(address)": EventFragment;
-    "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
-    "RoleGranted(bytes32,address,address)": EventFragment;
-    "RoleRevoked(bytes32,address,address)": EventFragment;
-    "Unpaused(address)": EventFragment;
-    "Upgraded(address)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "AdminChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "BeaconUpgraded"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OperatorBalanceChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OperatorCreated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OperatorDeleted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OperatorOwnerChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OperatorPropsChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OperatorStakeChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RoleAdminChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RoleGranted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RoleRevoked"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Upgraded"): EventFragment;
 }
 
-export interface AdminChangedEventObject {
-  previousAdmin: string;
-  newAdmin: string;
+export namespace AdminChangedEvent {
+  export type InputTuple = [previousAdmin: AddressLike, newAdmin: AddressLike];
+  export type OutputTuple = [previousAdmin: string, newAdmin: string];
+  export interface OutputObject {
+    previousAdmin: string;
+    newAdmin: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type AdminChangedEvent = TypedEvent<
-  [string, string],
-  AdminChangedEventObject
->;
 
-export type AdminChangedEventFilter = TypedEventFilter<AdminChangedEvent>;
-
-export interface BeaconUpgradedEventObject {
-  beacon: string;
+export namespace BeaconUpgradedEvent {
+  export type InputTuple = [beacon: AddressLike];
+  export type OutputTuple = [beacon: string];
+  export interface OutputObject {
+    beacon: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type BeaconUpgradedEvent = TypedEvent<
-  [string],
-  BeaconUpgradedEventObject
->;
 
-export type BeaconUpgradedEventFilter = TypedEventFilter<BeaconUpgradedEvent>;
-
-export interface InitializedEventObject {
-  version: number;
+export namespace InitializedEvent {
+  export type InputTuple = [version: BigNumberish];
+  export type OutputTuple = [version: bigint];
+  export interface OutputObject {
+    version: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type InitializedEvent = TypedEvent<[number], InitializedEventObject>;
 
-export type InitializedEventFilter = TypedEventFilter<InitializedEvent>;
-
-export interface OperatorBalanceChangedEventObject {
-  operatorId: string;
-  oldBalance: BigNumber;
-  newBalance: BigNumber;
+export namespace OperatorBalanceChangedEvent {
+  export type InputTuple = [
+    operatorId: BytesLike,
+    oldBalance: BigNumberish,
+    newBalance: BigNumberish
+  ];
+  export type OutputTuple = [
+    operatorId: string,
+    oldBalance: bigint,
+    newBalance: bigint
+  ];
+  export interface OutputObject {
+    operatorId: string;
+    oldBalance: bigint;
+    newBalance: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type OperatorBalanceChangedEvent = TypedEvent<
-  [string, BigNumber, BigNumber],
-  OperatorBalanceChangedEventObject
->;
 
-export type OperatorBalanceChangedEventFilter =
-  TypedEventFilter<OperatorBalanceChangedEvent>;
-
-export interface OperatorCreatedEventObject {
-  operatorId: string;
-  owner: string;
-  name: string;
-  email: string;
+export namespace OperatorCreatedEvent {
+  export type InputTuple = [
+    operatorId: BytesLike,
+    owner: AddressLike,
+    name: string,
+    email: string
+  ];
+  export type OutputTuple = [
+    operatorId: string,
+    owner: string,
+    name: string,
+    email: string
+  ];
+  export interface OutputObject {
+    operatorId: string;
+    owner: string;
+    name: string;
+    email: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type OperatorCreatedEvent = TypedEvent<
-  [string, string, string, string],
-  OperatorCreatedEventObject
->;
 
-export type OperatorCreatedEventFilter = TypedEventFilter<OperatorCreatedEvent>;
-
-export interface OperatorDeletedEventObject {
-  operatorId: string;
-  owner: string;
-  name: string;
-  email: string;
+export namespace OperatorDeletedEvent {
+  export type InputTuple = [
+    operatorId: BytesLike,
+    owner: AddressLike,
+    name: string,
+    email: string
+  ];
+  export type OutputTuple = [
+    operatorId: string,
+    owner: string,
+    name: string,
+    email: string
+  ];
+  export interface OutputObject {
+    operatorId: string;
+    owner: string;
+    name: string;
+    email: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type OperatorDeletedEvent = TypedEvent<
-  [string, string, string, string],
-  OperatorDeletedEventObject
->;
 
-export type OperatorDeletedEventFilter = TypedEventFilter<OperatorDeletedEvent>;
-
-export interface OperatorOwnerChangedEventObject {
-  operatorId: string;
-  oldOwner: string;
-  newOwner: string;
+export namespace OperatorOwnerChangedEvent {
+  export type InputTuple = [
+    operatorId: BytesLike,
+    oldOwner: AddressLike,
+    newOwner: AddressLike
+  ];
+  export type OutputTuple = [
+    operatorId: string,
+    oldOwner: string,
+    newOwner: string
+  ];
+  export interface OutputObject {
+    operatorId: string;
+    oldOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type OperatorOwnerChangedEvent = TypedEvent<
-  [string, string, string],
-  OperatorOwnerChangedEventObject
->;
 
-export type OperatorOwnerChangedEventFilter =
-  TypedEventFilter<OperatorOwnerChangedEvent>;
-
-export interface OperatorPropsChangedEventObject {
-  operatorId: string;
-  oldName: string;
-  oldEmail: string;
-  newName: string;
-  newEmail: string;
+export namespace OperatorPropsChangedEvent {
+  export type InputTuple = [
+    operatorId: BytesLike,
+    oldName: string,
+    oldEmail: string,
+    newName: string,
+    newEmail: string
+  ];
+  export type OutputTuple = [
+    operatorId: string,
+    oldName: string,
+    oldEmail: string,
+    newName: string,
+    newEmail: string
+  ];
+  export interface OutputObject {
+    operatorId: string;
+    oldName: string;
+    oldEmail: string;
+    newName: string;
+    newEmail: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type OperatorPropsChangedEvent = TypedEvent<
-  [string, string, string, string, string],
-  OperatorPropsChangedEventObject
->;
 
-export type OperatorPropsChangedEventFilter =
-  TypedEventFilter<OperatorPropsChangedEvent>;
-
-export interface OperatorStakeChangedEventObject {
-  operatorId: string;
-  oldStake: BigNumber;
-  newStake: BigNumber;
+export namespace OperatorStakeChangedEvent {
+  export type InputTuple = [
+    operatorId: BytesLike,
+    oldStake: BigNumberish,
+    newStake: BigNumberish
+  ];
+  export type OutputTuple = [
+    operatorId: string,
+    oldStake: bigint,
+    newStake: bigint
+  ];
+  export interface OutputObject {
+    operatorId: string;
+    oldStake: bigint;
+    newStake: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type OperatorStakeChangedEvent = TypedEvent<
-  [string, BigNumber, BigNumber],
-  OperatorStakeChangedEventObject
->;
 
-export type OperatorStakeChangedEventFilter =
-  TypedEventFilter<OperatorStakeChangedEvent>;
-
-export interface PausedEventObject {
-  account: string;
+export namespace PausedEvent {
+  export type InputTuple = [account: AddressLike];
+  export type OutputTuple = [account: string];
+  export interface OutputObject {
+    account: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type PausedEvent = TypedEvent<[string], PausedEventObject>;
 
-export type PausedEventFilter = TypedEventFilter<PausedEvent>;
-
-export interface RoleAdminChangedEventObject {
-  role: string;
-  previousAdminRole: string;
-  newAdminRole: string;
+export namespace RoleAdminChangedEvent {
+  export type InputTuple = [
+    role: BytesLike,
+    previousAdminRole: BytesLike,
+    newAdminRole: BytesLike
+  ];
+  export type OutputTuple = [
+    role: string,
+    previousAdminRole: string,
+    newAdminRole: string
+  ];
+  export interface OutputObject {
+    role: string;
+    previousAdminRole: string;
+    newAdminRole: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RoleAdminChangedEvent = TypedEvent<
-  [string, string, string],
-  RoleAdminChangedEventObject
->;
 
-export type RoleAdminChangedEventFilter =
-  TypedEventFilter<RoleAdminChangedEvent>;
-
-export interface RoleGrantedEventObject {
-  role: string;
-  account: string;
-  sender: string;
+export namespace RoleGrantedEvent {
+  export type InputTuple = [
+    role: BytesLike,
+    account: AddressLike,
+    sender: AddressLike
+  ];
+  export type OutputTuple = [role: string, account: string, sender: string];
+  export interface OutputObject {
+    role: string;
+    account: string;
+    sender: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RoleGrantedEvent = TypedEvent<
-  [string, string, string],
-  RoleGrantedEventObject
->;
 
-export type RoleGrantedEventFilter = TypedEventFilter<RoleGrantedEvent>;
-
-export interface RoleRevokedEventObject {
-  role: string;
-  account: string;
-  sender: string;
+export namespace RoleRevokedEvent {
+  export type InputTuple = [
+    role: BytesLike,
+    account: AddressLike,
+    sender: AddressLike
+  ];
+  export type OutputTuple = [role: string, account: string, sender: string];
+  export interface OutputObject {
+    role: string;
+    account: string;
+    sender: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RoleRevokedEvent = TypedEvent<
-  [string, string, string],
-  RoleRevokedEventObject
->;
 
-export type RoleRevokedEventFilter = TypedEventFilter<RoleRevokedEvent>;
-
-export interface UnpausedEventObject {
-  account: string;
+export namespace UnpausedEvent {
+  export type InputTuple = [account: AddressLike];
+  export type OutputTuple = [account: string];
+  export interface OutputObject {
+    account: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UnpausedEvent = TypedEvent<[string], UnpausedEventObject>;
 
-export type UnpausedEventFilter = TypedEventFilter<UnpausedEvent>;
-
-export interface UpgradedEventObject {
-  implementation: string;
+export namespace UpgradedEvent {
+  export type InputTuple = [implementation: AddressLike];
+  export type OutputTuple = [implementation: string];
+  export interface OutputObject {
+    implementation: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpgradedEvent = TypedEvent<[string], UpgradedEventObject>;
-
-export type UpgradedEventFilter = TypedEventFilter<UpgradedEvent>;
 
 export interface ArmadaOperators extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+  connect(runner?: ContractRunner | null): ArmadaOperators;
+  waitForDeployment(): Promise<this>;
 
   interface: ArmadaOperatorsInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
-
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
-
-  functions: {
-    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<[string]>;
-
-    IMPORTER_ROLE(overrides?: CallOverrides): Promise<[string]>;
-
-    createOperator(
-      owner: PromiseOrValue<string>,
-      name: PromiseOrValue<string>,
-      email: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    deleteOperator(
-      operatorId: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    depositOperatorBalance(
-      operatorId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    depositOperatorStake(
-      operatorId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    getOperator(
-      operatorId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[ArmadaOperatorStructOutput]>;
-
-    getOperatorCount(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    getOperators(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [ArmadaOperatorStructOutput[]] & { values: ArmadaOperatorStructOutput[] }
-    >;
-
-    getRegistry(overrides?: CallOverrides): Promise<[string]>;
-
-    getRoleAdmin(
-      role: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getStakePerNode(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    grantRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    hasRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    initialize(
-      admins: PromiseOrValue<string>[],
-      registry: PromiseOrValue<string>,
-      stakePerNode: PromiseOrValue<BigNumberish>,
-      grantImporterRole: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    pause(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    paused(overrides?: CallOverrides): Promise<[boolean]>;
-
-    proxiableUUID(overrides?: CallOverrides): Promise<[string]>;
-
-    renounceRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    requireTopologyNode(
-      nodeId: PromiseOrValue<BytesLike>,
-      sender: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    revokeRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    setOperatorBalanceImpl(
-      operatorId: PromiseOrValue<BytesLike>,
-      decrease: PromiseOrValue<BigNumberish>,
-      increase: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    setOperatorOwner(
-      operatorId: PromiseOrValue<BytesLike>,
-      owner: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    setOperatorProps(
-      operatorId: PromiseOrValue<BytesLike>,
-      name: PromiseOrValue<string>,
-      email: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    setStakePerNode(
-      stake: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    unpause(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    unsafeImportData(
-      operators: ArmadaOperatorStruct[],
-      revokeImporterRole: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    unsafeSetBalances(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      mul: PromiseOrValue<BigNumberish>,
-      div: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    unsafeSetRegistry(
-      registry: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    upgradeToAndCall(
-      newImplementation: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    withdrawOperatorBalance(
-      operatorId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      to: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    withdrawOperatorStake(
-      operatorId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      to: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-  };
-
-  DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
-
-  IMPORTER_ROLE(overrides?: CallOverrides): Promise<string>;
-
-  createOperator(
-    owner: PromiseOrValue<string>,
-    name: PromiseOrValue<string>,
-    email: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  deleteOperator(
-    operatorId: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  depositOperatorBalance(
-    operatorId: PromiseOrValue<BytesLike>,
-    amount: PromiseOrValue<BigNumberish>,
-    deadline: PromiseOrValue<BigNumberish>,
-    v: PromiseOrValue<BigNumberish>,
-    r: PromiseOrValue<BytesLike>,
-    s: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  depositOperatorStake(
-    operatorId: PromiseOrValue<BytesLike>,
-    amount: PromiseOrValue<BigNumberish>,
-    deadline: PromiseOrValue<BigNumberish>,
-    v: PromiseOrValue<BigNumberish>,
-    r: PromiseOrValue<BytesLike>,
-    s: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  getOperator(
-    operatorId: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<ArmadaOperatorStructOutput>;
-
-  getOperatorCount(overrides?: CallOverrides): Promise<BigNumber>;
-
-  getOperators(
-    skip: PromiseOrValue<BigNumberish>,
-    size: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<ArmadaOperatorStructOutput[]>;
-
-  getRegistry(overrides?: CallOverrides): Promise<string>;
-
-  getRoleAdmin(
-    role: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getStakePerNode(overrides?: CallOverrides): Promise<BigNumber>;
-
-  grantRole(
-    role: PromiseOrValue<BytesLike>,
-    account: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  hasRole(
-    role: PromiseOrValue<BytesLike>,
-    account: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  initialize(
-    admins: PromiseOrValue<string>[],
-    registry: PromiseOrValue<string>,
-    stakePerNode: PromiseOrValue<BigNumberish>,
-    grantImporterRole: PromiseOrValue<boolean>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  pause(
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  paused(overrides?: CallOverrides): Promise<boolean>;
-
-  proxiableUUID(overrides?: CallOverrides): Promise<string>;
-
-  renounceRole(
-    role: PromiseOrValue<BytesLike>,
-    account: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  requireTopologyNode(
-    nodeId: PromiseOrValue<BytesLike>,
-    sender: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  revokeRole(
-    role: PromiseOrValue<BytesLike>,
-    account: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setOperatorBalanceImpl(
-    operatorId: PromiseOrValue<BytesLike>,
-    decrease: PromiseOrValue<BigNumberish>,
-    increase: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setOperatorOwner(
-    operatorId: PromiseOrValue<BytesLike>,
-    owner: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setOperatorProps(
-    operatorId: PromiseOrValue<BytesLike>,
-    name: PromiseOrValue<string>,
-    email: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setStakePerNode(
-    stake: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  supportsInterface(
-    interfaceId: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  unpause(
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  unsafeImportData(
-    operators: ArmadaOperatorStruct[],
-    revokeImporterRole: PromiseOrValue<boolean>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  unsafeSetBalances(
-    skip: PromiseOrValue<BigNumberish>,
-    size: PromiseOrValue<BigNumberish>,
-    mul: PromiseOrValue<BigNumberish>,
-    div: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  unsafeSetRegistry(
-    registry: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  upgradeTo(
-    newImplementation: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  upgradeToAndCall(
-    newImplementation: PromiseOrValue<string>,
-    data: PromiseOrValue<BytesLike>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  withdrawOperatorBalance(
-    operatorId: PromiseOrValue<BytesLike>,
-    amount: PromiseOrValue<BigNumberish>,
-    to: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  withdrawOperatorStake(
-    operatorId: PromiseOrValue<BytesLike>,
-    amount: PromiseOrValue<BigNumberish>,
-    to: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  callStatic: {
-    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
-
-    IMPORTER_ROLE(overrides?: CallOverrides): Promise<string>;
-
-    createOperator(
-      owner: PromiseOrValue<string>,
-      name: PromiseOrValue<string>,
-      email: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    deleteOperator(
-      operatorId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    depositOperatorBalance(
-      operatorId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    depositOperatorStake(
-      operatorId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    getOperator(
-      operatorId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<ArmadaOperatorStructOutput>;
-
-    getOperatorCount(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getOperators(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<ArmadaOperatorStructOutput[]>;
-
-    getRegistry(overrides?: CallOverrides): Promise<string>;
-
-    getRoleAdmin(
-      role: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    getStakePerNode(overrides?: CallOverrides): Promise<BigNumber>;
-
-    grantRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    hasRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    initialize(
-      admins: PromiseOrValue<string>[],
-      registry: PromiseOrValue<string>,
-      stakePerNode: PromiseOrValue<BigNumberish>,
-      grantImporterRole: PromiseOrValue<boolean>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    pause(overrides?: CallOverrides): Promise<void>;
-
-    paused(overrides?: CallOverrides): Promise<boolean>;
-
-    proxiableUUID(overrides?: CallOverrides): Promise<string>;
-
-    renounceRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    requireTopologyNode(
-      nodeId: PromiseOrValue<BytesLike>,
-      sender: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    revokeRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setOperatorBalanceImpl(
-      operatorId: PromiseOrValue<BytesLike>,
-      decrease: PromiseOrValue<BigNumberish>,
-      increase: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setOperatorOwner(
-      operatorId: PromiseOrValue<BytesLike>,
-      owner: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setOperatorProps(
-      operatorId: PromiseOrValue<BytesLike>,
-      name: PromiseOrValue<string>,
-      email: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setStakePerNode(
-      stake: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    unpause(overrides?: CallOverrides): Promise<void>;
-
-    unsafeImportData(
-      operators: ArmadaOperatorStruct[],
-      revokeImporterRole: PromiseOrValue<boolean>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    unsafeSetBalances(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      mul: PromiseOrValue<BigNumberish>,
-      div: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    unsafeSetRegistry(
-      registry: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    upgradeToAndCall(
-      newImplementation: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    withdrawOperatorBalance(
-      operatorId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      to: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    withdrawOperatorStake(
-      operatorId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      to: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-  };
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
+
+  DEFAULT_ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
+
+  IMPORTER_ROLE: TypedContractMethod<[], [string], "view">;
+
+  createOperator: TypedContractMethod<
+    [owner: AddressLike, name: string, email: string],
+    [string],
+    "nonpayable"
+  >;
+
+  deleteOperator: TypedContractMethod<
+    [operatorId: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+
+  depositOperatorBalance: TypedContractMethod<
+    [
+      operatorId: BytesLike,
+      amount: BigNumberish,
+      deadline: BigNumberish,
+      v: BigNumberish,
+      r: BytesLike,
+      s: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  depositOperatorStake: TypedContractMethod<
+    [
+      operatorId: BytesLike,
+      amount: BigNumberish,
+      deadline: BigNumberish,
+      v: BigNumberish,
+      r: BytesLike,
+      s: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  getOperator: TypedContractMethod<
+    [operatorId: BytesLike],
+    [ArmadaOperatorStructOutput],
+    "view"
+  >;
+
+  getOperatorCount: TypedContractMethod<[], [bigint], "view">;
+
+  getOperators: TypedContractMethod<
+    [skip: BigNumberish, size: BigNumberish],
+    [ArmadaOperatorStructOutput[]],
+    "view"
+  >;
+
+  getRegistry: TypedContractMethod<[], [string], "view">;
+
+  getRoleAdmin: TypedContractMethod<[role: BytesLike], [string], "view">;
+
+  getStakePerNode: TypedContractMethod<[], [bigint], "view">;
+
+  grantRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  hasRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [boolean],
+    "view"
+  >;
+
+  initialize: TypedContractMethod<
+    [
+      admins: AddressLike[],
+      registry: AddressLike,
+      stakePerNode: BigNumberish,
+      grantImporterRole: boolean
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  pause: TypedContractMethod<[], [void], "nonpayable">;
+
+  paused: TypedContractMethod<[], [boolean], "view">;
+
+  proxiableUUID: TypedContractMethod<[], [string], "view">;
+
+  renounceRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  requireTopologyNode: TypedContractMethod<
+    [nodeId: BytesLike, sender: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  revokeRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  setOperatorBalanceImpl: TypedContractMethod<
+    [operatorId: BytesLike, decrease: BigNumberish, increase: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  setOperatorOwner: TypedContractMethod<
+    [operatorId: BytesLike, owner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  setOperatorProps: TypedContractMethod<
+    [operatorId: BytesLike, name: string, email: string],
+    [void],
+    "nonpayable"
+  >;
+
+  setStakePerNode: TypedContractMethod<
+    [stake: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  supportsInterface: TypedContractMethod<
+    [interfaceId: BytesLike],
+    [boolean],
+    "view"
+  >;
+
+  unpause: TypedContractMethod<[], [void], "nonpayable">;
+
+  unsafeImportData: TypedContractMethod<
+    [operators: ArmadaOperatorStruct[], revokeImporterRole: boolean],
+    [void],
+    "nonpayable"
+  >;
+
+  unsafeSetBalances: TypedContractMethod<
+    [
+      skip: BigNumberish,
+      size: BigNumberish,
+      mul: BigNumberish,
+      div: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  unsafeSetRegistry: TypedContractMethod<
+    [registry: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  upgradeTo: TypedContractMethod<
+    [newImplementation: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  upgradeToAndCall: TypedContractMethod<
+    [newImplementation: AddressLike, data: BytesLike],
+    [void],
+    "payable"
+  >;
+
+  withdrawOperatorBalance: TypedContractMethod<
+    [operatorId: BytesLike, amount: BigNumberish, to: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  withdrawOperatorStake: TypedContractMethod<
+    [operatorId: BytesLike, amount: BigNumberish, to: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
+
+  getFunction(
+    nameOrSignature: "DEFAULT_ADMIN_ROLE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "IMPORTER_ROLE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "createOperator"
+  ): TypedContractMethod<
+    [owner: AddressLike, name: string, email: string],
+    [string],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "deleteOperator"
+  ): TypedContractMethod<[operatorId: BytesLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "depositOperatorBalance"
+  ): TypedContractMethod<
+    [
+      operatorId: BytesLike,
+      amount: BigNumberish,
+      deadline: BigNumberish,
+      v: BigNumberish,
+      r: BytesLike,
+      s: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "depositOperatorStake"
+  ): TypedContractMethod<
+    [
+      operatorId: BytesLike,
+      amount: BigNumberish,
+      deadline: BigNumberish,
+      v: BigNumberish,
+      r: BytesLike,
+      s: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "getOperator"
+  ): TypedContractMethod<
+    [operatorId: BytesLike],
+    [ArmadaOperatorStructOutput],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getOperatorCount"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getOperators"
+  ): TypedContractMethod<
+    [skip: BigNumberish, size: BigNumberish],
+    [ArmadaOperatorStructOutput[]],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getRegistry"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "getRoleAdmin"
+  ): TypedContractMethod<[role: BytesLike], [string], "view">;
+  getFunction(
+    nameOrSignature: "getStakePerNode"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "grantRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "hasRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [boolean],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "initialize"
+  ): TypedContractMethod<
+    [
+      admins: AddressLike[],
+      registry: AddressLike,
+      stakePerNode: BigNumberish,
+      grantImporterRole: boolean
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "pause"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "paused"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "proxiableUUID"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "renounceRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "requireTopologyNode"
+  ): TypedContractMethod<
+    [nodeId: BytesLike, sender: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "revokeRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setOperatorBalanceImpl"
+  ): TypedContractMethod<
+    [operatorId: BytesLike, decrease: BigNumberish, increase: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setOperatorOwner"
+  ): TypedContractMethod<
+    [operatorId: BytesLike, owner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setOperatorProps"
+  ): TypedContractMethod<
+    [operatorId: BytesLike, name: string, email: string],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setStakePerNode"
+  ): TypedContractMethod<[stake: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "supportsInterface"
+  ): TypedContractMethod<[interfaceId: BytesLike], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "unpause"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "unsafeImportData"
+  ): TypedContractMethod<
+    [operators: ArmadaOperatorStruct[], revokeImporterRole: boolean],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "unsafeSetBalances"
+  ): TypedContractMethod<
+    [
+      skip: BigNumberish,
+      size: BigNumberish,
+      mul: BigNumberish,
+      div: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "unsafeSetRegistry"
+  ): TypedContractMethod<[registry: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "upgradeTo"
+  ): TypedContractMethod<
+    [newImplementation: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "upgradeToAndCall"
+  ): TypedContractMethod<
+    [newImplementation: AddressLike, data: BytesLike],
+    [void],
+    "payable"
+  >;
+  getFunction(
+    nameOrSignature: "withdrawOperatorBalance"
+  ): TypedContractMethod<
+    [operatorId: BytesLike, amount: BigNumberish, to: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "withdrawOperatorStake"
+  ): TypedContractMethod<
+    [operatorId: BytesLike, amount: BigNumberish, to: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  getEvent(
+    key: "AdminChanged"
+  ): TypedContractEvent<
+    AdminChangedEvent.InputTuple,
+    AdminChangedEvent.OutputTuple,
+    AdminChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "BeaconUpgraded"
+  ): TypedContractEvent<
+    BeaconUpgradedEvent.InputTuple,
+    BeaconUpgradedEvent.OutputTuple,
+    BeaconUpgradedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Initialized"
+  ): TypedContractEvent<
+    InitializedEvent.InputTuple,
+    InitializedEvent.OutputTuple,
+    InitializedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OperatorBalanceChanged"
+  ): TypedContractEvent<
+    OperatorBalanceChangedEvent.InputTuple,
+    OperatorBalanceChangedEvent.OutputTuple,
+    OperatorBalanceChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OperatorCreated"
+  ): TypedContractEvent<
+    OperatorCreatedEvent.InputTuple,
+    OperatorCreatedEvent.OutputTuple,
+    OperatorCreatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OperatorDeleted"
+  ): TypedContractEvent<
+    OperatorDeletedEvent.InputTuple,
+    OperatorDeletedEvent.OutputTuple,
+    OperatorDeletedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OperatorOwnerChanged"
+  ): TypedContractEvent<
+    OperatorOwnerChangedEvent.InputTuple,
+    OperatorOwnerChangedEvent.OutputTuple,
+    OperatorOwnerChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OperatorPropsChanged"
+  ): TypedContractEvent<
+    OperatorPropsChangedEvent.InputTuple,
+    OperatorPropsChangedEvent.OutputTuple,
+    OperatorPropsChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OperatorStakeChanged"
+  ): TypedContractEvent<
+    OperatorStakeChangedEvent.InputTuple,
+    OperatorStakeChangedEvent.OutputTuple,
+    OperatorStakeChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Paused"
+  ): TypedContractEvent<
+    PausedEvent.InputTuple,
+    PausedEvent.OutputTuple,
+    PausedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RoleAdminChanged"
+  ): TypedContractEvent<
+    RoleAdminChangedEvent.InputTuple,
+    RoleAdminChangedEvent.OutputTuple,
+    RoleAdminChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RoleGranted"
+  ): TypedContractEvent<
+    RoleGrantedEvent.InputTuple,
+    RoleGrantedEvent.OutputTuple,
+    RoleGrantedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RoleRevoked"
+  ): TypedContractEvent<
+    RoleRevokedEvent.InputTuple,
+    RoleRevokedEvent.OutputTuple,
+    RoleRevokedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Unpaused"
+  ): TypedContractEvent<
+    UnpausedEvent.InputTuple,
+    UnpausedEvent.OutputTuple,
+    UnpausedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Upgraded"
+  ): TypedContractEvent<
+    UpgradedEvent.InputTuple,
+    UpgradedEvent.OutputTuple,
+    UpgradedEvent.OutputObject
+  >;
 
   filters: {
-    "AdminChanged(address,address)"(
-      previousAdmin?: null,
-      newAdmin?: null
-    ): AdminChangedEventFilter;
-    AdminChanged(
-      previousAdmin?: null,
-      newAdmin?: null
-    ): AdminChangedEventFilter;
-
-    "BeaconUpgraded(address)"(
-      beacon?: PromiseOrValue<string> | null
-    ): BeaconUpgradedEventFilter;
-    BeaconUpgraded(
-      beacon?: PromiseOrValue<string> | null
-    ): BeaconUpgradedEventFilter;
-
-    "Initialized(uint8)"(version?: null): InitializedEventFilter;
-    Initialized(version?: null): InitializedEventFilter;
-
-    "OperatorBalanceChanged(bytes32,uint256,uint256)"(
-      operatorId?: PromiseOrValue<BytesLike> | null,
-      oldBalance?: null,
-      newBalance?: null
-    ): OperatorBalanceChangedEventFilter;
-    OperatorBalanceChanged(
-      operatorId?: PromiseOrValue<BytesLike> | null,
-      oldBalance?: null,
-      newBalance?: null
-    ): OperatorBalanceChangedEventFilter;
-
-    "OperatorCreated(bytes32,address,string,string)"(
-      operatorId?: PromiseOrValue<BytesLike> | null,
-      owner?: PromiseOrValue<string> | null,
-      name?: null,
-      email?: null
-    ): OperatorCreatedEventFilter;
-    OperatorCreated(
-      operatorId?: PromiseOrValue<BytesLike> | null,
-      owner?: PromiseOrValue<string> | null,
-      name?: null,
-      email?: null
-    ): OperatorCreatedEventFilter;
-
-    "OperatorDeleted(bytes32,address,string,string)"(
-      operatorId?: PromiseOrValue<BytesLike> | null,
-      owner?: PromiseOrValue<string> | null,
-      name?: null,
-      email?: null
-    ): OperatorDeletedEventFilter;
-    OperatorDeleted(
-      operatorId?: PromiseOrValue<BytesLike> | null,
-      owner?: PromiseOrValue<string> | null,
-      name?: null,
-      email?: null
-    ): OperatorDeletedEventFilter;
-
-    "OperatorOwnerChanged(bytes32,address,address)"(
-      operatorId?: PromiseOrValue<BytesLike> | null,
-      oldOwner?: PromiseOrValue<string> | null,
-      newOwner?: PromiseOrValue<string> | null
-    ): OperatorOwnerChangedEventFilter;
-    OperatorOwnerChanged(
-      operatorId?: PromiseOrValue<BytesLike> | null,
-      oldOwner?: PromiseOrValue<string> | null,
-      newOwner?: PromiseOrValue<string> | null
-    ): OperatorOwnerChangedEventFilter;
-
-    "OperatorPropsChanged(bytes32,string,string,string,string)"(
-      operatorId?: PromiseOrValue<BytesLike> | null,
-      oldName?: null,
-      oldEmail?: null,
-      newName?: null,
-      newEmail?: null
-    ): OperatorPropsChangedEventFilter;
-    OperatorPropsChanged(
-      operatorId?: PromiseOrValue<BytesLike> | null,
-      oldName?: null,
-      oldEmail?: null,
-      newName?: null,
-      newEmail?: null
-    ): OperatorPropsChangedEventFilter;
-
-    "OperatorStakeChanged(bytes32,uint256,uint256)"(
-      operatorId?: PromiseOrValue<BytesLike> | null,
-      oldStake?: null,
-      newStake?: null
-    ): OperatorStakeChangedEventFilter;
-    OperatorStakeChanged(
-      operatorId?: PromiseOrValue<BytesLike> | null,
-      oldStake?: null,
-      newStake?: null
-    ): OperatorStakeChangedEventFilter;
-
-    "Paused(address)"(account?: null): PausedEventFilter;
-    Paused(account?: null): PausedEventFilter;
-
-    "RoleAdminChanged(bytes32,bytes32,bytes32)"(
-      role?: PromiseOrValue<BytesLike> | null,
-      previousAdminRole?: PromiseOrValue<BytesLike> | null,
-      newAdminRole?: PromiseOrValue<BytesLike> | null
-    ): RoleAdminChangedEventFilter;
-    RoleAdminChanged(
-      role?: PromiseOrValue<BytesLike> | null,
-      previousAdminRole?: PromiseOrValue<BytesLike> | null,
-      newAdminRole?: PromiseOrValue<BytesLike> | null
-    ): RoleAdminChangedEventFilter;
-
-    "RoleGranted(bytes32,address,address)"(
-      role?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      sender?: PromiseOrValue<string> | null
-    ): RoleGrantedEventFilter;
-    RoleGranted(
-      role?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      sender?: PromiseOrValue<string> | null
-    ): RoleGrantedEventFilter;
-
-    "RoleRevoked(bytes32,address,address)"(
-      role?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      sender?: PromiseOrValue<string> | null
-    ): RoleRevokedEventFilter;
-    RoleRevoked(
-      role?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      sender?: PromiseOrValue<string> | null
-    ): RoleRevokedEventFilter;
-
-    "Unpaused(address)"(account?: null): UnpausedEventFilter;
-    Unpaused(account?: null): UnpausedEventFilter;
-
-    "Upgraded(address)"(
-      implementation?: PromiseOrValue<string> | null
-    ): UpgradedEventFilter;
-    Upgraded(
-      implementation?: PromiseOrValue<string> | null
-    ): UpgradedEventFilter;
-  };
-
-  estimateGas: {
-    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
-
-    IMPORTER_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
-
-    createOperator(
-      owner: PromiseOrValue<string>,
-      name: PromiseOrValue<string>,
-      email: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    deleteOperator(
-      operatorId: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    depositOperatorBalance(
-      operatorId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    depositOperatorStake(
-      operatorId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    getOperator(
-      operatorId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getOperatorCount(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getOperators(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getRegistry(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getRoleAdmin(
-      role: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getStakePerNode(overrides?: CallOverrides): Promise<BigNumber>;
-
-    grantRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    hasRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    initialize(
-      admins: PromiseOrValue<string>[],
-      registry: PromiseOrValue<string>,
-      stakePerNode: PromiseOrValue<BigNumberish>,
-      grantImporterRole: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    pause(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    paused(overrides?: CallOverrides): Promise<BigNumber>;
-
-    proxiableUUID(overrides?: CallOverrides): Promise<BigNumber>;
-
-    renounceRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    requireTopologyNode(
-      nodeId: PromiseOrValue<BytesLike>,
-      sender: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    revokeRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setOperatorBalanceImpl(
-      operatorId: PromiseOrValue<BytesLike>,
-      decrease: PromiseOrValue<BigNumberish>,
-      increase: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setOperatorOwner(
-      operatorId: PromiseOrValue<BytesLike>,
-      owner: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setOperatorProps(
-      operatorId: PromiseOrValue<BytesLike>,
-      name: PromiseOrValue<string>,
-      email: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setStakePerNode(
-      stake: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    unpause(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    unsafeImportData(
-      operators: ArmadaOperatorStruct[],
-      revokeImporterRole: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    unsafeSetBalances(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      mul: PromiseOrValue<BigNumberish>,
-      div: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    unsafeSetRegistry(
-      registry: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    upgradeToAndCall(
-      newImplementation: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    withdrawOperatorBalance(
-      operatorId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      to: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    withdrawOperatorStake(
-      operatorId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      to: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    DEFAULT_ADMIN_ROLE(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    IMPORTER_ROLE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    createOperator(
-      owner: PromiseOrValue<string>,
-      name: PromiseOrValue<string>,
-      email: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    deleteOperator(
-      operatorId: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    depositOperatorBalance(
-      operatorId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    depositOperatorStake(
-      operatorId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      deadline: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    getOperator(
-      operatorId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getOperatorCount(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getOperators(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getRegistry(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getRoleAdmin(
-      role: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getStakePerNode(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    grantRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    hasRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    initialize(
-      admins: PromiseOrValue<string>[],
-      registry: PromiseOrValue<string>,
-      stakePerNode: PromiseOrValue<BigNumberish>,
-      grantImporterRole: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    pause(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    paused(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    proxiableUUID(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    renounceRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    requireTopologyNode(
-      nodeId: PromiseOrValue<BytesLike>,
-      sender: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    revokeRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setOperatorBalanceImpl(
-      operatorId: PromiseOrValue<BytesLike>,
-      decrease: PromiseOrValue<BigNumberish>,
-      increase: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setOperatorOwner(
-      operatorId: PromiseOrValue<BytesLike>,
-      owner: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setOperatorProps(
-      operatorId: PromiseOrValue<BytesLike>,
-      name: PromiseOrValue<string>,
-      email: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setStakePerNode(
-      stake: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    unpause(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    unsafeImportData(
-      operators: ArmadaOperatorStruct[],
-      revokeImporterRole: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    unsafeSetBalances(
-      skip: PromiseOrValue<BigNumberish>,
-      size: PromiseOrValue<BigNumberish>,
-      mul: PromiseOrValue<BigNumberish>,
-      div: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    unsafeSetRegistry(
-      registry: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    upgradeTo(
-      newImplementation: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    upgradeToAndCall(
-      newImplementation: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    withdrawOperatorBalance(
-      operatorId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      to: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    withdrawOperatorStake(
-      operatorId: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      to: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
+    "AdminChanged(address,address)": TypedContractEvent<
+      AdminChangedEvent.InputTuple,
+      AdminChangedEvent.OutputTuple,
+      AdminChangedEvent.OutputObject
+    >;
+    AdminChanged: TypedContractEvent<
+      AdminChangedEvent.InputTuple,
+      AdminChangedEvent.OutputTuple,
+      AdminChangedEvent.OutputObject
+    >;
+
+    "BeaconUpgraded(address)": TypedContractEvent<
+      BeaconUpgradedEvent.InputTuple,
+      BeaconUpgradedEvent.OutputTuple,
+      BeaconUpgradedEvent.OutputObject
+    >;
+    BeaconUpgraded: TypedContractEvent<
+      BeaconUpgradedEvent.InputTuple,
+      BeaconUpgradedEvent.OutputTuple,
+      BeaconUpgradedEvent.OutputObject
+    >;
+
+    "Initialized(uint8)": TypedContractEvent<
+      InitializedEvent.InputTuple,
+      InitializedEvent.OutputTuple,
+      InitializedEvent.OutputObject
+    >;
+    Initialized: TypedContractEvent<
+      InitializedEvent.InputTuple,
+      InitializedEvent.OutputTuple,
+      InitializedEvent.OutputObject
+    >;
+
+    "OperatorBalanceChanged(bytes32,uint256,uint256)": TypedContractEvent<
+      OperatorBalanceChangedEvent.InputTuple,
+      OperatorBalanceChangedEvent.OutputTuple,
+      OperatorBalanceChangedEvent.OutputObject
+    >;
+    OperatorBalanceChanged: TypedContractEvent<
+      OperatorBalanceChangedEvent.InputTuple,
+      OperatorBalanceChangedEvent.OutputTuple,
+      OperatorBalanceChangedEvent.OutputObject
+    >;
+
+    "OperatorCreated(bytes32,address,string,string)": TypedContractEvent<
+      OperatorCreatedEvent.InputTuple,
+      OperatorCreatedEvent.OutputTuple,
+      OperatorCreatedEvent.OutputObject
+    >;
+    OperatorCreated: TypedContractEvent<
+      OperatorCreatedEvent.InputTuple,
+      OperatorCreatedEvent.OutputTuple,
+      OperatorCreatedEvent.OutputObject
+    >;
+
+    "OperatorDeleted(bytes32,address,string,string)": TypedContractEvent<
+      OperatorDeletedEvent.InputTuple,
+      OperatorDeletedEvent.OutputTuple,
+      OperatorDeletedEvent.OutputObject
+    >;
+    OperatorDeleted: TypedContractEvent<
+      OperatorDeletedEvent.InputTuple,
+      OperatorDeletedEvent.OutputTuple,
+      OperatorDeletedEvent.OutputObject
+    >;
+
+    "OperatorOwnerChanged(bytes32,address,address)": TypedContractEvent<
+      OperatorOwnerChangedEvent.InputTuple,
+      OperatorOwnerChangedEvent.OutputTuple,
+      OperatorOwnerChangedEvent.OutputObject
+    >;
+    OperatorOwnerChanged: TypedContractEvent<
+      OperatorOwnerChangedEvent.InputTuple,
+      OperatorOwnerChangedEvent.OutputTuple,
+      OperatorOwnerChangedEvent.OutputObject
+    >;
+
+    "OperatorPropsChanged(bytes32,string,string,string,string)": TypedContractEvent<
+      OperatorPropsChangedEvent.InputTuple,
+      OperatorPropsChangedEvent.OutputTuple,
+      OperatorPropsChangedEvent.OutputObject
+    >;
+    OperatorPropsChanged: TypedContractEvent<
+      OperatorPropsChangedEvent.InputTuple,
+      OperatorPropsChangedEvent.OutputTuple,
+      OperatorPropsChangedEvent.OutputObject
+    >;
+
+    "OperatorStakeChanged(bytes32,uint256,uint256)": TypedContractEvent<
+      OperatorStakeChangedEvent.InputTuple,
+      OperatorStakeChangedEvent.OutputTuple,
+      OperatorStakeChangedEvent.OutputObject
+    >;
+    OperatorStakeChanged: TypedContractEvent<
+      OperatorStakeChangedEvent.InputTuple,
+      OperatorStakeChangedEvent.OutputTuple,
+      OperatorStakeChangedEvent.OutputObject
+    >;
+
+    "Paused(address)": TypedContractEvent<
+      PausedEvent.InputTuple,
+      PausedEvent.OutputTuple,
+      PausedEvent.OutputObject
+    >;
+    Paused: TypedContractEvent<
+      PausedEvent.InputTuple,
+      PausedEvent.OutputTuple,
+      PausedEvent.OutputObject
+    >;
+
+    "RoleAdminChanged(bytes32,bytes32,bytes32)": TypedContractEvent<
+      RoleAdminChangedEvent.InputTuple,
+      RoleAdminChangedEvent.OutputTuple,
+      RoleAdminChangedEvent.OutputObject
+    >;
+    RoleAdminChanged: TypedContractEvent<
+      RoleAdminChangedEvent.InputTuple,
+      RoleAdminChangedEvent.OutputTuple,
+      RoleAdminChangedEvent.OutputObject
+    >;
+
+    "RoleGranted(bytes32,address,address)": TypedContractEvent<
+      RoleGrantedEvent.InputTuple,
+      RoleGrantedEvent.OutputTuple,
+      RoleGrantedEvent.OutputObject
+    >;
+    RoleGranted: TypedContractEvent<
+      RoleGrantedEvent.InputTuple,
+      RoleGrantedEvent.OutputTuple,
+      RoleGrantedEvent.OutputObject
+    >;
+
+    "RoleRevoked(bytes32,address,address)": TypedContractEvent<
+      RoleRevokedEvent.InputTuple,
+      RoleRevokedEvent.OutputTuple,
+      RoleRevokedEvent.OutputObject
+    >;
+    RoleRevoked: TypedContractEvent<
+      RoleRevokedEvent.InputTuple,
+      RoleRevokedEvent.OutputTuple,
+      RoleRevokedEvent.OutputObject
+    >;
+
+    "Unpaused(address)": TypedContractEvent<
+      UnpausedEvent.InputTuple,
+      UnpausedEvent.OutputTuple,
+      UnpausedEvent.OutputObject
+    >;
+    Unpaused: TypedContractEvent<
+      UnpausedEvent.InputTuple,
+      UnpausedEvent.OutputTuple,
+      UnpausedEvent.OutputObject
+    >;
+
+    "Upgraded(address)": TypedContractEvent<
+      UpgradedEvent.InputTuple,
+      UpgradedEvent.OutputTuple,
+      UpgradedEvent.OutputObject
+    >;
+    Upgraded: TypedContractEvent<
+      UpgradedEvent.InputTuple,
+      UpgradedEvent.OutputTuple,
+      UpgradedEvent.OutputObject
+    >;
   };
 }

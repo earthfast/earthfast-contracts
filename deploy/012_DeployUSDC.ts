@@ -1,7 +1,6 @@
-import { BigNumber } from "ethers";
 import hre from "hardhat";
 import { deployDeterministic } from "../lib/deploy";
-import { attach, confirm, loadData, parseUSDC, signers, stringify, wait } from "../lib/util";
+import { attach, confirm, loadData, parseUSDC, signers, wait } from "../lib/util";
 
 // @ts-ignore Type created during hardhat compile
 type USDC = import("../typechain-types").USDC;
@@ -15,24 +14,25 @@ async function main() {
 
   const { deployer, admin } = await signers(hre);
   const args = [admin.address];
-  const salt = hre.ethers.utils.id(hre.network.name);
+  const salt = hre.ethers.id(hre.network.name);
   await deployDeterministic(hre, "USDC", { args, from: deployer.address, salt });
 
   // Transfer USDC to to registry
-  let amount = BigNumber.from(0);
+  let amount = BigInt(0);
   const data = await loadData(hre);
   const usdc = <USDC>await attach(hre, "USDC");
   const registry = await attach(hre, "ArmadaRegistry");
+  const registryAddress = await registry.getAddress();
   const projectsData = data?.ArmadaProjects?.projects ?? [];
   const operatorsData = data?.ArmadaOperators?.operators ?? [];
   for (const project of projectsData) {
-    amount = amount.add(parseUSDC(project.escrow ?? "0"));
+    amount = amount + parseUSDC(project.escrow ?? "0");
   }
   for (const operator of operatorsData) {
-    amount = amount.add(parseUSDC(operator.balance ?? "0"));
+    amount = amount + parseUSDC(operator.balance ?? "0");
   }
-  const transferArgs = [registry.address, amount] as const;
-  if (confirm(hre, `Execute USDC.transfer ${stringify(transferArgs)}`)) {
+  const transferArgs = [registryAddress, amount] as const;
+  if (confirm(hre, `Execute USDC.transfer ${registryAddress}, ${amount.toString()}`)) {
     await wait(usdc.connect(admin).transfer(...transferArgs));
   }
 }

@@ -1,8 +1,6 @@
-import { AddressZero, HashZero } from "@ethersproject/constants";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
-import { Result } from "ethers/lib/utils";
+import { Result, SignerWithAddress, ZeroAddress, ZeroHash } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, newId } from "../lib/test";
 import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
@@ -30,11 +28,23 @@ describe("ArmadaProjects", function () {
   let projects: ArmadaProjects;
   let reservations: ArmadaReservations;
 
+  // store contract addresses after awaiting fixture
+  let registryAddress: string;
+  let nodesAddress: string;
+  let operatorsAddress: string;
+  let projectsAddress: string;
+
   let snapshotId: string;
 
   async function fixture() {
     ({ admin, operator, project, deployer } = await signers(hre));
     ({ usdc, token, operators, projects, reservations, nodes, registry } = await fixtures(hre));
+
+    // set contract addresses as string
+    registryAddress = await registry.getAddress();
+    nodesAddress = await nodes.getAddress();
+    operatorsAddress = await operators.getAddress();
+    projectsAddress = await projects.getAddress();
   }
 
   before(async function () {
@@ -49,59 +59,59 @@ describe("ArmadaProjects", function () {
 
   it("Should disallow empty admins", async function () {
     const projectsFactory = await hre.ethers.getContractFactory("ArmadaProjects");
-    const projectsArgs = [[], registry.address, true];
+    const projectsArgs = [[], registryAddress, true];
     await expect(hre.upgrades.deployProxy(projectsFactory, projectsArgs, { kind: "uups" })).to.be.revertedWith("no admins");
   });
 
   it("Should disallow zero admin", async function () {
     const projectsFactory = await hre.ethers.getContractFactory("ArmadaProjects");
-    const projectsArgs = [[AddressZero], registry.address, true];
+    const projectsArgs = [[ZeroAddress], registryAddress, true];
     await expect(hre.upgrades.deployProxy(projectsFactory, projectsArgs, { kind: "uups" })).to.be.revertedWith("zero admin");
   });
 
   it("Should not grant importer role", async function () {
     const projectsFactory = await hre.ethers.getContractFactory("ArmadaProjects");
-    const projectsArgs = [[admin.address], registry.address, false];
+    const projectsArgs = [[admin.address], registryAddress, false];
     expect(await hre.upgrades.deployProxy(projectsFactory, projectsArgs, { kind: "uups" })).to.be.ok;
   });
 
   it("Should check create projects parameters", async function () {
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
-    await expect(projects.connect(project).createProject({ owner: AddressZero, name: "", email: "@", content: "", checksum: HashZero, metadata: "" })).to.be.revertedWith("zero owner");
-    await expect(projects.connect(project).createProject({ owner: project.address, name: "", email: "@", content: "", checksum: HashZero, metadata: "" })).to.be.revertedWith("empty name");
-    await expect(projects.connect(project).createProject({ owner: project.address, name: "x".repeat(257), email: "@", content: "", checksum: HashZero, metadata: "" })).to.be.revertedWith(
+    await expect(projects.connect(project).createProject({ owner: ZeroAddress, name: "", email: "@", content: "", checksum: ZeroHash, metadata: "" })).to.be.revertedWith("zero owner");
+    await expect(projects.connect(project).createProject({ owner: project.address, name: "", email: "@", content: "", checksum: ZeroHash, metadata: "" })).to.be.revertedWith("empty name");
+    await expect(projects.connect(project).createProject({ owner: project.address, name: "x".repeat(257), email: "@", content: "", checksum: ZeroHash, metadata: "" })).to.be.revertedWith(
       "name too long"
     );
-    await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "x".repeat(257), content: "", checksum: HashZero, metadata: "" })).to.be.revertedWith(
+    await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "x".repeat(257), content: "", checksum: ZeroHash, metadata: "" })).to.be.revertedWith(
       "email too long"
     );
-    await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "@", content: "x".repeat(2049), checksum: HashZero, metadata: "" })).to.be.revertedWith(
+    await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "@", content: "x".repeat(2049), checksum: ZeroHash, metadata: "" })).to.be.revertedWith(
       "content too long"
     );
-    await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "@", content: "", checksum: HashZero, metadata: "x".repeat(2049) })).to.be.revertedWith(
+    await expect(projects.connect(project).createProject({ owner: project.address, name: "p", email: "@", content: "", checksum: ZeroHash, metadata: "x".repeat(2049) })).to.be.revertedWith(
       "metadata too long"
     );
   });
 
   it("Should create/delete projects", async function () {
     // Create project
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
     await expect(projects.connect(project).createProject(p1)).to.be.revertedWith("not project creator");
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    expect(projectId1 !== HashZero);
+    expect(projectId1 !== ZeroHash);
     expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 1, 0: p1 });
 
     // Get project
-    await expect(projects.connect(project).getProject(HashZero)).to.be.revertedWith("unknown project");
+    await expect(projects.connect(project).getProject(ZeroHash)).to.be.revertedWith("unknown project");
     expect(await projects.connect(project).getProject(projectId1)).to.be.shallowDeepEqual(p1);
 
     // Create identical project
     const p2: ArmadaCreateProjectDataStruct = { ...p1 };
     const createProject2 = await expectReceipt(projects.connect(project).createProject(p2));
     const [projectId2] = await expectEvent(createProject2, projects, "ProjectCreated");
-    expect(projectId2 !== HashZero);
+    expect(projectId2 !== ZeroHash);
     expect(projectId2 !== projectId1);
     expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 2, 0: p1, 1: p2 });
 
@@ -114,14 +124,14 @@ describe("ArmadaProjects", function () {
 
     // Delete missing project
     await expect(projects.connect(project).deleteProject(projectId1)).to.be.revertedWith("unknown project");
-    await expect(projects.connect(project).deleteProject(HashZero)).to.be.revertedWith("unknown project");
+    await expect(projects.connect(project).deleteProject(ZeroHash)).to.be.revertedWith("unknown project");
     await expect(projects.connect(project).deleteProject(newId())).to.be.revertedWith("unknown project");
 
     // Create previously deleted project
     const p3: ArmadaCreateProjectDataStruct = { ...p1 };
     const createProject3 = await expectReceipt(projects.connect(project).createProject(p3));
     const [projectId3] = await expectEvent(createProject3, projects, "ProjectCreated");
-    expect(projectId3 !== HashZero);
+    expect(projectId3 !== ZeroHash);
     expect(projectId3 !== projectId1);
     expect(projectId3 !== projectId2);
     expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 2, 0: p2, 1: p3 });
@@ -129,17 +139,17 @@ describe("ArmadaProjects", function () {
 
   it("Should update content, email/name, owner, metadata on project", async function () {
     // Create project
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    expect(projectId1).to.not.eq(HashZero);
+    expect(projectId1).to.not.eq(ZeroHash);
     expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 1, 0: p1 });
 
     // Update and check content
     const newContent = "new content";
-    await expect(projects.connect(project).setProjectContent(projectId1, "x".repeat(2049), HashZero)).to.be.revertedWith("content too long");
-    expect(await projects.connect(project).setProjectContent(projectId1, newContent, HashZero)).to.be.ok;
+    await expect(projects.connect(project).setProjectContent(projectId1, "x".repeat(2049), ZeroHash)).to.be.revertedWith("content too long");
+    expect(await projects.connect(project).setProjectContent(projectId1, newContent, ZeroHash)).to.be.ok;
     const projectDetails1 = await projects.connect(project).getProject(projectId1);
     expect(projectDetails1.content).to.equal(newContent);
 
@@ -166,9 +176,9 @@ describe("ArmadaProjects", function () {
 
     // Update owner
     const newOwner = admin.address;
-    await expect(projects.connect(project).setProjectOwner(HashZero, newOwner)).to.be.revertedWith("unknown project");
+    await expect(projects.connect(project).setProjectOwner(ZeroHash, newOwner)).to.be.revertedWith("unknown project");
     await expect(projects.connect(operator).setProjectOwner(projectId1, newOwner)).to.be.revertedWith("not admin or project owner");
-    await expect(projects.connect(project).setProjectOwner(projectId1, AddressZero)).to.be.revertedWith("zero owner");
+    await expect(projects.connect(project).setProjectOwner(projectId1, ZeroAddress)).to.be.revertedWith("zero owner");
     expect(await projects.connect(project).setProjectOwner(projectId1, newOwner)).to.be.ok;
     expect(await projects.connect(admin).setProjectOwner(projectId1, newOwner)).to.be.ok;
     const projectDetails4 = await projects.connect(project).getProject(projectId1);
@@ -180,16 +190,17 @@ describe("ArmadaProjects", function () {
 
   it("Should allow importer role to use unsafeImportData ", async function () {
     // Create project
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    expect(projectId1).to.not.eq(HashZero);
+    expect(projectId1).to.not.eq(ZeroHash);
 
     // Use unsafeImportData
     const existingProjects = await projects.getProjects(0, 10);
     expect(existingProjects.length).to.equal(1);
-    const projectsToImport = existingProjects.map((p) => ({ ...p, id: newId() }));
+    const projectsToImport = existingProjects.map((p) => ({ ...p.toObject(true), id: newId() }));
+
     const newCreatorAddr = operator.address;
     expect(await projects.connect(deployer).unsafeImportData(projectsToImport, [newCreatorAddr], false)).to.be.ok;
 
@@ -201,7 +212,6 @@ describe("ArmadaProjects", function () {
 
     // Import duplicates
     await expect(projects.connect(deployer).unsafeImportData(projectsToImport, [newCreatorAddr], false)).to.be.revertedWith("duplicate id");
-
     // Verify importer role is revoked
     expect(await projects.hasRole(projects.IMPORTER_ROLE(), deployer.address)).to.be.true;
     expect(await projects.connect(deployer).unsafeImportData([], [], true)).to.be.ok;
@@ -210,14 +220,14 @@ describe("ArmadaProjects", function () {
 
   it("Should allow admin to adjust escrows", async function () {
     // Create project
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    expect(projectId1).to.not.eq(HashZero);
+    expect(projectId1).to.not.eq(ZeroHash);
 
     // Deposit escrow
-    const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));
+    const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
     expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
     expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("100"));
     expect((await projects.getProject(projectId1)).reserve).to.equal(parseUSDC("0"));
@@ -234,10 +244,10 @@ describe("ArmadaProjects", function () {
     const price = parseUSDC("1");
 
     // Create operator, deposit stake, create nodes
-    const o1: ArmadaOperatorStruct = { id: HashZero, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
+    const o1: ArmadaOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
     [o1.id] = await expectEvent(createOperator1, operators, "OperatorCreated");
-    const operatorsPermit = await approve(hre, token, admin.address, operators.address, parseTokens("100"));
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), ...operatorsPermit)).to.be.ok;
     expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
     const n0: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r1", price: parseUSDC("0") };
@@ -251,11 +261,11 @@ describe("ArmadaProjects", function () {
     const { 0: { nodeId: nodeId1 }, 1: { nodeId: nodeId2 } } = createNodes12Result; // prettier-ignore
 
     // Create project
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    expect(projectId1 !== HashZero);
+    expect(projectId1 !== ZeroHash);
 
     // Reserve topology nodes
     await expect(reservations.connect(project).createReservations(projectId1, [nodeId0], [price], { last: false, next: true })).to.be.revertedWith("topology node");
@@ -264,13 +274,13 @@ describe("ArmadaProjects", function () {
     await expect(reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.revertedWith("not enough escrow");
 
     // Deposit escrow
-    const projectsPermit = await approve(hre, usdc, admin.address, projects.address, parseUSDC("100"));
-    await expect(projects.connect(admin).depositProjectEscrow(HashZero, parseUSDC("100"), ...projectsPermit)).to.be.revertedWith("unknown project");
+    const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
+    await expect(projects.connect(admin).depositProjectEscrow(ZeroHash, parseUSDC("100"), ...projectsPermit)).to.be.revertedWith("unknown project");
     expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
     expect(await usdc.connect(admin).balanceOf(project.address)).to.equal(parseUSDC("0"));
     expect(await token.connect(admin).balanceOf(project.address)).to.equal(parseTokens("0"));
-    expect(await usdc.connect(admin).balanceOf(registry.address)).to.equal(parseUSDC("100"));
-    expect(await token.connect(admin).balanceOf(registry.address)).to.equal(parseTokens("100"));
+    expect(await usdc.connect(admin).balanceOf(registryAddress)).to.equal(parseUSDC("100"));
+    expect(await token.connect(admin).balanceOf(registryAddress)).to.equal(parseTokens("100"));
     expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("100"));
 
     // Reserve content nodes
@@ -284,8 +294,8 @@ describe("ArmadaProjects", function () {
     expect(await projects.connect(project).withdrawProjectEscrow(projectId1, parseUSDC("98"), project.address)).to.be.ok;
     expect(await usdc.connect(admin).balanceOf(project.address)).to.equal(parseUSDC("98"));
     expect(await token.connect(admin).balanceOf(project.address)).to.equal(parseTokens("0"));
-    expect(await usdc.connect(admin).balanceOf(registry.address)).to.equal(parseUSDC("2"));
-    expect(await token.connect(admin).balanceOf(registry.address)).to.equal(parseTokens("100"));
+    expect(await usdc.connect(admin).balanceOf(registryAddress)).to.equal(parseUSDC("2"));
+    expect(await token.connect(admin).balanceOf(registryAddress)).to.equal(parseTokens("100"));
     expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("2"));
     await expect(projects.connect(project).withdrawProjectEscrow(projectId1, parseUSDC("2"), project.address)).to.be.revertedWith("not enough escrow");
 
@@ -300,8 +310,8 @@ describe("ArmadaProjects", function () {
     expect(await projects.connect(project).withdrawProjectEscrow(projectId1, parseUSDC("2"), project.address)).to.be.ok;
     expect(await usdc.connect(admin).balanceOf(project.address)).to.equal(parseUSDC("100"));
     expect(await token.connect(admin).balanceOf(project.address)).to.equal(parseTokens("0"));
-    expect(await usdc.connect(admin).balanceOf(registry.address)).to.equal(parseUSDC("0"));
-    expect(await token.connect(admin).balanceOf(registry.address)).to.equal(parseTokens("100"));
+    expect(await usdc.connect(admin).balanceOf(registryAddress)).to.equal(parseUSDC("0"));
+    expect(await token.connect(admin).balanceOf(registryAddress)).to.equal(parseTokens("100"));
     expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("0"));
 
     // Delete project
@@ -310,37 +320,38 @@ describe("ArmadaProjects", function () {
 
   it("Should deposit escrow with token allowance", async function () {
     // Create project
-    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: HashZero, metadata: "" };
+    const p1: ArmadaCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
     expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
-    expect(projectId1 !== HashZero);
+    expect(projectId1 !== ZeroHash);
 
     // Check invalid permits
-    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 1, 0, HashZero, HashZero)).to.be.revertedWith("invalid permit");
-    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 1, HashZero, HashZero)).to.be.revertedWith("invalid permit");
-    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 0, projectId1, HashZero)).to.be.revertedWith("invalid permit");
+    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 1, 0, ZeroHash, ZeroHash)).to.be.revertedWith("invalid permit");
+    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 1, ZeroHash, ZeroHash)).to.be.revertedWith("invalid permit");
+    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 0, projectId1, ZeroHash)).to.be.revertedWith("invalid permit");
 
     // Deposit with allowance
-    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 0, HashZero, HashZero)).to.be.revertedWith("ERC20: insufficient allowance");
+    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 0, ZeroHash, ZeroHash)).to.be.revertedWith("ERC20: insufficient allowance");
     expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 1, 0: p1 });
-    expect(await usdc.connect(admin).approve(projects.address, parseTokens("100"))).to.be.ok;
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 0, HashZero, HashZero)).to.be.ok;
+    expect(await usdc.connect(admin).approve(projectsAddress, parseTokens("100"))).to.be.ok;
+    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 0, ZeroHash, ZeroHash)).to.be.ok;
     expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 1, 0: { ...p1, escrow: parseTokens("100") } });
   });
 
   it("Should allow admin to update registry address in projects", async () => {
     // check old registry
-    expect(await projects.getRegistry()).to.equal(registry.address);
+    expect(await projects.getRegistry()).to.equal(registryAddress);
 
     // create new registry
     const registryFactory = await hre.ethers.getContractFactory("ArmadaRegistry");
     const newRegistry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false });
+    const newregistryAddress = await newRegistry.getAddress();
 
-    expect(await projects.connect(admin).unsafeSetRegistry(newRegistry.address)).to.be.ok;
+    expect(await projects.connect(admin).unsafeSetRegistry(newregistryAddress)).to.be.ok;
 
     // check new registry
-    expect(await projects.getRegistry()).to.equal(newRegistry.address);
+    expect(await projects.getRegistry()).to.equal(newregistryAddress);
   });
 
   it("Should allow admin to pause and unpause", async function () {
@@ -367,14 +378,14 @@ describe("ArmadaProjects", function () {
   });
 
   it("Should disallow impl calls from unauthorized senders", async function () {
-    const nodesSigner = await hre.ethers.getSigner(nodes.address);
+    const nodesSigner = await hre.ethers.getSigner(nodesAddress);
 
     // unknown project id is disallowed
-    await expect(projects.connect(nodesSigner).setProjectEscrowImpl(HashZero, 0, 0, { gasPrice: 0 })).to.be.revertedWith("unknown project");
-    await expect(projects.connect(nodesSigner).setProjectReserveImpl(HashZero, 0, 0, { gasPrice: 0 })).to.be.revertedWith("unknown project");
+    await expect(projects.connect(nodesSigner).setProjectEscrowImpl(ZeroHash, 0, 0, { gasPrice: 0 })).to.be.revertedWith("unknown project");
+    await expect(projects.connect(nodesSigner).setProjectReserveImpl(ZeroHash, 0, 0, { gasPrice: 0 })).to.be.revertedWith("unknown project");
 
     // implementation call is disallowed from unauthorized address
-    await expect(projects.setProjectEscrowImpl(HashZero, 0, 0)).to.be.revertedWith("not impl");
-    await expect(projects.setProjectReserveImpl(HashZero, 0, 0)).to.be.revertedWith("not impl");
+    await expect(projects.setProjectEscrowImpl(ZeroHash, 0, 0)).to.be.revertedWith("not impl");
+    await expect(projects.setProjectReserveImpl(ZeroHash, 0, 0)).to.be.revertedWith("not impl");
   });
 });

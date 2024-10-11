@@ -3,84 +3,29 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PayableOverrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
-} from "ethers";
-import type {
   FunctionFragment,
   Result,
+  Interface,
   EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
+} from "ethers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
-  PromiseOrValue,
+  TypedContractMethod,
 } from "../common";
 
-export interface ArmadaGovernorInterface extends utils.Interface {
-  functions: {
-    "BALLOT_TYPEHASH()": FunctionFragment;
-    "COUNTING_MODE()": FunctionFragment;
-    "DEFAULT_ADMIN_ROLE()": FunctionFragment;
-    "EXTENDED_BALLOT_TYPEHASH()": FunctionFragment;
-    "cancel(address[],uint256[],bytes[],bytes32)": FunctionFragment;
-    "castVote(uint256,uint8)": FunctionFragment;
-    "castVoteBySig(uint256,uint8,uint8,bytes32,bytes32)": FunctionFragment;
-    "castVoteWithReason(uint256,uint8,string)": FunctionFragment;
-    "castVoteWithReasonAndParams(uint256,uint8,string,bytes)": FunctionFragment;
-    "castVoteWithReasonAndParamsBySig(uint256,uint8,string,bytes,uint8,bytes32,bytes32)": FunctionFragment;
-    "execute(address[],uint256[],bytes[],bytes32)": FunctionFragment;
-    "getRoleAdmin(bytes32)": FunctionFragment;
-    "getVotes(address,uint256)": FunctionFragment;
-    "getVotesWithParams(address,uint256,bytes)": FunctionFragment;
-    "grantRole(bytes32,address)": FunctionFragment;
-    "hasRole(bytes32,address)": FunctionFragment;
-    "hasVoted(uint256,address)": FunctionFragment;
-    "hashProposal(address[],uint256[],bytes[],bytes32)": FunctionFragment;
-    "name()": FunctionFragment;
-    "onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)": FunctionFragment;
-    "onERC1155Received(address,address,uint256,uint256,bytes)": FunctionFragment;
-    "onERC721Received(address,address,uint256,bytes)": FunctionFragment;
-    "proposalDeadline(uint256)": FunctionFragment;
-    "proposalEta(uint256)": FunctionFragment;
-    "proposalSnapshot(uint256)": FunctionFragment;
-    "proposalThreshold()": FunctionFragment;
-    "proposalVotes(uint256)": FunctionFragment;
-    "propose(address[],uint256[],bytes[],string)": FunctionFragment;
-    "queue(address[],uint256[],bytes[],bytes32)": FunctionFragment;
-    "quorum(uint256)": FunctionFragment;
-    "quorumDenominator()": FunctionFragment;
-    "quorumNumerator()": FunctionFragment;
-    "relay(address,uint256,bytes)": FunctionFragment;
-    "renounceRole(bytes32,address)": FunctionFragment;
-    "revokeRole(bytes32,address)": FunctionFragment;
-    "setProposalThreshold(uint256)": FunctionFragment;
-    "setVotingDelay(uint256)": FunctionFragment;
-    "setVotingPeriod(uint256)": FunctionFragment;
-    "state(uint256)": FunctionFragment;
-    "supportsInterface(bytes4)": FunctionFragment;
-    "timelock()": FunctionFragment;
-    "token()": FunctionFragment;
-    "updateQuorumNumerator(uint256)": FunctionFragment;
-    "updateTimelock(address)": FunctionFragment;
-    "version()": FunctionFragment;
-    "votingDelay()": FunctionFragment;
-    "votingPeriod()": FunctionFragment;
-  };
-
+export interface ArmadaGovernorInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "BALLOT_TYPEHASH"
       | "COUNTING_MODE"
       | "DEFAULT_ADMIN_ROLE"
@@ -130,6 +75,24 @@ export interface ArmadaGovernorInterface extends utils.Interface {
       | "votingPeriod"
   ): FunctionFragment;
 
+  getEvent(
+    nameOrSignatureOrTopic:
+      | "ProposalCanceled"
+      | "ProposalCreated"
+      | "ProposalExecuted"
+      | "ProposalQueued"
+      | "ProposalThresholdSet"
+      | "QuorumNumeratorUpdated"
+      | "RoleAdminChanged"
+      | "RoleGranted"
+      | "RoleRevoked"
+      | "TimelockChange"
+      | "VoteCast"
+      | "VoteCastWithParams"
+      | "VotingDelaySet"
+      | "VotingPeriodSet"
+  ): EventFragment;
+
   encodeFunctionData(
     functionFragment: "BALLOT_TYPEHASH",
     values?: undefined
@@ -148,143 +111,98 @@ export interface ArmadaGovernorInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "cancel",
-    values: [
-      PromiseOrValue<string>[],
-      PromiseOrValue<BigNumberish>[],
-      PromiseOrValue<BytesLike>[],
-      PromiseOrValue<BytesLike>
-    ]
+    values: [AddressLike[], BigNumberish[], BytesLike[], BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "castVote",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+    values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "castVoteBySig",
-    values: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BytesLike>
-    ]
+    values: [BigNumberish, BigNumberish, BigNumberish, BytesLike, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "castVoteWithReason",
-    values: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<string>
-    ]
+    values: [BigNumberish, BigNumberish, string]
   ): string;
   encodeFunctionData(
     functionFragment: "castVoteWithReasonAndParams",
-    values: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BytesLike>
-    ]
+    values: [BigNumberish, BigNumberish, string, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "castVoteWithReasonAndParamsBySig",
     values: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BytesLike>
+      BigNumberish,
+      BigNumberish,
+      string,
+      BytesLike,
+      BigNumberish,
+      BytesLike,
+      BytesLike
     ]
   ): string;
   encodeFunctionData(
     functionFragment: "execute",
-    values: [
-      PromiseOrValue<string>[],
-      PromiseOrValue<BigNumberish>[],
-      PromiseOrValue<BytesLike>[],
-      PromiseOrValue<BytesLike>
-    ]
+    values: [AddressLike[], BigNumberish[], BytesLike[], BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getRoleAdmin",
-    values: [PromiseOrValue<BytesLike>]
+    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getVotes",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getVotesWithParams",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BytesLike>
-    ]
+    values: [AddressLike, BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "grantRole",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "hasRole",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "hasVoted",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<string>]
+    values: [BigNumberish, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "hashProposal",
-    values: [
-      PromiseOrValue<string>[],
-      PromiseOrValue<BigNumberish>[],
-      PromiseOrValue<BytesLike>[],
-      PromiseOrValue<BytesLike>
-    ]
+    values: [AddressLike[], BigNumberish[], BytesLike[], BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "onERC1155BatchReceived",
     values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>[],
-      PromiseOrValue<BigNumberish>[],
-      PromiseOrValue<BytesLike>
+      AddressLike,
+      AddressLike,
+      BigNumberish[],
+      BigNumberish[],
+      BytesLike
     ]
   ): string;
   encodeFunctionData(
     functionFragment: "onERC1155Received",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BytesLike>
-    ]
+    values: [AddressLike, AddressLike, BigNumberish, BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "onERC721Received",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BytesLike>
-    ]
+    values: [AddressLike, AddressLike, BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "proposalDeadline",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "proposalEta",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "proposalSnapshot",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "proposalThreshold",
@@ -292,29 +210,19 @@ export interface ArmadaGovernorInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "proposalVotes",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "propose",
-    values: [
-      PromiseOrValue<string>[],
-      PromiseOrValue<BigNumberish>[],
-      PromiseOrValue<BytesLike>[],
-      PromiseOrValue<string>
-    ]
+    values: [AddressLike[], BigNumberish[], BytesLike[], string]
   ): string;
   encodeFunctionData(
     functionFragment: "queue",
-    values: [
-      PromiseOrValue<string>[],
-      PromiseOrValue<BigNumberish>[],
-      PromiseOrValue<BytesLike>[],
-      PromiseOrValue<BytesLike>
-    ]
+    values: [AddressLike[], BigNumberish[], BytesLike[], BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "quorum",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "quorumDenominator",
@@ -326,49 +234,42 @@ export interface ArmadaGovernorInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "relay",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BytesLike>
-    ]
+    values: [AddressLike, BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "renounceRole",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "revokeRole",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setProposalThreshold",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setVotingDelay",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setVotingPeriod",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
-  encodeFunctionData(
-    functionFragment: "state",
-    values: [PromiseOrValue<BigNumberish>]
-  ): string;
+  encodeFunctionData(functionFragment: "state", values: [BigNumberish]): string;
   encodeFunctionData(
     functionFragment: "supportsInterface",
-    values: [PromiseOrValue<BytesLike>]
+    values: [BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "timelock", values?: undefined): string;
   encodeFunctionData(functionFragment: "token", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "updateQuorumNumerator",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "updateTimelock",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "version", values?: undefined): string;
   encodeFunctionData(
@@ -517,1665 +418,1164 @@ export interface ArmadaGovernorInterface extends utils.Interface {
     functionFragment: "votingPeriod",
     data: BytesLike
   ): Result;
-
-  events: {
-    "ProposalCanceled(uint256)": EventFragment;
-    "ProposalCreated(uint256,address,address[],uint256[],string[],bytes[],uint256,uint256,string)": EventFragment;
-    "ProposalExecuted(uint256)": EventFragment;
-    "ProposalQueued(uint256,uint256)": EventFragment;
-    "ProposalThresholdSet(uint256,uint256)": EventFragment;
-    "QuorumNumeratorUpdated(uint256,uint256)": EventFragment;
-    "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
-    "RoleGranted(bytes32,address,address)": EventFragment;
-    "RoleRevoked(bytes32,address,address)": EventFragment;
-    "TimelockChange(address,address)": EventFragment;
-    "VoteCast(address,uint256,uint8,uint256,string)": EventFragment;
-    "VoteCastWithParams(address,uint256,uint8,uint256,string,bytes)": EventFragment;
-    "VotingDelaySet(uint256,uint256)": EventFragment;
-    "VotingPeriodSet(uint256,uint256)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "ProposalCanceled"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ProposalCreated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ProposalExecuted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ProposalQueued"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ProposalThresholdSet"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "QuorumNumeratorUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RoleAdminChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RoleGranted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RoleRevoked"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TimelockChange"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "VoteCast"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "VoteCastWithParams"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "VotingDelaySet"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "VotingPeriodSet"): EventFragment;
 }
 
-export interface ProposalCanceledEventObject {
-  proposalId: BigNumber;
+export namespace ProposalCanceledEvent {
+  export type InputTuple = [proposalId: BigNumberish];
+  export type OutputTuple = [proposalId: bigint];
+  export interface OutputObject {
+    proposalId: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ProposalCanceledEvent = TypedEvent<
-  [BigNumber],
-  ProposalCanceledEventObject
->;
 
-export type ProposalCanceledEventFilter =
-  TypedEventFilter<ProposalCanceledEvent>;
-
-export interface ProposalCreatedEventObject {
-  proposalId: BigNumber;
-  proposer: string;
-  targets: string[];
-  values: BigNumber[];
-  signatures: string[];
-  calldatas: string[];
-  startBlock: BigNumber;
-  endBlock: BigNumber;
-  description: string;
+export namespace ProposalCreatedEvent {
+  export type InputTuple = [
+    proposalId: BigNumberish,
+    proposer: AddressLike,
+    targets: AddressLike[],
+    values: BigNumberish[],
+    signatures: string[],
+    calldatas: BytesLike[],
+    startBlock: BigNumberish,
+    endBlock: BigNumberish,
+    description: string
+  ];
+  export type OutputTuple = [
+    proposalId: bigint,
+    proposer: string,
+    targets: string[],
+    values: bigint[],
+    signatures: string[],
+    calldatas: string[],
+    startBlock: bigint,
+    endBlock: bigint,
+    description: string
+  ];
+  export interface OutputObject {
+    proposalId: bigint;
+    proposer: string;
+    targets: string[];
+    values: bigint[];
+    signatures: string[];
+    calldatas: string[];
+    startBlock: bigint;
+    endBlock: bigint;
+    description: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ProposalCreatedEvent = TypedEvent<
-  [
-    BigNumber,
-    string,
-    string[],
-    BigNumber[],
-    string[],
-    string[],
-    BigNumber,
-    BigNumber,
-    string
-  ],
-  ProposalCreatedEventObject
->;
 
-export type ProposalCreatedEventFilter = TypedEventFilter<ProposalCreatedEvent>;
-
-export interface ProposalExecutedEventObject {
-  proposalId: BigNumber;
+export namespace ProposalExecutedEvent {
+  export type InputTuple = [proposalId: BigNumberish];
+  export type OutputTuple = [proposalId: bigint];
+  export interface OutputObject {
+    proposalId: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ProposalExecutedEvent = TypedEvent<
-  [BigNumber],
-  ProposalExecutedEventObject
->;
 
-export type ProposalExecutedEventFilter =
-  TypedEventFilter<ProposalExecutedEvent>;
-
-export interface ProposalQueuedEventObject {
-  proposalId: BigNumber;
-  eta: BigNumber;
+export namespace ProposalQueuedEvent {
+  export type InputTuple = [proposalId: BigNumberish, eta: BigNumberish];
+  export type OutputTuple = [proposalId: bigint, eta: bigint];
+  export interface OutputObject {
+    proposalId: bigint;
+    eta: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ProposalQueuedEvent = TypedEvent<
-  [BigNumber, BigNumber],
-  ProposalQueuedEventObject
->;
 
-export type ProposalQueuedEventFilter = TypedEventFilter<ProposalQueuedEvent>;
-
-export interface ProposalThresholdSetEventObject {
-  oldProposalThreshold: BigNumber;
-  newProposalThreshold: BigNumber;
+export namespace ProposalThresholdSetEvent {
+  export type InputTuple = [
+    oldProposalThreshold: BigNumberish,
+    newProposalThreshold: BigNumberish
+  ];
+  export type OutputTuple = [
+    oldProposalThreshold: bigint,
+    newProposalThreshold: bigint
+  ];
+  export interface OutputObject {
+    oldProposalThreshold: bigint;
+    newProposalThreshold: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ProposalThresholdSetEvent = TypedEvent<
-  [BigNumber, BigNumber],
-  ProposalThresholdSetEventObject
->;
 
-export type ProposalThresholdSetEventFilter =
-  TypedEventFilter<ProposalThresholdSetEvent>;
-
-export interface QuorumNumeratorUpdatedEventObject {
-  oldQuorumNumerator: BigNumber;
-  newQuorumNumerator: BigNumber;
+export namespace QuorumNumeratorUpdatedEvent {
+  export type InputTuple = [
+    oldQuorumNumerator: BigNumberish,
+    newQuorumNumerator: BigNumberish
+  ];
+  export type OutputTuple = [
+    oldQuorumNumerator: bigint,
+    newQuorumNumerator: bigint
+  ];
+  export interface OutputObject {
+    oldQuorumNumerator: bigint;
+    newQuorumNumerator: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type QuorumNumeratorUpdatedEvent = TypedEvent<
-  [BigNumber, BigNumber],
-  QuorumNumeratorUpdatedEventObject
->;
 
-export type QuorumNumeratorUpdatedEventFilter =
-  TypedEventFilter<QuorumNumeratorUpdatedEvent>;
-
-export interface RoleAdminChangedEventObject {
-  role: string;
-  previousAdminRole: string;
-  newAdminRole: string;
+export namespace RoleAdminChangedEvent {
+  export type InputTuple = [
+    role: BytesLike,
+    previousAdminRole: BytesLike,
+    newAdminRole: BytesLike
+  ];
+  export type OutputTuple = [
+    role: string,
+    previousAdminRole: string,
+    newAdminRole: string
+  ];
+  export interface OutputObject {
+    role: string;
+    previousAdminRole: string;
+    newAdminRole: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RoleAdminChangedEvent = TypedEvent<
-  [string, string, string],
-  RoleAdminChangedEventObject
->;
 
-export type RoleAdminChangedEventFilter =
-  TypedEventFilter<RoleAdminChangedEvent>;
-
-export interface RoleGrantedEventObject {
-  role: string;
-  account: string;
-  sender: string;
+export namespace RoleGrantedEvent {
+  export type InputTuple = [
+    role: BytesLike,
+    account: AddressLike,
+    sender: AddressLike
+  ];
+  export type OutputTuple = [role: string, account: string, sender: string];
+  export interface OutputObject {
+    role: string;
+    account: string;
+    sender: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RoleGrantedEvent = TypedEvent<
-  [string, string, string],
-  RoleGrantedEventObject
->;
 
-export type RoleGrantedEventFilter = TypedEventFilter<RoleGrantedEvent>;
-
-export interface RoleRevokedEventObject {
-  role: string;
-  account: string;
-  sender: string;
+export namespace RoleRevokedEvent {
+  export type InputTuple = [
+    role: BytesLike,
+    account: AddressLike,
+    sender: AddressLike
+  ];
+  export type OutputTuple = [role: string, account: string, sender: string];
+  export interface OutputObject {
+    role: string;
+    account: string;
+    sender: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RoleRevokedEvent = TypedEvent<
-  [string, string, string],
-  RoleRevokedEventObject
->;
 
-export type RoleRevokedEventFilter = TypedEventFilter<RoleRevokedEvent>;
-
-export interface TimelockChangeEventObject {
-  oldTimelock: string;
-  newTimelock: string;
+export namespace TimelockChangeEvent {
+  export type InputTuple = [oldTimelock: AddressLike, newTimelock: AddressLike];
+  export type OutputTuple = [oldTimelock: string, newTimelock: string];
+  export interface OutputObject {
+    oldTimelock: string;
+    newTimelock: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type TimelockChangeEvent = TypedEvent<
-  [string, string],
-  TimelockChangeEventObject
->;
 
-export type TimelockChangeEventFilter = TypedEventFilter<TimelockChangeEvent>;
-
-export interface VoteCastEventObject {
-  voter: string;
-  proposalId: BigNumber;
-  support: number;
-  weight: BigNumber;
-  reason: string;
+export namespace VoteCastEvent {
+  export type InputTuple = [
+    voter: AddressLike,
+    proposalId: BigNumberish,
+    support: BigNumberish,
+    weight: BigNumberish,
+    reason: string
+  ];
+  export type OutputTuple = [
+    voter: string,
+    proposalId: bigint,
+    support: bigint,
+    weight: bigint,
+    reason: string
+  ];
+  export interface OutputObject {
+    voter: string;
+    proposalId: bigint;
+    support: bigint;
+    weight: bigint;
+    reason: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type VoteCastEvent = TypedEvent<
-  [string, BigNumber, number, BigNumber, string],
-  VoteCastEventObject
->;
 
-export type VoteCastEventFilter = TypedEventFilter<VoteCastEvent>;
-
-export interface VoteCastWithParamsEventObject {
-  voter: string;
-  proposalId: BigNumber;
-  support: number;
-  weight: BigNumber;
-  reason: string;
-  params: string;
+export namespace VoteCastWithParamsEvent {
+  export type InputTuple = [
+    voter: AddressLike,
+    proposalId: BigNumberish,
+    support: BigNumberish,
+    weight: BigNumberish,
+    reason: string,
+    params: BytesLike
+  ];
+  export type OutputTuple = [
+    voter: string,
+    proposalId: bigint,
+    support: bigint,
+    weight: bigint,
+    reason: string,
+    params: string
+  ];
+  export interface OutputObject {
+    voter: string;
+    proposalId: bigint;
+    support: bigint;
+    weight: bigint;
+    reason: string;
+    params: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type VoteCastWithParamsEvent = TypedEvent<
-  [string, BigNumber, number, BigNumber, string, string],
-  VoteCastWithParamsEventObject
->;
 
-export type VoteCastWithParamsEventFilter =
-  TypedEventFilter<VoteCastWithParamsEvent>;
-
-export interface VotingDelaySetEventObject {
-  oldVotingDelay: BigNumber;
-  newVotingDelay: BigNumber;
+export namespace VotingDelaySetEvent {
+  export type InputTuple = [
+    oldVotingDelay: BigNumberish,
+    newVotingDelay: BigNumberish
+  ];
+  export type OutputTuple = [oldVotingDelay: bigint, newVotingDelay: bigint];
+  export interface OutputObject {
+    oldVotingDelay: bigint;
+    newVotingDelay: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type VotingDelaySetEvent = TypedEvent<
-  [BigNumber, BigNumber],
-  VotingDelaySetEventObject
->;
 
-export type VotingDelaySetEventFilter = TypedEventFilter<VotingDelaySetEvent>;
-
-export interface VotingPeriodSetEventObject {
-  oldVotingPeriod: BigNumber;
-  newVotingPeriod: BigNumber;
+export namespace VotingPeriodSetEvent {
+  export type InputTuple = [
+    oldVotingPeriod: BigNumberish,
+    newVotingPeriod: BigNumberish
+  ];
+  export type OutputTuple = [oldVotingPeriod: bigint, newVotingPeriod: bigint];
+  export interface OutputObject {
+    oldVotingPeriod: bigint;
+    newVotingPeriod: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type VotingPeriodSetEvent = TypedEvent<
-  [BigNumber, BigNumber],
-  VotingPeriodSetEventObject
->;
-
-export type VotingPeriodSetEventFilter = TypedEventFilter<VotingPeriodSetEvent>;
 
 export interface ArmadaGovernor extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+  connect(runner?: ContractRunner | null): ArmadaGovernor;
+  waitForDeployment(): Promise<this>;
 
   interface: ArmadaGovernorInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
-
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
-
-  functions: {
-    BALLOT_TYPEHASH(overrides?: CallOverrides): Promise<[string]>;
-
-    COUNTING_MODE(overrides?: CallOverrides): Promise<[string]>;
-
-    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<[string]>;
-
-    EXTENDED_BALLOT_TYPEHASH(overrides?: CallOverrides): Promise<[string]>;
-
-    cancel(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      descriptionHash: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    castVote(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    castVoteBySig(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    castVoteWithReason(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      reason: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    castVoteWithReasonAndParams(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      reason: PromiseOrValue<string>,
-      params: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    castVoteWithReasonAndParamsBySig(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      reason: PromiseOrValue<string>,
-      params: PromiseOrValue<BytesLike>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    execute(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      descriptionHash: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    getRoleAdmin(
-      role: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getVotes(
-      account: PromiseOrValue<string>,
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    getVotesWithParams(
-      account: PromiseOrValue<string>,
-      blockNumber: PromiseOrValue<BigNumberish>,
-      params: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    grantRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    hasRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    hasVoted(
-      proposalId: PromiseOrValue<BigNumberish>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    hashProposal(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      descriptionHash: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    name(overrides?: CallOverrides): Promise<[string]>;
-
-    onERC1155BatchReceived(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      arg2: PromiseOrValue<BigNumberish>[],
-      arg3: PromiseOrValue<BigNumberish>[],
-      arg4: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    onERC1155Received(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      arg2: PromiseOrValue<BigNumberish>,
-      arg3: PromiseOrValue<BigNumberish>,
-      arg4: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    onERC721Received(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      arg2: PromiseOrValue<BigNumberish>,
-      arg3: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    proposalDeadline(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    proposalEta(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    proposalSnapshot(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    proposalThreshold(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    proposalVotes(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber, BigNumber] & {
-        againstVotes: BigNumber;
-        forVotes: BigNumber;
-        abstainVotes: BigNumber;
-      }
-    >;
-
-    propose(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      description: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    queue(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      descriptionHash: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    quorum(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    quorumDenominator(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    quorumNumerator(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    relay(
-      target: PromiseOrValue<string>,
-      value: PromiseOrValue<BigNumberish>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    renounceRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    revokeRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    setProposalThreshold(
-      newProposalThreshold: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    setVotingDelay(
-      newVotingDelay: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    setVotingPeriod(
-      newVotingPeriod: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    state(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[number]>;
-
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    timelock(overrides?: CallOverrides): Promise<[string]>;
-
-    token(overrides?: CallOverrides): Promise<[string]>;
-
-    updateQuorumNumerator(
-      newQuorumNumerator: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    updateTimelock(
-      newTimelock: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    version(overrides?: CallOverrides): Promise<[string]>;
-
-    votingDelay(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    votingPeriod(overrides?: CallOverrides): Promise<[BigNumber]>;
-  };
-
-  BALLOT_TYPEHASH(overrides?: CallOverrides): Promise<string>;
-
-  COUNTING_MODE(overrides?: CallOverrides): Promise<string>;
-
-  DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
-
-  EXTENDED_BALLOT_TYPEHASH(overrides?: CallOverrides): Promise<string>;
-
-  cancel(
-    targets: PromiseOrValue<string>[],
-    values: PromiseOrValue<BigNumberish>[],
-    calldatas: PromiseOrValue<BytesLike>[],
-    descriptionHash: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  castVote(
-    proposalId: PromiseOrValue<BigNumberish>,
-    support: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  castVoteBySig(
-    proposalId: PromiseOrValue<BigNumberish>,
-    support: PromiseOrValue<BigNumberish>,
-    v: PromiseOrValue<BigNumberish>,
-    r: PromiseOrValue<BytesLike>,
-    s: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  castVoteWithReason(
-    proposalId: PromiseOrValue<BigNumberish>,
-    support: PromiseOrValue<BigNumberish>,
-    reason: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  castVoteWithReasonAndParams(
-    proposalId: PromiseOrValue<BigNumberish>,
-    support: PromiseOrValue<BigNumberish>,
-    reason: PromiseOrValue<string>,
-    params: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  castVoteWithReasonAndParamsBySig(
-    proposalId: PromiseOrValue<BigNumberish>,
-    support: PromiseOrValue<BigNumberish>,
-    reason: PromiseOrValue<string>,
-    params: PromiseOrValue<BytesLike>,
-    v: PromiseOrValue<BigNumberish>,
-    r: PromiseOrValue<BytesLike>,
-    s: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  execute(
-    targets: PromiseOrValue<string>[],
-    values: PromiseOrValue<BigNumberish>[],
-    calldatas: PromiseOrValue<BytesLike>[],
-    descriptionHash: PromiseOrValue<BytesLike>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  getRoleAdmin(
-    role: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getVotes(
-    account: PromiseOrValue<string>,
-    blockNumber: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  getVotesWithParams(
-    account: PromiseOrValue<string>,
-    blockNumber: PromiseOrValue<BigNumberish>,
-    params: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  grantRole(
-    role: PromiseOrValue<BytesLike>,
-    account: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  hasRole(
-    role: PromiseOrValue<BytesLike>,
-    account: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  hasVoted(
-    proposalId: PromiseOrValue<BigNumberish>,
-    account: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  hashProposal(
-    targets: PromiseOrValue<string>[],
-    values: PromiseOrValue<BigNumberish>[],
-    calldatas: PromiseOrValue<BytesLike>[],
-    descriptionHash: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  name(overrides?: CallOverrides): Promise<string>;
-
-  onERC1155BatchReceived(
-    arg0: PromiseOrValue<string>,
-    arg1: PromiseOrValue<string>,
-    arg2: PromiseOrValue<BigNumberish>[],
-    arg3: PromiseOrValue<BigNumberish>[],
-    arg4: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  onERC1155Received(
-    arg0: PromiseOrValue<string>,
-    arg1: PromiseOrValue<string>,
-    arg2: PromiseOrValue<BigNumberish>,
-    arg3: PromiseOrValue<BigNumberish>,
-    arg4: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  onERC721Received(
-    arg0: PromiseOrValue<string>,
-    arg1: PromiseOrValue<string>,
-    arg2: PromiseOrValue<BigNumberish>,
-    arg3: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  proposalDeadline(
-    proposalId: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  proposalEta(
-    proposalId: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  proposalSnapshot(
-    proposalId: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  proposalThreshold(overrides?: CallOverrides): Promise<BigNumber>;
-
-  proposalVotes(
-    proposalId: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<
-    [BigNumber, BigNumber, BigNumber] & {
-      againstVotes: BigNumber;
-      forVotes: BigNumber;
-      abstainVotes: BigNumber;
-    }
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
+
+  BALLOT_TYPEHASH: TypedContractMethod<[], [string], "view">;
+
+  COUNTING_MODE: TypedContractMethod<[], [string], "view">;
+
+  DEFAULT_ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
+
+  EXTENDED_BALLOT_TYPEHASH: TypedContractMethod<[], [string], "view">;
+
+  cancel: TypedContractMethod<
+    [
+      targets: AddressLike[],
+      values: BigNumberish[],
+      calldatas: BytesLike[],
+      descriptionHash: BytesLike
+    ],
+    [bigint],
+    "nonpayable"
   >;
 
-  propose(
-    targets: PromiseOrValue<string>[],
-    values: PromiseOrValue<BigNumberish>[],
-    calldatas: PromiseOrValue<BytesLike>[],
-    description: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  castVote: TypedContractMethod<
+    [proposalId: BigNumberish, support: BigNumberish],
+    [bigint],
+    "nonpayable"
+  >;
 
-  queue(
-    targets: PromiseOrValue<string>[],
-    values: PromiseOrValue<BigNumberish>[],
-    calldatas: PromiseOrValue<BytesLike>[],
-    descriptionHash: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  castVoteBySig: TypedContractMethod<
+    [
+      proposalId: BigNumberish,
+      support: BigNumberish,
+      v: BigNumberish,
+      r: BytesLike,
+      s: BytesLike
+    ],
+    [bigint],
+    "nonpayable"
+  >;
 
-  quorum(
-    blockNumber: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
+  castVoteWithReason: TypedContractMethod<
+    [proposalId: BigNumberish, support: BigNumberish, reason: string],
+    [bigint],
+    "nonpayable"
+  >;
 
-  quorumDenominator(overrides?: CallOverrides): Promise<BigNumber>;
+  castVoteWithReasonAndParams: TypedContractMethod<
+    [
+      proposalId: BigNumberish,
+      support: BigNumberish,
+      reason: string,
+      params: BytesLike
+    ],
+    [bigint],
+    "nonpayable"
+  >;
 
-  quorumNumerator(overrides?: CallOverrides): Promise<BigNumber>;
+  castVoteWithReasonAndParamsBySig: TypedContractMethod<
+    [
+      proposalId: BigNumberish,
+      support: BigNumberish,
+      reason: string,
+      params: BytesLike,
+      v: BigNumberish,
+      r: BytesLike,
+      s: BytesLike
+    ],
+    [bigint],
+    "nonpayable"
+  >;
 
-  relay(
-    target: PromiseOrValue<string>,
-    value: PromiseOrValue<BigNumberish>,
-    data: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  execute: TypedContractMethod<
+    [
+      targets: AddressLike[],
+      values: BigNumberish[],
+      calldatas: BytesLike[],
+      descriptionHash: BytesLike
+    ],
+    [bigint],
+    "payable"
+  >;
 
-  renounceRole(
-    role: PromiseOrValue<BytesLike>,
-    account: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  getRoleAdmin: TypedContractMethod<[role: BytesLike], [string], "view">;
 
-  revokeRole(
-    role: PromiseOrValue<BytesLike>,
-    account: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  getVotes: TypedContractMethod<
+    [account: AddressLike, blockNumber: BigNumberish],
+    [bigint],
+    "view"
+  >;
 
-  setProposalThreshold(
-    newProposalThreshold: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  getVotesWithParams: TypedContractMethod<
+    [account: AddressLike, blockNumber: BigNumberish, params: BytesLike],
+    [bigint],
+    "view"
+  >;
 
-  setVotingDelay(
-    newVotingDelay: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  grantRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-  setVotingPeriod(
-    newVotingPeriod: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  hasRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [boolean],
+    "view"
+  >;
 
-  state(
-    proposalId: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<number>;
+  hasVoted: TypedContractMethod<
+    [proposalId: BigNumberish, account: AddressLike],
+    [boolean],
+    "view"
+  >;
 
-  supportsInterface(
-    interfaceId: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
+  hashProposal: TypedContractMethod<
+    [
+      targets: AddressLike[],
+      values: BigNumberish[],
+      calldatas: BytesLike[],
+      descriptionHash: BytesLike
+    ],
+    [bigint],
+    "view"
+  >;
 
-  timelock(overrides?: CallOverrides): Promise<string>;
+  name: TypedContractMethod<[], [string], "view">;
 
-  token(overrides?: CallOverrides): Promise<string>;
+  onERC1155BatchReceived: TypedContractMethod<
+    [
+      arg0: AddressLike,
+      arg1: AddressLike,
+      arg2: BigNumberish[],
+      arg3: BigNumberish[],
+      arg4: BytesLike
+    ],
+    [string],
+    "nonpayable"
+  >;
 
-  updateQuorumNumerator(
-    newQuorumNumerator: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  onERC1155Received: TypedContractMethod<
+    [
+      arg0: AddressLike,
+      arg1: AddressLike,
+      arg2: BigNumberish,
+      arg3: BigNumberish,
+      arg4: BytesLike
+    ],
+    [string],
+    "nonpayable"
+  >;
 
-  updateTimelock(
-    newTimelock: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  onERC721Received: TypedContractMethod<
+    [arg0: AddressLike, arg1: AddressLike, arg2: BigNumberish, arg3: BytesLike],
+    [string],
+    "nonpayable"
+  >;
 
-  version(overrides?: CallOverrides): Promise<string>;
+  proposalDeadline: TypedContractMethod<
+    [proposalId: BigNumberish],
+    [bigint],
+    "view"
+  >;
 
-  votingDelay(overrides?: CallOverrides): Promise<BigNumber>;
+  proposalEta: TypedContractMethod<
+    [proposalId: BigNumberish],
+    [bigint],
+    "view"
+  >;
 
-  votingPeriod(overrides?: CallOverrides): Promise<BigNumber>;
+  proposalSnapshot: TypedContractMethod<
+    [proposalId: BigNumberish],
+    [bigint],
+    "view"
+  >;
 
-  callStatic: {
-    BALLOT_TYPEHASH(overrides?: CallOverrides): Promise<string>;
+  proposalThreshold: TypedContractMethod<[], [bigint], "view">;
 
-    COUNTING_MODE(overrides?: CallOverrides): Promise<string>;
-
-    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
-
-    EXTENDED_BALLOT_TYPEHASH(overrides?: CallOverrides): Promise<string>;
-
-    cancel(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      descriptionHash: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    castVote(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    castVoteBySig(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    castVoteWithReason(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      reason: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    castVoteWithReasonAndParams(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      reason: PromiseOrValue<string>,
-      params: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    castVoteWithReasonAndParamsBySig(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      reason: PromiseOrValue<string>,
-      params: PromiseOrValue<BytesLike>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    execute(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      descriptionHash: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getRoleAdmin(
-      role: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    getVotes(
-      account: PromiseOrValue<string>,
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getVotesWithParams(
-      account: PromiseOrValue<string>,
-      blockNumber: PromiseOrValue<BigNumberish>,
-      params: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    grantRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    hasRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    hasVoted(
-      proposalId: PromiseOrValue<BigNumberish>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    hashProposal(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      descriptionHash: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    name(overrides?: CallOverrides): Promise<string>;
-
-    onERC1155BatchReceived(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      arg2: PromiseOrValue<BigNumberish>[],
-      arg3: PromiseOrValue<BigNumberish>[],
-      arg4: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    onERC1155Received(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      arg2: PromiseOrValue<BigNumberish>,
-      arg3: PromiseOrValue<BigNumberish>,
-      arg4: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    onERC721Received(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      arg2: PromiseOrValue<BigNumberish>,
-      arg3: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    proposalDeadline(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    proposalEta(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    proposalSnapshot(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    proposalThreshold(overrides?: CallOverrides): Promise<BigNumber>;
-
-    proposalVotes(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber, BigNumber] & {
-        againstVotes: BigNumber;
-        forVotes: BigNumber;
-        abstainVotes: BigNumber;
+  proposalVotes: TypedContractMethod<
+    [proposalId: BigNumberish],
+    [
+      [bigint, bigint, bigint] & {
+        againstVotes: bigint;
+        forVotes: bigint;
+        abstainVotes: bigint;
       }
-    >;
+    ],
+    "view"
+  >;
 
-    propose(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      description: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+  propose: TypedContractMethod<
+    [
+      targets: AddressLike[],
+      values: BigNumberish[],
+      calldatas: BytesLike[],
+      description: string
+    ],
+    [bigint],
+    "nonpayable"
+  >;
 
-    queue(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      descriptionHash: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+  queue: TypedContractMethod<
+    [
+      targets: AddressLike[],
+      values: BigNumberish[],
+      calldatas: BytesLike[],
+      descriptionHash: BytesLike
+    ],
+    [bigint],
+    "nonpayable"
+  >;
 
-    quorum(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+  quorum: TypedContractMethod<[blockNumber: BigNumberish], [bigint], "view">;
 
-    quorumDenominator(overrides?: CallOverrides): Promise<BigNumber>;
+  quorumDenominator: TypedContractMethod<[], [bigint], "view">;
 
-    quorumNumerator(overrides?: CallOverrides): Promise<BigNumber>;
+  quorumNumerator: TypedContractMethod<[], [bigint], "view">;
 
-    relay(
-      target: PromiseOrValue<string>,
-      value: PromiseOrValue<BigNumberish>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  relay: TypedContractMethod<
+    [target: AddressLike, value: BigNumberish, data: BytesLike],
+    [void],
+    "nonpayable"
+  >;
 
-    renounceRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  renounceRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    revokeRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  revokeRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    setProposalThreshold(
-      newProposalThreshold: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setProposalThreshold: TypedContractMethod<
+    [newProposalThreshold: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    setVotingDelay(
-      newVotingDelay: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setVotingDelay: TypedContractMethod<
+    [newVotingDelay: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    setVotingPeriod(
-      newVotingPeriod: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setVotingPeriod: TypedContractMethod<
+    [newVotingPeriod: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    state(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<number>;
+  state: TypedContractMethod<[proposalId: BigNumberish], [bigint], "view">;
 
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+  supportsInterface: TypedContractMethod<
+    [interfaceId: BytesLike],
+    [boolean],
+    "view"
+  >;
 
-    timelock(overrides?: CallOverrides): Promise<string>;
+  timelock: TypedContractMethod<[], [string], "view">;
 
-    token(overrides?: CallOverrides): Promise<string>;
+  token: TypedContractMethod<[], [string], "view">;
 
-    updateQuorumNumerator(
-      newQuorumNumerator: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  updateQuorumNumerator: TypedContractMethod<
+    [newQuorumNumerator: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    updateTimelock(
-      newTimelock: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  updateTimelock: TypedContractMethod<
+    [newTimelock: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    version(overrides?: CallOverrides): Promise<string>;
+  version: TypedContractMethod<[], [string], "view">;
 
-    votingDelay(overrides?: CallOverrides): Promise<BigNumber>;
+  votingDelay: TypedContractMethod<[], [bigint], "view">;
 
-    votingPeriod(overrides?: CallOverrides): Promise<BigNumber>;
-  };
+  votingPeriod: TypedContractMethod<[], [bigint], "view">;
+
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
+
+  getFunction(
+    nameOrSignature: "BALLOT_TYPEHASH"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "COUNTING_MODE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "DEFAULT_ADMIN_ROLE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "EXTENDED_BALLOT_TYPEHASH"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "cancel"
+  ): TypedContractMethod<
+    [
+      targets: AddressLike[],
+      values: BigNumberish[],
+      calldatas: BytesLike[],
+      descriptionHash: BytesLike
+    ],
+    [bigint],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "castVote"
+  ): TypedContractMethod<
+    [proposalId: BigNumberish, support: BigNumberish],
+    [bigint],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "castVoteBySig"
+  ): TypedContractMethod<
+    [
+      proposalId: BigNumberish,
+      support: BigNumberish,
+      v: BigNumberish,
+      r: BytesLike,
+      s: BytesLike
+    ],
+    [bigint],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "castVoteWithReason"
+  ): TypedContractMethod<
+    [proposalId: BigNumberish, support: BigNumberish, reason: string],
+    [bigint],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "castVoteWithReasonAndParams"
+  ): TypedContractMethod<
+    [
+      proposalId: BigNumberish,
+      support: BigNumberish,
+      reason: string,
+      params: BytesLike
+    ],
+    [bigint],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "castVoteWithReasonAndParamsBySig"
+  ): TypedContractMethod<
+    [
+      proposalId: BigNumberish,
+      support: BigNumberish,
+      reason: string,
+      params: BytesLike,
+      v: BigNumberish,
+      r: BytesLike,
+      s: BytesLike
+    ],
+    [bigint],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "execute"
+  ): TypedContractMethod<
+    [
+      targets: AddressLike[],
+      values: BigNumberish[],
+      calldatas: BytesLike[],
+      descriptionHash: BytesLike
+    ],
+    [bigint],
+    "payable"
+  >;
+  getFunction(
+    nameOrSignature: "getRoleAdmin"
+  ): TypedContractMethod<[role: BytesLike], [string], "view">;
+  getFunction(
+    nameOrSignature: "getVotes"
+  ): TypedContractMethod<
+    [account: AddressLike, blockNumber: BigNumberish],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getVotesWithParams"
+  ): TypedContractMethod<
+    [account: AddressLike, blockNumber: BigNumberish, params: BytesLike],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "grantRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "hasRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [boolean],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "hasVoted"
+  ): TypedContractMethod<
+    [proposalId: BigNumberish, account: AddressLike],
+    [boolean],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "hashProposal"
+  ): TypedContractMethod<
+    [
+      targets: AddressLike[],
+      values: BigNumberish[],
+      calldatas: BytesLike[],
+      descriptionHash: BytesLike
+    ],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "name"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "onERC1155BatchReceived"
+  ): TypedContractMethod<
+    [
+      arg0: AddressLike,
+      arg1: AddressLike,
+      arg2: BigNumberish[],
+      arg3: BigNumberish[],
+      arg4: BytesLike
+    ],
+    [string],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "onERC1155Received"
+  ): TypedContractMethod<
+    [
+      arg0: AddressLike,
+      arg1: AddressLike,
+      arg2: BigNumberish,
+      arg3: BigNumberish,
+      arg4: BytesLike
+    ],
+    [string],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "onERC721Received"
+  ): TypedContractMethod<
+    [arg0: AddressLike, arg1: AddressLike, arg2: BigNumberish, arg3: BytesLike],
+    [string],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "proposalDeadline"
+  ): TypedContractMethod<[proposalId: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "proposalEta"
+  ): TypedContractMethod<[proposalId: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "proposalSnapshot"
+  ): TypedContractMethod<[proposalId: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "proposalThreshold"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "proposalVotes"
+  ): TypedContractMethod<
+    [proposalId: BigNumberish],
+    [
+      [bigint, bigint, bigint] & {
+        againstVotes: bigint;
+        forVotes: bigint;
+        abstainVotes: bigint;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "propose"
+  ): TypedContractMethod<
+    [
+      targets: AddressLike[],
+      values: BigNumberish[],
+      calldatas: BytesLike[],
+      description: string
+    ],
+    [bigint],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "queue"
+  ): TypedContractMethod<
+    [
+      targets: AddressLike[],
+      values: BigNumberish[],
+      calldatas: BytesLike[],
+      descriptionHash: BytesLike
+    ],
+    [bigint],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "quorum"
+  ): TypedContractMethod<[blockNumber: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "quorumDenominator"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "quorumNumerator"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "relay"
+  ): TypedContractMethod<
+    [target: AddressLike, value: BigNumberish, data: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "renounceRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "revokeRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setProposalThreshold"
+  ): TypedContractMethod<
+    [newProposalThreshold: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setVotingDelay"
+  ): TypedContractMethod<[newVotingDelay: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setVotingPeriod"
+  ): TypedContractMethod<[newVotingPeriod: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "state"
+  ): TypedContractMethod<[proposalId: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "supportsInterface"
+  ): TypedContractMethod<[interfaceId: BytesLike], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "timelock"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "token"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "updateQuorumNumerator"
+  ): TypedContractMethod<
+    [newQuorumNumerator: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "updateTimelock"
+  ): TypedContractMethod<[newTimelock: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "version"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "votingDelay"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "votingPeriod"
+  ): TypedContractMethod<[], [bigint], "view">;
+
+  getEvent(
+    key: "ProposalCanceled"
+  ): TypedContractEvent<
+    ProposalCanceledEvent.InputTuple,
+    ProposalCanceledEvent.OutputTuple,
+    ProposalCanceledEvent.OutputObject
+  >;
+  getEvent(
+    key: "ProposalCreated"
+  ): TypedContractEvent<
+    ProposalCreatedEvent.InputTuple,
+    ProposalCreatedEvent.OutputTuple,
+    ProposalCreatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "ProposalExecuted"
+  ): TypedContractEvent<
+    ProposalExecutedEvent.InputTuple,
+    ProposalExecutedEvent.OutputTuple,
+    ProposalExecutedEvent.OutputObject
+  >;
+  getEvent(
+    key: "ProposalQueued"
+  ): TypedContractEvent<
+    ProposalQueuedEvent.InputTuple,
+    ProposalQueuedEvent.OutputTuple,
+    ProposalQueuedEvent.OutputObject
+  >;
+  getEvent(
+    key: "ProposalThresholdSet"
+  ): TypedContractEvent<
+    ProposalThresholdSetEvent.InputTuple,
+    ProposalThresholdSetEvent.OutputTuple,
+    ProposalThresholdSetEvent.OutputObject
+  >;
+  getEvent(
+    key: "QuorumNumeratorUpdated"
+  ): TypedContractEvent<
+    QuorumNumeratorUpdatedEvent.InputTuple,
+    QuorumNumeratorUpdatedEvent.OutputTuple,
+    QuorumNumeratorUpdatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RoleAdminChanged"
+  ): TypedContractEvent<
+    RoleAdminChangedEvent.InputTuple,
+    RoleAdminChangedEvent.OutputTuple,
+    RoleAdminChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RoleGranted"
+  ): TypedContractEvent<
+    RoleGrantedEvent.InputTuple,
+    RoleGrantedEvent.OutputTuple,
+    RoleGrantedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RoleRevoked"
+  ): TypedContractEvent<
+    RoleRevokedEvent.InputTuple,
+    RoleRevokedEvent.OutputTuple,
+    RoleRevokedEvent.OutputObject
+  >;
+  getEvent(
+    key: "TimelockChange"
+  ): TypedContractEvent<
+    TimelockChangeEvent.InputTuple,
+    TimelockChangeEvent.OutputTuple,
+    TimelockChangeEvent.OutputObject
+  >;
+  getEvent(
+    key: "VoteCast"
+  ): TypedContractEvent<
+    VoteCastEvent.InputTuple,
+    VoteCastEvent.OutputTuple,
+    VoteCastEvent.OutputObject
+  >;
+  getEvent(
+    key: "VoteCastWithParams"
+  ): TypedContractEvent<
+    VoteCastWithParamsEvent.InputTuple,
+    VoteCastWithParamsEvent.OutputTuple,
+    VoteCastWithParamsEvent.OutputObject
+  >;
+  getEvent(
+    key: "VotingDelaySet"
+  ): TypedContractEvent<
+    VotingDelaySetEvent.InputTuple,
+    VotingDelaySetEvent.OutputTuple,
+    VotingDelaySetEvent.OutputObject
+  >;
+  getEvent(
+    key: "VotingPeriodSet"
+  ): TypedContractEvent<
+    VotingPeriodSetEvent.InputTuple,
+    VotingPeriodSetEvent.OutputTuple,
+    VotingPeriodSetEvent.OutputObject
+  >;
 
   filters: {
-    "ProposalCanceled(uint256)"(proposalId?: null): ProposalCanceledEventFilter;
-    ProposalCanceled(proposalId?: null): ProposalCanceledEventFilter;
-
-    "ProposalCreated(uint256,address,address[],uint256[],string[],bytes[],uint256,uint256,string)"(
-      proposalId?: null,
-      proposer?: null,
-      targets?: null,
-      values?: null,
-      signatures?: null,
-      calldatas?: null,
-      startBlock?: null,
-      endBlock?: null,
-      description?: null
-    ): ProposalCreatedEventFilter;
-    ProposalCreated(
-      proposalId?: null,
-      proposer?: null,
-      targets?: null,
-      values?: null,
-      signatures?: null,
-      calldatas?: null,
-      startBlock?: null,
-      endBlock?: null,
-      description?: null
-    ): ProposalCreatedEventFilter;
-
-    "ProposalExecuted(uint256)"(proposalId?: null): ProposalExecutedEventFilter;
-    ProposalExecuted(proposalId?: null): ProposalExecutedEventFilter;
-
-    "ProposalQueued(uint256,uint256)"(
-      proposalId?: null,
-      eta?: null
-    ): ProposalQueuedEventFilter;
-    ProposalQueued(proposalId?: null, eta?: null): ProposalQueuedEventFilter;
-
-    "ProposalThresholdSet(uint256,uint256)"(
-      oldProposalThreshold?: null,
-      newProposalThreshold?: null
-    ): ProposalThresholdSetEventFilter;
-    ProposalThresholdSet(
-      oldProposalThreshold?: null,
-      newProposalThreshold?: null
-    ): ProposalThresholdSetEventFilter;
-
-    "QuorumNumeratorUpdated(uint256,uint256)"(
-      oldQuorumNumerator?: null,
-      newQuorumNumerator?: null
-    ): QuorumNumeratorUpdatedEventFilter;
-    QuorumNumeratorUpdated(
-      oldQuorumNumerator?: null,
-      newQuorumNumerator?: null
-    ): QuorumNumeratorUpdatedEventFilter;
-
-    "RoleAdminChanged(bytes32,bytes32,bytes32)"(
-      role?: PromiseOrValue<BytesLike> | null,
-      previousAdminRole?: PromiseOrValue<BytesLike> | null,
-      newAdminRole?: PromiseOrValue<BytesLike> | null
-    ): RoleAdminChangedEventFilter;
-    RoleAdminChanged(
-      role?: PromiseOrValue<BytesLike> | null,
-      previousAdminRole?: PromiseOrValue<BytesLike> | null,
-      newAdminRole?: PromiseOrValue<BytesLike> | null
-    ): RoleAdminChangedEventFilter;
-
-    "RoleGranted(bytes32,address,address)"(
-      role?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      sender?: PromiseOrValue<string> | null
-    ): RoleGrantedEventFilter;
-    RoleGranted(
-      role?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      sender?: PromiseOrValue<string> | null
-    ): RoleGrantedEventFilter;
-
-    "RoleRevoked(bytes32,address,address)"(
-      role?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      sender?: PromiseOrValue<string> | null
-    ): RoleRevokedEventFilter;
-    RoleRevoked(
-      role?: PromiseOrValue<BytesLike> | null,
-      account?: PromiseOrValue<string> | null,
-      sender?: PromiseOrValue<string> | null
-    ): RoleRevokedEventFilter;
-
-    "TimelockChange(address,address)"(
-      oldTimelock?: null,
-      newTimelock?: null
-    ): TimelockChangeEventFilter;
-    TimelockChange(
-      oldTimelock?: null,
-      newTimelock?: null
-    ): TimelockChangeEventFilter;
-
-    "VoteCast(address,uint256,uint8,uint256,string)"(
-      voter?: PromiseOrValue<string> | null,
-      proposalId?: null,
-      support?: null,
-      weight?: null,
-      reason?: null
-    ): VoteCastEventFilter;
-    VoteCast(
-      voter?: PromiseOrValue<string> | null,
-      proposalId?: null,
-      support?: null,
-      weight?: null,
-      reason?: null
-    ): VoteCastEventFilter;
-
-    "VoteCastWithParams(address,uint256,uint8,uint256,string,bytes)"(
-      voter?: PromiseOrValue<string> | null,
-      proposalId?: null,
-      support?: null,
-      weight?: null,
-      reason?: null,
-      params?: null
-    ): VoteCastWithParamsEventFilter;
-    VoteCastWithParams(
-      voter?: PromiseOrValue<string> | null,
-      proposalId?: null,
-      support?: null,
-      weight?: null,
-      reason?: null,
-      params?: null
-    ): VoteCastWithParamsEventFilter;
-
-    "VotingDelaySet(uint256,uint256)"(
-      oldVotingDelay?: null,
-      newVotingDelay?: null
-    ): VotingDelaySetEventFilter;
-    VotingDelaySet(
-      oldVotingDelay?: null,
-      newVotingDelay?: null
-    ): VotingDelaySetEventFilter;
-
-    "VotingPeriodSet(uint256,uint256)"(
-      oldVotingPeriod?: null,
-      newVotingPeriod?: null
-    ): VotingPeriodSetEventFilter;
-    VotingPeriodSet(
-      oldVotingPeriod?: null,
-      newVotingPeriod?: null
-    ): VotingPeriodSetEventFilter;
-  };
-
-  estimateGas: {
-    BALLOT_TYPEHASH(overrides?: CallOverrides): Promise<BigNumber>;
-
-    COUNTING_MODE(overrides?: CallOverrides): Promise<BigNumber>;
-
-    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
-
-    EXTENDED_BALLOT_TYPEHASH(overrides?: CallOverrides): Promise<BigNumber>;
-
-    cancel(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      descriptionHash: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    castVote(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    castVoteBySig(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    castVoteWithReason(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      reason: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    castVoteWithReasonAndParams(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      reason: PromiseOrValue<string>,
-      params: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    castVoteWithReasonAndParamsBySig(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      reason: PromiseOrValue<string>,
-      params: PromiseOrValue<BytesLike>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    execute(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      descriptionHash: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    getRoleAdmin(
-      role: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getVotes(
-      account: PromiseOrValue<string>,
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getVotesWithParams(
-      account: PromiseOrValue<string>,
-      blockNumber: PromiseOrValue<BigNumberish>,
-      params: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    grantRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    hasRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    hasVoted(
-      proposalId: PromiseOrValue<BigNumberish>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    hashProposal(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      descriptionHash: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    name(overrides?: CallOverrides): Promise<BigNumber>;
-
-    onERC1155BatchReceived(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      arg2: PromiseOrValue<BigNumberish>[],
-      arg3: PromiseOrValue<BigNumberish>[],
-      arg4: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    onERC1155Received(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      arg2: PromiseOrValue<BigNumberish>,
-      arg3: PromiseOrValue<BigNumberish>,
-      arg4: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    onERC721Received(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      arg2: PromiseOrValue<BigNumberish>,
-      arg3: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    proposalDeadline(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    proposalEta(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    proposalSnapshot(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    proposalThreshold(overrides?: CallOverrides): Promise<BigNumber>;
-
-    proposalVotes(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    propose(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      description: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    queue(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      descriptionHash: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    quorum(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    quorumDenominator(overrides?: CallOverrides): Promise<BigNumber>;
-
-    quorumNumerator(overrides?: CallOverrides): Promise<BigNumber>;
-
-    relay(
-      target: PromiseOrValue<string>,
-      value: PromiseOrValue<BigNumberish>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    renounceRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    revokeRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setProposalThreshold(
-      newProposalThreshold: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setVotingDelay(
-      newVotingDelay: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setVotingPeriod(
-      newVotingPeriod: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    state(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    timelock(overrides?: CallOverrides): Promise<BigNumber>;
-
-    token(overrides?: CallOverrides): Promise<BigNumber>;
-
-    updateQuorumNumerator(
-      newQuorumNumerator: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    updateTimelock(
-      newTimelock: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    version(overrides?: CallOverrides): Promise<BigNumber>;
-
-    votingDelay(overrides?: CallOverrides): Promise<BigNumber>;
-
-    votingPeriod(overrides?: CallOverrides): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    BALLOT_TYPEHASH(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    COUNTING_MODE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    DEFAULT_ADMIN_ROLE(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    EXTENDED_BALLOT_TYPEHASH(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    cancel(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      descriptionHash: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    castVote(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    castVoteBySig(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    castVoteWithReason(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      reason: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    castVoteWithReasonAndParams(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      reason: PromiseOrValue<string>,
-      params: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    castVoteWithReasonAndParamsBySig(
-      proposalId: PromiseOrValue<BigNumberish>,
-      support: PromiseOrValue<BigNumberish>,
-      reason: PromiseOrValue<string>,
-      params: PromiseOrValue<BytesLike>,
-      v: PromiseOrValue<BigNumberish>,
-      r: PromiseOrValue<BytesLike>,
-      s: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    execute(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      descriptionHash: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    getRoleAdmin(
-      role: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getVotes(
-      account: PromiseOrValue<string>,
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getVotesWithParams(
-      account: PromiseOrValue<string>,
-      blockNumber: PromiseOrValue<BigNumberish>,
-      params: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    grantRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    hasRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    hasVoted(
-      proposalId: PromiseOrValue<BigNumberish>,
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    hashProposal(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      descriptionHash: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    onERC1155BatchReceived(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      arg2: PromiseOrValue<BigNumberish>[],
-      arg3: PromiseOrValue<BigNumberish>[],
-      arg4: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    onERC1155Received(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      arg2: PromiseOrValue<BigNumberish>,
-      arg3: PromiseOrValue<BigNumberish>,
-      arg4: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    onERC721Received(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
-      arg2: PromiseOrValue<BigNumberish>,
-      arg3: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    proposalDeadline(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    proposalEta(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    proposalSnapshot(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    proposalThreshold(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    proposalVotes(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    propose(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      description: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    queue(
-      targets: PromiseOrValue<string>[],
-      values: PromiseOrValue<BigNumberish>[],
-      calldatas: PromiseOrValue<BytesLike>[],
-      descriptionHash: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    quorum(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    quorumDenominator(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    quorumNumerator(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    relay(
-      target: PromiseOrValue<string>,
-      value: PromiseOrValue<BigNumberish>,
-      data: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    renounceRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    revokeRole(
-      role: PromiseOrValue<BytesLike>,
-      account: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setProposalThreshold(
-      newProposalThreshold: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setVotingDelay(
-      newVotingDelay: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setVotingPeriod(
-      newVotingPeriod: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    state(
-      proposalId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    supportsInterface(
-      interfaceId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    timelock(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    token(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    updateQuorumNumerator(
-      newQuorumNumerator: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    updateTimelock(
-      newTimelock: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    version(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    votingDelay(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    votingPeriod(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    "ProposalCanceled(uint256)": TypedContractEvent<
+      ProposalCanceledEvent.InputTuple,
+      ProposalCanceledEvent.OutputTuple,
+      ProposalCanceledEvent.OutputObject
+    >;
+    ProposalCanceled: TypedContractEvent<
+      ProposalCanceledEvent.InputTuple,
+      ProposalCanceledEvent.OutputTuple,
+      ProposalCanceledEvent.OutputObject
+    >;
+
+    "ProposalCreated(uint256,address,address[],uint256[],string[],bytes[],uint256,uint256,string)": TypedContractEvent<
+      ProposalCreatedEvent.InputTuple,
+      ProposalCreatedEvent.OutputTuple,
+      ProposalCreatedEvent.OutputObject
+    >;
+    ProposalCreated: TypedContractEvent<
+      ProposalCreatedEvent.InputTuple,
+      ProposalCreatedEvent.OutputTuple,
+      ProposalCreatedEvent.OutputObject
+    >;
+
+    "ProposalExecuted(uint256)": TypedContractEvent<
+      ProposalExecutedEvent.InputTuple,
+      ProposalExecutedEvent.OutputTuple,
+      ProposalExecutedEvent.OutputObject
+    >;
+    ProposalExecuted: TypedContractEvent<
+      ProposalExecutedEvent.InputTuple,
+      ProposalExecutedEvent.OutputTuple,
+      ProposalExecutedEvent.OutputObject
+    >;
+
+    "ProposalQueued(uint256,uint256)": TypedContractEvent<
+      ProposalQueuedEvent.InputTuple,
+      ProposalQueuedEvent.OutputTuple,
+      ProposalQueuedEvent.OutputObject
+    >;
+    ProposalQueued: TypedContractEvent<
+      ProposalQueuedEvent.InputTuple,
+      ProposalQueuedEvent.OutputTuple,
+      ProposalQueuedEvent.OutputObject
+    >;
+
+    "ProposalThresholdSet(uint256,uint256)": TypedContractEvent<
+      ProposalThresholdSetEvent.InputTuple,
+      ProposalThresholdSetEvent.OutputTuple,
+      ProposalThresholdSetEvent.OutputObject
+    >;
+    ProposalThresholdSet: TypedContractEvent<
+      ProposalThresholdSetEvent.InputTuple,
+      ProposalThresholdSetEvent.OutputTuple,
+      ProposalThresholdSetEvent.OutputObject
+    >;
+
+    "QuorumNumeratorUpdated(uint256,uint256)": TypedContractEvent<
+      QuorumNumeratorUpdatedEvent.InputTuple,
+      QuorumNumeratorUpdatedEvent.OutputTuple,
+      QuorumNumeratorUpdatedEvent.OutputObject
+    >;
+    QuorumNumeratorUpdated: TypedContractEvent<
+      QuorumNumeratorUpdatedEvent.InputTuple,
+      QuorumNumeratorUpdatedEvent.OutputTuple,
+      QuorumNumeratorUpdatedEvent.OutputObject
+    >;
+
+    "RoleAdminChanged(bytes32,bytes32,bytes32)": TypedContractEvent<
+      RoleAdminChangedEvent.InputTuple,
+      RoleAdminChangedEvent.OutputTuple,
+      RoleAdminChangedEvent.OutputObject
+    >;
+    RoleAdminChanged: TypedContractEvent<
+      RoleAdminChangedEvent.InputTuple,
+      RoleAdminChangedEvent.OutputTuple,
+      RoleAdminChangedEvent.OutputObject
+    >;
+
+    "RoleGranted(bytes32,address,address)": TypedContractEvent<
+      RoleGrantedEvent.InputTuple,
+      RoleGrantedEvent.OutputTuple,
+      RoleGrantedEvent.OutputObject
+    >;
+    RoleGranted: TypedContractEvent<
+      RoleGrantedEvent.InputTuple,
+      RoleGrantedEvent.OutputTuple,
+      RoleGrantedEvent.OutputObject
+    >;
+
+    "RoleRevoked(bytes32,address,address)": TypedContractEvent<
+      RoleRevokedEvent.InputTuple,
+      RoleRevokedEvent.OutputTuple,
+      RoleRevokedEvent.OutputObject
+    >;
+    RoleRevoked: TypedContractEvent<
+      RoleRevokedEvent.InputTuple,
+      RoleRevokedEvent.OutputTuple,
+      RoleRevokedEvent.OutputObject
+    >;
+
+    "TimelockChange(address,address)": TypedContractEvent<
+      TimelockChangeEvent.InputTuple,
+      TimelockChangeEvent.OutputTuple,
+      TimelockChangeEvent.OutputObject
+    >;
+    TimelockChange: TypedContractEvent<
+      TimelockChangeEvent.InputTuple,
+      TimelockChangeEvent.OutputTuple,
+      TimelockChangeEvent.OutputObject
+    >;
+
+    "VoteCast(address,uint256,uint8,uint256,string)": TypedContractEvent<
+      VoteCastEvent.InputTuple,
+      VoteCastEvent.OutputTuple,
+      VoteCastEvent.OutputObject
+    >;
+    VoteCast: TypedContractEvent<
+      VoteCastEvent.InputTuple,
+      VoteCastEvent.OutputTuple,
+      VoteCastEvent.OutputObject
+    >;
+
+    "VoteCastWithParams(address,uint256,uint8,uint256,string,bytes)": TypedContractEvent<
+      VoteCastWithParamsEvent.InputTuple,
+      VoteCastWithParamsEvent.OutputTuple,
+      VoteCastWithParamsEvent.OutputObject
+    >;
+    VoteCastWithParams: TypedContractEvent<
+      VoteCastWithParamsEvent.InputTuple,
+      VoteCastWithParamsEvent.OutputTuple,
+      VoteCastWithParamsEvent.OutputObject
+    >;
+
+    "VotingDelaySet(uint256,uint256)": TypedContractEvent<
+      VotingDelaySetEvent.InputTuple,
+      VotingDelaySetEvent.OutputTuple,
+      VotingDelaySetEvent.OutputObject
+    >;
+    VotingDelaySet: TypedContractEvent<
+      VotingDelaySetEvent.InputTuple,
+      VotingDelaySetEvent.OutputTuple,
+      VotingDelaySetEvent.OutputObject
+    >;
+
+    "VotingPeriodSet(uint256,uint256)": TypedContractEvent<
+      VotingPeriodSetEvent.InputTuple,
+      VotingPeriodSetEvent.OutputTuple,
+      VotingPeriodSetEvent.OutputObject
+    >;
+    VotingPeriodSet: TypedContractEvent<
+      VotingPeriodSetEvent.InputTuple,
+      VotingPeriodSetEvent.OutputTuple,
+      VotingPeriodSetEvent.OutputObject
+    >;
   };
 }

@@ -1,6 +1,5 @@
-import { AddressZero } from "@ethersproject/constants";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
+import { SignerWithAddress, ZeroAddress } from "ethers";
 import hre from "hardhat";
 import { fixtures } from "../lib/test";
 import { parseTokens, signers } from "../lib/util";
@@ -11,12 +10,14 @@ describe("ArmadaToken", function () {
   let operator: SignerWithAddress;
 
   let token: ArmadaToken;
+  let tokenAddress: string;
 
   let snapshotId: string;
 
   async function fixture() {
     ({ admin, operator } = await signers(hre));
     ({ token } = await fixtures(hre));
+    tokenAddress = await token.getAddress();
   }
 
   before(async function () {
@@ -32,9 +33,9 @@ describe("ArmadaToken", function () {
   it("Should check constructor args", async function () {
     const factory = await hre.ethers.getContractFactory("ArmadaToken");
     await expect(factory.deploy("Armada", "ARMADA", [], [admin.address], [admin.address])).to.be.revertedWith("no admins");
-    await expect(factory.deploy("Armada", "ARMADA", [AddressZero], [admin.address], [admin.address])).to.be.revertedWith("zero admin");
-    await expect(factory.deploy("Armada", "ARMADA", [admin.address], [AddressZero], [admin.address])).to.be.revertedWith("zero minter");
-    await expect(factory.deploy("Armada", "ARMADA", [admin.address], [admin.address], [AddressZero])).to.be.revertedWith("zero pauser");
+    await expect(factory.deploy("Armada", "ARMADA", [ZeroAddress], [admin.address], [admin.address])).to.be.revertedWith("zero admin");
+    await expect(factory.deploy("Armada", "ARMADA", [admin.address], [ZeroAddress], [admin.address])).to.be.revertedWith("zero minter");
+    await expect(factory.deploy("Armada", "ARMADA", [admin.address], [admin.address], [ZeroAddress])).to.be.revertedWith("zero pauser");
   });
 
   it("Should mint/burn ok", async function () {
@@ -48,11 +49,11 @@ describe("ArmadaToken", function () {
     // burn from
     const originalBal = await token.balanceOf(admin.address);
     expect(await token.connect(admin).approve(operator.address, parseTokens("100")));
-    expect(await token.allowance(admin.address, token.address));
+    expect(await token.allowance(admin.address, tokenAddress));
     expect(await token.connect(operator).burnFrom(admin.address, parseTokens("100"))).to.be.ok;
 
     const newBal = await token.connect(admin).balanceOf(admin.address);
-    expect(originalBal.sub(newBal)).to.eq(parseTokens("100"));
+    expect(originalBal - newBal).to.eq(parseTokens("100"));
   });
 
   it("Should pause/unpause ok", async function () {
