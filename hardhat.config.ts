@@ -1,4 +1,5 @@
 import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-foundry";
 import "@openzeppelin/defender-sdk";
 import "@openzeppelin/hardhat-upgrades";
 import "hardhat-deploy";
