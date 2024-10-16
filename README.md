@@ -37,6 +37,7 @@ $ npx hardhat --network localhost|staging seed # Uploads dummy programmatic cont
 $ npx hardhat --network localhost|staging deploy [--data data/foo.json] # Deploys everything
 $ npx hardhat --network localhost|staging deploy --tags ArmadaNodesImpl # Redeploys a library
 $ npx hardhat --network localhost|staging upgrade ArmadaNodes [--libs ...] # Upgrades a proxy
+$ npx hardhat size-contracts # Reports contract sizes
 $ git commit -a # Commit deployed ABI
 ```
 
