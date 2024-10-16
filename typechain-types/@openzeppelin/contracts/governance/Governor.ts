@@ -27,13 +27,17 @@ export interface GovernorInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "BALLOT_TYPEHASH"
+      | "CLOCK_MODE"
       | "COUNTING_MODE"
       | "EXTENDED_BALLOT_TYPEHASH"
+      | "cancel"
       | "castVote"
       | "castVoteBySig"
       | "castVoteWithReason"
       | "castVoteWithReasonAndParams"
       | "castVoteWithReasonAndParamsBySig"
+      | "clock"
+      | "eip712Domain"
       | "execute"
       | "getVotes"
       | "getVotesWithParams"
@@ -44,6 +48,7 @@ export interface GovernorInterface extends Interface {
       | "onERC1155Received"
       | "onERC721Received"
       | "proposalDeadline"
+      | "proposalProposer"
       | "proposalSnapshot"
       | "proposalThreshold"
       | "propose"
@@ -58,6 +63,7 @@ export interface GovernorInterface extends Interface {
 
   getEvent(
     nameOrSignatureOrTopic:
+      | "EIP712DomainChanged"
       | "ProposalCanceled"
       | "ProposalCreated"
       | "ProposalExecuted"
@@ -70,12 +76,20 @@ export interface GovernorInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "CLOCK_MODE",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "COUNTING_MODE",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "EXTENDED_BALLOT_TYPEHASH",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "cancel",
+    values: [AddressLike[], BigNumberish[], BytesLike[], BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "castVote",
@@ -104,6 +118,11 @@ export interface GovernorInterface extends Interface {
       BytesLike,
       BytesLike
     ]
+  ): string;
+  encodeFunctionData(functionFragment: "clock", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "eip712Domain",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "execute",
@@ -149,6 +168,10 @@ export interface GovernorInterface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "proposalProposer",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "proposalSnapshot",
     values: [BigNumberish]
   ): string;
@@ -187,6 +210,7 @@ export interface GovernorInterface extends Interface {
     functionFragment: "BALLOT_TYPEHASH",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "CLOCK_MODE", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "COUNTING_MODE",
     data: BytesLike
@@ -195,6 +219,7 @@ export interface GovernorInterface extends Interface {
     functionFragment: "EXTENDED_BALLOT_TYPEHASH",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "cancel", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "castVote", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "castVoteBySig",
@@ -210,6 +235,11 @@ export interface GovernorInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "castVoteWithReasonAndParamsBySig",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "clock", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "eip712Domain",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
@@ -241,6 +271,10 @@ export interface GovernorInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "proposalProposer",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "proposalSnapshot",
     data: BytesLike
   ): Result;
@@ -267,6 +301,16 @@ export interface GovernorInterface extends Interface {
   ): Result;
 }
 
+export namespace EIP712DomainChangedEvent {
+  export type InputTuple = [];
+  export type OutputTuple = [];
+  export interface OutputObject {}
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace ProposalCanceledEvent {
   export type InputTuple = [proposalId: BigNumberish];
   export type OutputTuple = [proposalId: bigint];
@@ -287,8 +331,8 @@ export namespace ProposalCreatedEvent {
     values: BigNumberish[],
     signatures: string[],
     calldatas: BytesLike[],
-    startBlock: BigNumberish,
-    endBlock: BigNumberish,
+    voteStart: BigNumberish,
+    voteEnd: BigNumberish,
     description: string
   ];
   export type OutputTuple = [
@@ -298,8 +342,8 @@ export namespace ProposalCreatedEvent {
     values: bigint[],
     signatures: string[],
     calldatas: string[],
-    startBlock: bigint,
-    endBlock: bigint,
+    voteStart: bigint,
+    voteEnd: bigint,
     description: string
   ];
   export interface OutputObject {
@@ -309,8 +353,8 @@ export namespace ProposalCreatedEvent {
     values: bigint[];
     signatures: string[];
     calldatas: string[];
-    startBlock: bigint;
-    endBlock: bigint;
+    voteStart: bigint;
+    voteEnd: bigint;
     description: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -435,9 +479,22 @@ export interface Governor extends BaseContract {
 
   BALLOT_TYPEHASH: TypedContractMethod<[], [string], "view">;
 
+  CLOCK_MODE: TypedContractMethod<[], [string], "view">;
+
   COUNTING_MODE: TypedContractMethod<[], [string], "view">;
 
   EXTENDED_BALLOT_TYPEHASH: TypedContractMethod<[], [string], "view">;
+
+  cancel: TypedContractMethod<
+    [
+      targets: AddressLike[],
+      values: BigNumberish[],
+      calldatas: BytesLike[],
+      descriptionHash: BytesLike
+    ],
+    [bigint],
+    "nonpayable"
+  >;
 
   castVote: TypedContractMethod<
     [proposalId: BigNumberish, support: BigNumberish],
@@ -488,6 +545,24 @@ export interface Governor extends BaseContract {
     "nonpayable"
   >;
 
+  clock: TypedContractMethod<[], [bigint], "view">;
+
+  eip712Domain: TypedContractMethod<
+    [],
+    [
+      [string, string, string, bigint, string, string, bigint[]] & {
+        fields: string;
+        name: string;
+        version: string;
+        chainId: bigint;
+        verifyingContract: string;
+        salt: string;
+        extensions: bigint[];
+      }
+    ],
+    "view"
+  >;
+
   execute: TypedContractMethod<
     [
       targets: AddressLike[],
@@ -500,13 +575,13 @@ export interface Governor extends BaseContract {
   >;
 
   getVotes: TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish],
+    [account: AddressLike, timepoint: BigNumberish],
     [bigint],
     "view"
   >;
 
   getVotesWithParams: TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish, params: BytesLike],
+    [account: AddressLike, timepoint: BigNumberish, params: BytesLike],
     [bigint],
     "view"
   >;
@@ -566,6 +641,12 @@ export interface Governor extends BaseContract {
     "view"
   >;
 
+  proposalProposer: TypedContractMethod<
+    [proposalId: BigNumberish],
+    [string],
+    "view"
+  >;
+
   proposalSnapshot: TypedContractMethod<
     [proposalId: BigNumberish],
     [bigint],
@@ -585,12 +666,12 @@ export interface Governor extends BaseContract {
     "nonpayable"
   >;
 
-  quorum: TypedContractMethod<[blockNumber: BigNumberish], [bigint], "view">;
+  quorum: TypedContractMethod<[timepoint: BigNumberish], [bigint], "view">;
 
   relay: TypedContractMethod<
     [target: AddressLike, value: BigNumberish, data: BytesLike],
     [void],
-    "nonpayable"
+    "payable"
   >;
 
   state: TypedContractMethod<[proposalId: BigNumberish], [bigint], "view">;
@@ -615,11 +696,26 @@ export interface Governor extends BaseContract {
     nameOrSignature: "BALLOT_TYPEHASH"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "CLOCK_MODE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "COUNTING_MODE"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "EXTENDED_BALLOT_TYPEHASH"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "cancel"
+  ): TypedContractMethod<
+    [
+      targets: AddressLike[],
+      values: BigNumberish[],
+      calldatas: BytesLike[],
+      descriptionHash: BytesLike
+    ],
+    [bigint],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "castVote"
   ): TypedContractMethod<
@@ -675,6 +771,26 @@ export interface Governor extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "clock"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "eip712Domain"
+  ): TypedContractMethod<
+    [],
+    [
+      [string, string, string, bigint, string, string, bigint[]] & {
+        fields: string;
+        name: string;
+        version: string;
+        chainId: bigint;
+        verifyingContract: string;
+        salt: string;
+        extensions: bigint[];
+      }
+    ],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "execute"
   ): TypedContractMethod<
     [
@@ -689,14 +805,14 @@ export interface Governor extends BaseContract {
   getFunction(
     nameOrSignature: "getVotes"
   ): TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish],
+    [account: AddressLike, timepoint: BigNumberish],
     [bigint],
     "view"
   >;
   getFunction(
     nameOrSignature: "getVotesWithParams"
   ): TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish, params: BytesLike],
+    [account: AddressLike, timepoint: BigNumberish, params: BytesLike],
     [bigint],
     "view"
   >;
@@ -759,6 +875,9 @@ export interface Governor extends BaseContract {
     nameOrSignature: "proposalDeadline"
   ): TypedContractMethod<[proposalId: BigNumberish], [bigint], "view">;
   getFunction(
+    nameOrSignature: "proposalProposer"
+  ): TypedContractMethod<[proposalId: BigNumberish], [string], "view">;
+  getFunction(
     nameOrSignature: "proposalSnapshot"
   ): TypedContractMethod<[proposalId: BigNumberish], [bigint], "view">;
   getFunction(
@@ -778,13 +897,13 @@ export interface Governor extends BaseContract {
   >;
   getFunction(
     nameOrSignature: "quorum"
-  ): TypedContractMethod<[blockNumber: BigNumberish], [bigint], "view">;
+  ): TypedContractMethod<[timepoint: BigNumberish], [bigint], "view">;
   getFunction(
     nameOrSignature: "relay"
   ): TypedContractMethod<
     [target: AddressLike, value: BigNumberish, data: BytesLike],
     [void],
-    "nonpayable"
+    "payable"
   >;
   getFunction(
     nameOrSignature: "state"
@@ -802,6 +921,13 @@ export interface Governor extends BaseContract {
     nameOrSignature: "votingPeriod"
   ): TypedContractMethod<[], [bigint], "view">;
 
+  getEvent(
+    key: "EIP712DomainChanged"
+  ): TypedContractEvent<
+    EIP712DomainChangedEvent.InputTuple,
+    EIP712DomainChangedEvent.OutputTuple,
+    EIP712DomainChangedEvent.OutputObject
+  >;
   getEvent(
     key: "ProposalCanceled"
   ): TypedContractEvent<
@@ -839,6 +965,17 @@ export interface Governor extends BaseContract {
   >;
 
   filters: {
+    "EIP712DomainChanged()": TypedContractEvent<
+      EIP712DomainChangedEvent.InputTuple,
+      EIP712DomainChangedEvent.OutputTuple,
+      EIP712DomainChangedEvent.OutputObject
+    >;
+    EIP712DomainChanged: TypedContractEvent<
+      EIP712DomainChangedEvent.InputTuple,
+      EIP712DomainChangedEvent.OutputTuple,
+      EIP712DomainChangedEvent.OutputObject
+    >;
+
     "ProposalCanceled(uint256)": TypedContractEvent<
       ProposalCanceledEvent.InputTuple,
       ProposalCanceledEvent.OutputTuple,

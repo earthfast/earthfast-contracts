@@ -27,13 +27,17 @@ export interface GovernorVotesQuorumFractionInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "BALLOT_TYPEHASH"
+      | "CLOCK_MODE"
       | "COUNTING_MODE"
       | "EXTENDED_BALLOT_TYPEHASH"
+      | "cancel"
       | "castVote"
       | "castVoteBySig"
       | "castVoteWithReason"
       | "castVoteWithReasonAndParams"
       | "castVoteWithReasonAndParamsBySig"
+      | "clock"
+      | "eip712Domain"
       | "execute"
       | "getVotes"
       | "getVotesWithParams"
@@ -44,12 +48,14 @@ export interface GovernorVotesQuorumFractionInterface extends Interface {
       | "onERC1155Received"
       | "onERC721Received"
       | "proposalDeadline"
+      | "proposalProposer"
       | "proposalSnapshot"
       | "proposalThreshold"
       | "propose"
       | "quorum"
       | "quorumDenominator"
-      | "quorumNumerator"
+      | "quorumNumerator(uint256)"
+      | "quorumNumerator()"
       | "relay"
       | "state"
       | "supportsInterface"
@@ -62,6 +68,7 @@ export interface GovernorVotesQuorumFractionInterface extends Interface {
 
   getEvent(
     nameOrSignatureOrTopic:
+      | "EIP712DomainChanged"
       | "ProposalCanceled"
       | "ProposalCreated"
       | "ProposalExecuted"
@@ -75,12 +82,20 @@ export interface GovernorVotesQuorumFractionInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "CLOCK_MODE",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "COUNTING_MODE",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "EXTENDED_BALLOT_TYPEHASH",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "cancel",
+    values: [AddressLike[], BigNumberish[], BytesLike[], BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "castVote",
@@ -109,6 +124,11 @@ export interface GovernorVotesQuorumFractionInterface extends Interface {
       BytesLike,
       BytesLike
     ]
+  ): string;
+  encodeFunctionData(functionFragment: "clock", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "eip712Domain",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "execute",
@@ -154,6 +174,10 @@ export interface GovernorVotesQuorumFractionInterface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "proposalProposer",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "proposalSnapshot",
     values: [BigNumberish]
   ): string;
@@ -174,7 +198,11 @@ export interface GovernorVotesQuorumFractionInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "quorumNumerator",
+    functionFragment: "quorumNumerator(uint256)",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "quorumNumerator()",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -205,6 +233,7 @@ export interface GovernorVotesQuorumFractionInterface extends Interface {
     functionFragment: "BALLOT_TYPEHASH",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "CLOCK_MODE", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "COUNTING_MODE",
     data: BytesLike
@@ -213,6 +242,7 @@ export interface GovernorVotesQuorumFractionInterface extends Interface {
     functionFragment: "EXTENDED_BALLOT_TYPEHASH",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "cancel", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "castVote", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "castVoteBySig",
@@ -228,6 +258,11 @@ export interface GovernorVotesQuorumFractionInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "castVoteWithReasonAndParamsBySig",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "clock", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "eip712Domain",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
@@ -259,6 +294,10 @@ export interface GovernorVotesQuorumFractionInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "proposalProposer",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "proposalSnapshot",
     data: BytesLike
   ): Result;
@@ -273,7 +312,11 @@ export interface GovernorVotesQuorumFractionInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "quorumNumerator",
+    functionFragment: "quorumNumerator(uint256)",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "quorumNumerator()",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "relay", data: BytesLike): Result;
@@ -298,6 +341,16 @@ export interface GovernorVotesQuorumFractionInterface extends Interface {
   ): Result;
 }
 
+export namespace EIP712DomainChangedEvent {
+  export type InputTuple = [];
+  export type OutputTuple = [];
+  export interface OutputObject {}
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace ProposalCanceledEvent {
   export type InputTuple = [proposalId: BigNumberish];
   export type OutputTuple = [proposalId: bigint];
@@ -318,8 +371,8 @@ export namespace ProposalCreatedEvent {
     values: BigNumberish[],
     signatures: string[],
     calldatas: BytesLike[],
-    startBlock: BigNumberish,
-    endBlock: BigNumberish,
+    voteStart: BigNumberish,
+    voteEnd: BigNumberish,
     description: string
   ];
   export type OutputTuple = [
@@ -329,8 +382,8 @@ export namespace ProposalCreatedEvent {
     values: bigint[],
     signatures: string[],
     calldatas: string[],
-    startBlock: bigint,
-    endBlock: bigint,
+    voteStart: bigint,
+    voteEnd: bigint,
     description: string
   ];
   export interface OutputObject {
@@ -340,8 +393,8 @@ export namespace ProposalCreatedEvent {
     values: bigint[];
     signatures: string[];
     calldatas: string[];
-    startBlock: bigint;
-    endBlock: bigint;
+    voteStart: bigint;
+    voteEnd: bigint;
     description: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -485,9 +538,22 @@ export interface GovernorVotesQuorumFraction extends BaseContract {
 
   BALLOT_TYPEHASH: TypedContractMethod<[], [string], "view">;
 
+  CLOCK_MODE: TypedContractMethod<[], [string], "view">;
+
   COUNTING_MODE: TypedContractMethod<[], [string], "view">;
 
   EXTENDED_BALLOT_TYPEHASH: TypedContractMethod<[], [string], "view">;
+
+  cancel: TypedContractMethod<
+    [
+      targets: AddressLike[],
+      values: BigNumberish[],
+      calldatas: BytesLike[],
+      descriptionHash: BytesLike
+    ],
+    [bigint],
+    "nonpayable"
+  >;
 
   castVote: TypedContractMethod<
     [proposalId: BigNumberish, support: BigNumberish],
@@ -538,6 +604,24 @@ export interface GovernorVotesQuorumFraction extends BaseContract {
     "nonpayable"
   >;
 
+  clock: TypedContractMethod<[], [bigint], "view">;
+
+  eip712Domain: TypedContractMethod<
+    [],
+    [
+      [string, string, string, bigint, string, string, bigint[]] & {
+        fields: string;
+        name: string;
+        version: string;
+        chainId: bigint;
+        verifyingContract: string;
+        salt: string;
+        extensions: bigint[];
+      }
+    ],
+    "view"
+  >;
+
   execute: TypedContractMethod<
     [
       targets: AddressLike[],
@@ -550,13 +634,13 @@ export interface GovernorVotesQuorumFraction extends BaseContract {
   >;
 
   getVotes: TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish],
+    [account: AddressLike, timepoint: BigNumberish],
     [bigint],
     "view"
   >;
 
   getVotesWithParams: TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish, params: BytesLike],
+    [account: AddressLike, timepoint: BigNumberish, params: BytesLike],
     [bigint],
     "view"
   >;
@@ -616,6 +700,12 @@ export interface GovernorVotesQuorumFraction extends BaseContract {
     "view"
   >;
 
+  proposalProposer: TypedContractMethod<
+    [proposalId: BigNumberish],
+    [string],
+    "view"
+  >;
+
   proposalSnapshot: TypedContractMethod<
     [proposalId: BigNumberish],
     [bigint],
@@ -635,16 +725,22 @@ export interface GovernorVotesQuorumFraction extends BaseContract {
     "nonpayable"
   >;
 
-  quorum: TypedContractMethod<[blockNumber: BigNumberish], [bigint], "view">;
+  quorum: TypedContractMethod<[timepoint: BigNumberish], [bigint], "view">;
 
   quorumDenominator: TypedContractMethod<[], [bigint], "view">;
 
-  quorumNumerator: TypedContractMethod<[], [bigint], "view">;
+  "quorumNumerator(uint256)": TypedContractMethod<
+    [timepoint: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
+  "quorumNumerator()": TypedContractMethod<[], [bigint], "view">;
 
   relay: TypedContractMethod<
     [target: AddressLike, value: BigNumberish, data: BytesLike],
     [void],
-    "nonpayable"
+    "payable"
   >;
 
   state: TypedContractMethod<[proposalId: BigNumberish], [bigint], "view">;
@@ -677,11 +773,26 @@ export interface GovernorVotesQuorumFraction extends BaseContract {
     nameOrSignature: "BALLOT_TYPEHASH"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "CLOCK_MODE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "COUNTING_MODE"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "EXTENDED_BALLOT_TYPEHASH"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "cancel"
+  ): TypedContractMethod<
+    [
+      targets: AddressLike[],
+      values: BigNumberish[],
+      calldatas: BytesLike[],
+      descriptionHash: BytesLike
+    ],
+    [bigint],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "castVote"
   ): TypedContractMethod<
@@ -737,6 +848,26 @@ export interface GovernorVotesQuorumFraction extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "clock"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "eip712Domain"
+  ): TypedContractMethod<
+    [],
+    [
+      [string, string, string, bigint, string, string, bigint[]] & {
+        fields: string;
+        name: string;
+        version: string;
+        chainId: bigint;
+        verifyingContract: string;
+        salt: string;
+        extensions: bigint[];
+      }
+    ],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "execute"
   ): TypedContractMethod<
     [
@@ -751,14 +882,14 @@ export interface GovernorVotesQuorumFraction extends BaseContract {
   getFunction(
     nameOrSignature: "getVotes"
   ): TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish],
+    [account: AddressLike, timepoint: BigNumberish],
     [bigint],
     "view"
   >;
   getFunction(
     nameOrSignature: "getVotesWithParams"
   ): TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish, params: BytesLike],
+    [account: AddressLike, timepoint: BigNumberish, params: BytesLike],
     [bigint],
     "view"
   >;
@@ -821,6 +952,9 @@ export interface GovernorVotesQuorumFraction extends BaseContract {
     nameOrSignature: "proposalDeadline"
   ): TypedContractMethod<[proposalId: BigNumberish], [bigint], "view">;
   getFunction(
+    nameOrSignature: "proposalProposer"
+  ): TypedContractMethod<[proposalId: BigNumberish], [string], "view">;
+  getFunction(
     nameOrSignature: "proposalSnapshot"
   ): TypedContractMethod<[proposalId: BigNumberish], [bigint], "view">;
   getFunction(
@@ -840,19 +974,22 @@ export interface GovernorVotesQuorumFraction extends BaseContract {
   >;
   getFunction(
     nameOrSignature: "quorum"
-  ): TypedContractMethod<[blockNumber: BigNumberish], [bigint], "view">;
+  ): TypedContractMethod<[timepoint: BigNumberish], [bigint], "view">;
   getFunction(
     nameOrSignature: "quorumDenominator"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
-    nameOrSignature: "quorumNumerator"
+    nameOrSignature: "quorumNumerator(uint256)"
+  ): TypedContractMethod<[timepoint: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "quorumNumerator()"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "relay"
   ): TypedContractMethod<
     [target: AddressLike, value: BigNumberish, data: BytesLike],
     [void],
-    "nonpayable"
+    "payable"
   >;
   getFunction(
     nameOrSignature: "state"
@@ -880,6 +1017,13 @@ export interface GovernorVotesQuorumFraction extends BaseContract {
     nameOrSignature: "votingPeriod"
   ): TypedContractMethod<[], [bigint], "view">;
 
+  getEvent(
+    key: "EIP712DomainChanged"
+  ): TypedContractEvent<
+    EIP712DomainChangedEvent.InputTuple,
+    EIP712DomainChangedEvent.OutputTuple,
+    EIP712DomainChangedEvent.OutputObject
+  >;
   getEvent(
     key: "ProposalCanceled"
   ): TypedContractEvent<
@@ -924,6 +1068,17 @@ export interface GovernorVotesQuorumFraction extends BaseContract {
   >;
 
   filters: {
+    "EIP712DomainChanged()": TypedContractEvent<
+      EIP712DomainChangedEvent.InputTuple,
+      EIP712DomainChangedEvent.OutputTuple,
+      EIP712DomainChangedEvent.OutputObject
+    >;
+    EIP712DomainChanged: TypedContractEvent<
+      EIP712DomainChangedEvent.InputTuple,
+      EIP712DomainChangedEvent.OutputTuple,
+      EIP712DomainChangedEvent.OutputObject
+    >;
+
     "ProposalCanceled(uint256)": TypedContractEvent<
       ProposalCanceledEvent.InputTuple,
       ProposalCanceledEvent.OutputTuple,

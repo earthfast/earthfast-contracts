@@ -21,11 +21,13 @@ import type {
   TypedLogDescription,
   TypedListener,
   TypedContractMethod,
-} from "../../../../common";
+} from "../../../common";
 
-export interface IVotesInterface extends Interface {
+export interface IERC5805Interface extends Interface {
   getFunction(
     nameOrSignature:
+      | "CLOCK_MODE"
+      | "clock"
       | "delegate"
       | "delegateBySig"
       | "delegates"
@@ -38,6 +40,11 @@ export interface IVotesInterface extends Interface {
     nameOrSignatureOrTopic: "DelegateChanged" | "DelegateVotesChanged"
   ): EventFragment;
 
+  encodeFunctionData(
+    functionFragment: "CLOCK_MODE",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "clock", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "delegate",
     values: [AddressLike]
@@ -70,6 +77,8 @@ export interface IVotesInterface extends Interface {
     values: [AddressLike]
   ): string;
 
+  decodeFunctionResult(functionFragment: "CLOCK_MODE", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "clock", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "delegate", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "delegateBySig",
@@ -131,11 +140,11 @@ export namespace DelegateVotesChangedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface IVotes extends BaseContract {
-  connect(runner?: ContractRunner | null): IVotes;
+export interface IERC5805 extends BaseContract {
+  connect(runner?: ContractRunner | null): IERC5805;
   waitForDeployment(): Promise<this>;
 
-  interface: IVotesInterface;
+  interface: IERC5805Interface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -174,6 +183,10 @@ export interface IVotes extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  CLOCK_MODE: TypedContractMethod<[], [string], "view">;
+
+  clock: TypedContractMethod<[], [bigint], "view">;
+
   delegate: TypedContractMethod<[delegatee: AddressLike], [void], "nonpayable">;
 
   delegateBySig: TypedContractMethod<
@@ -209,6 +222,12 @@ export interface IVotes extends BaseContract {
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "CLOCK_MODE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "clock"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "delegate"
   ): TypedContractMethod<[delegatee: AddressLike], [void], "nonpayable">;

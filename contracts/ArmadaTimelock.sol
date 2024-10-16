@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/governance/TimelockController.sol";
 
 contract ArmadaTimelock is TimelockController {
   constructor(uint256 minDelay, address[] memory admins, address[] memory proposers, address[] memory executors)
-    TimelockController(minDelay, proposers, executors) {
+    TimelockController(minDelay, proposers, executors, address(0)) {
     // Use explicit admins for CREATE2 compatibility
     _revokeRole(TIMELOCK_ADMIN_ROLE, msg.sender);
     require(admins.length > 0, "no admins");

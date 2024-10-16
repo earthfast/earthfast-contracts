@@ -4,9 +4,9 @@
 
 import { Contract, Interface, type ContractRunner } from "ethers";
 import type {
-  IVotes,
-  IVotesInterface,
-} from "../../../../../@openzeppelin/contracts/governance/utils/IVotes";
+  IERC5805,
+  IERC5805Interface,
+} from "../../../../@openzeppelin/contracts/interfaces/IERC5805";
 
 const _abi = [
   {
@@ -58,6 +58,32 @@ const _abi = [
     ],
     name: "DelegateVotesChanged",
     type: "event",
+  },
+  {
+    inputs: [],
+    name: "CLOCK_MODE",
+    outputs: [
+      {
+        internalType: "string",
+        name: "",
+        type: "string",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "clock",
+    outputs: [
+      {
+        internalType: "uint48",
+        name: "",
+        type: "uint48",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
   },
   {
     inputs: [
@@ -193,12 +219,12 @@ const _abi = [
   },
 ] as const;
 
-export class IVotes__factory {
+export class IERC5805__factory {
   static readonly abi = _abi;
-  static createInterface(): IVotesInterface {
-    return new Interface(_abi) as IVotesInterface;
+  static createInterface(): IERC5805Interface {
+    return new Interface(_abi) as IERC5805Interface;
   }
-  static connect(address: string, runner?: ContractRunner | null): IVotes {
-    return new Contract(address, _abi, runner) as unknown as IVotes;
+  static connect(address: string, runner?: ContractRunner | null): IERC5805 {
+    return new Contract(address, _abi, runner) as unknown as IERC5805;
   }
 }

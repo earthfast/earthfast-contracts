@@ -8,38 +8,44 @@ import {
   Interface,
 } from "ethers";
 import type { Signer, ContractDeployTransaction, ContractRunner } from "ethers";
-import type { NonPayableOverrides } from "../../../../../common";
+import type { NonPayableOverrides } from "../../../../common";
 import type {
-  DoubleEndedQueue,
-  DoubleEndedQueueInterface,
-} from "../../../../../@openzeppelin/contracts/utils/structs/DoubleEndedQueue";
+  ShortStrings,
+  ShortStringsInterface,
+} from "../../../../@openzeppelin/contracts/utils/ShortStrings";
 
 const _abi = [
   {
     inputs: [],
-    name: "Empty",
+    name: "InvalidShortString",
     type: "error",
   },
   {
-    inputs: [],
-    name: "OutOfBounds",
+    inputs: [
+      {
+        internalType: "string",
+        name: "str",
+        type: "string",
+      },
+    ],
+    name: "StringTooLong",
     type: "error",
   },
 ] as const;
 
 const _bytecode =
-  "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220456a7ce5da9b21cd8b50ddddfd5f5ad73a9c8a4599aaaa87122aebba8114acf564736f6c63430008090033";
+  "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220f12fba06866bcf47cfc4b9981a7969c51f8e6ecbb0bb502f877d8d1e41de056764736f6c63430008090033";
 
-type DoubleEndedQueueConstructorParams =
+type ShortStringsConstructorParams =
   | [signer?: Signer]
   | ConstructorParameters<typeof ContractFactory>;
 
 const isSuperArgs = (
-  xs: DoubleEndedQueueConstructorParams
+  xs: ShortStringsConstructorParams
 ): xs is ConstructorParameters<typeof ContractFactory> => xs.length > 1;
 
-export class DoubleEndedQueue__factory extends ContractFactory {
-  constructor(...args: DoubleEndedQueueConstructorParams) {
+export class ShortStrings__factory extends ContractFactory {
+  constructor(...args: ShortStringsConstructorParams) {
     if (isSuperArgs(args)) {
       super(...args);
     } else {
@@ -54,24 +60,24 @@ export class DoubleEndedQueue__factory extends ContractFactory {
   }
   override deploy(overrides?: NonPayableOverrides & { from?: string }) {
     return super.deploy(overrides || {}) as Promise<
-      DoubleEndedQueue & {
+      ShortStrings & {
         deploymentTransaction(): ContractTransactionResponse;
       }
     >;
   }
-  override connect(runner: ContractRunner | null): DoubleEndedQueue__factory {
-    return super.connect(runner) as DoubleEndedQueue__factory;
+  override connect(runner: ContractRunner | null): ShortStrings__factory {
+    return super.connect(runner) as ShortStrings__factory;
   }
 
   static readonly bytecode = _bytecode;
   static readonly abi = _abi;
-  static createInterface(): DoubleEndedQueueInterface {
-    return new Interface(_abi) as DoubleEndedQueueInterface;
+  static createInterface(): ShortStringsInterface {
+    return new Interface(_abi) as ShortStringsInterface;
   }
   static connect(
     address: string,
     runner?: ContractRunner | null
-  ): DoubleEndedQueue {
-    return new Contract(address, _abi, runner) as unknown as DoubleEndedQueue;
+  ): ShortStrings {
+    return new Contract(address, _abi, runner) as unknown as ShortStrings;
   }
 }

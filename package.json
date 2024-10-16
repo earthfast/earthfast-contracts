@@ -13,8 +13,8 @@
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "@openzeppelin/contracts": "^4.6.0",
-    "@openzeppelin/contracts-upgradeable": "^4.6.0",
+    "@openzeppelin/contracts": "^4.9.6",
+    "@openzeppelin/contracts-upgradeable": "^4.9.6",
     "@openzeppelin/defender-sdk": "^1.14.4",
     "@openzeppelin/hardhat-upgrades": "^3.4.0",
     "@types/mocha": "^9.1.1",
