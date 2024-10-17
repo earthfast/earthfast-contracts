@@ -160,4 +160,8 @@ contract ArmadaBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpg
       }
     }
   }
+
+  // Reserve storage for future upgrades
+  uint256[10] private __gap;
+
 }

@@ -295,4 +295,8 @@ contract ArmadaOperators is AccessControlUpgradeable, PausableUpgradeable, Reent
       values[i] = _operators[_operatorIds.at(skip + i)];
     }
   }
+
+  // Reserve storage for future upgrades
+  uint256[10] private __gap;
+
 }
