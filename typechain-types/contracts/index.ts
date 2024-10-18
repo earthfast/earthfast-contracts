@@ -14,3 +14,5 @@ export type { ArmadaRegistry } from "./ArmadaRegistry";
 export type { ArmadaReservations } from "./ArmadaReservations";
 export type { ArmadaTimelock } from "./ArmadaTimelock";
 export type { ArmadaToken } from "./ArmadaToken";
+export type { CCMPReceiver } from "./CCMPReceiver";
+export type { CCMPSender } from "./CCMPSender";

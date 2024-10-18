@@ -13,3 +13,5 @@ export { ArmadaRegistry__factory } from "./ArmadaRegistry__factory";
 export { ArmadaReservations__factory } from "./ArmadaReservations__factory";
 export { ArmadaTimelock__factory } from "./ArmadaTimelock__factory";
 export { ArmadaToken__factory } from "./ArmadaToken__factory";
+export { CCMPReceiver__factory } from "./CCMPReceiver__factory";
+export { CCMPSender__factory } from "./CCMPSender__factory";
