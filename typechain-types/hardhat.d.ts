@@ -246,6 +246,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.CCMPSender__factory>;
     getContractFactory(
+      name: "MockAxelarGasService",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.MockAxelarGasService__factory>;
+    getContractFactory(
+      name: "MockAxelarGateway",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.MockAxelarGateway__factory>;
+    getContractFactory(
       name: "USDC",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.USDC__factory>;
@@ -541,6 +549,16 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.CCMPSender>;
     getContractAt(
+      name: "MockAxelarGasService",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.MockAxelarGasService>;
+    getContractAt(
+      name: "MockAxelarGateway",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.MockAxelarGateway>;
+    getContractAt(
       name: "USDC",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -779,6 +797,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.CCMPSender>;
     deployContract(
+      name: "MockAxelarGasService",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MockAxelarGasService>;
+    deployContract(
+      name: "MockAxelarGateway",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MockAxelarGateway>;
+    deployContract(
       name: "USDC",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.USDC>;
@@ -1073,6 +1099,16 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.CCMPSender>;
+    deployContract(
+      name: "MockAxelarGasService",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MockAxelarGasService>;
+    deployContract(
+      name: "MockAxelarGateway",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MockAxelarGateway>;
     deployContract(
       name: "USDC",
       args: any[],
