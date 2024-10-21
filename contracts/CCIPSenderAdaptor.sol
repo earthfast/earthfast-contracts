@@ -20,33 +20,53 @@ contract CCIPSenderAdaptor {
 
   event MessageSent(bytes32 messageId);
 
+  // TODO: move this to a shared library
+  struct CCArmadaMessage {
+      address contractAddress; // the address of the contract to be called
+      bytes32 functionSelector; // the function selector to be called
+      bytes data; // the data to be sent to the contract
+  }
+
   constructor(address router, address link) {
       i_router = router;
       i_link = link;
   }
 
-  /**
-    * @notice Create a project on the Earthfast platform.
-    * @dev This function is called on the source chain to create a project on the Earthfast platform.
-    * @param project The data required to instantiate a new project.
-    * @param destinationChainSelector The chain ID of the destination chain.
-    * @param receiver The address of the earthfast destination adaptor to interact with.
-   */
-  function createProject(
-    ArmadaCreateProjectData memory project,
-    uint64 destinationChainSelector,
+  // @notice create a message to be sent to the receiving chain
+  // @dev Expected to be called by the client to construct the message prior to sending
+  // @param contractAddress the address of the contract to be called by the receiver
+  // @param data the data to be sent to the contract
+  // @param functionSignature the function signature to be called
+  // @param receiver the address of the receiver on the destination chain
+  // @param payFeesIn the type of fees to be paid
+  // @return the encoded message in CCIP format
+  function createMessage(
+    address contractAddress,
+    bytes calldata data,
+    string calldata functionSignature,
     address receiver,
     PayFeesIn payFeesIn
-  ) external payable returns (bytes32 messageId) {
-    Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
+  ) external view returns (Client.EVM2AnyMessage memory) {
+
+    // set the message struct
+    CCArmadaMessage memory message;
+    message.contractAddress = contractAddress;
+    message.functionSelector = bytes4(keccak256(bytes(functionSignature)));
+    message.data = data;
+
+    // encode the message struct
+    bytes memory encodedMessage = abi.encode(message);
+
+    // set the CCIP message struct
+    Client.EVM2AnyMessage memory ccipMessage = Client.EVM2AnyMessage({
       receiver: abi.encode(receiver),
-      data: abi.encodeWithSignature("createProject(ArmadaCreateProjectData)", project),
+      data: encodedMessage,
       tokenAmounts: new Client.EVMTokenAmount[](0),
       extraArgs: "",
       feeToken: payFeesIn == PayFeesIn.LINK ? i_link : address(0)
     });
 
-    messageId = _sendMessage(message, destinationChainSelector, payFeesIn);
+    return ccipMessage;
   }
 
   function _sendMessage(
