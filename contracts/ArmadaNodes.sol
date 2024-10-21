@@ -14,12 +14,6 @@ import "./ArmadaNodesImpl.sol";
 contract ArmadaNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUpgradeable {
   using EnumerableSet for EnumerableSet.Bytes32Set;
 
-  /// @custom:oz-upgrades-unsafe-allow constructor
-  // prevent malicious actors from front-running initialization
-  constructor() {
-    _disableInitializers();
-  }
-
   // Controls who can do data import during contract initialization
   bytes32 public constant IMPORTER_ROLE = keccak256("IMPORTER_ROLE");
 
