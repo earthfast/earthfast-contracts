@@ -60,6 +60,9 @@ contract CCIPSenderAdaptor {
     // set the CCIP message struct
     Client.EVM2AnyMessage memory ccipMessage = Client.EVM2AnyMessage({
       receiver: abi.encode(receiver),
+      // receiver: abi.encode(uint256(uint160(receiver))),
+      // receiver: abi.encodePacked(uint256(uint160(receiver))), 
+      // receiver: abi.encodePacked(receiver),
       data: encodedMessage,
       tokenAmounts: new Client.EVMTokenAmount[](0),
       extraArgs: "",
@@ -69,11 +72,11 @@ contract CCIPSenderAdaptor {
     return ccipMessage;
   }
 
-  function _sendMessage(
-    Client.EVM2AnyMessage memory message,
+  function sendMessage(
     uint64 destinationChainSelector,
+    Client.EVM2AnyMessage memory message,
     PayFeesIn payFeesIn
-  ) internal returns (bytes32 messageId) {
+  ) external returns (bytes32 messageId) {
     // calculate the fee required to send and receive the message
     uint256 fee = IRouterClient(i_router).getFee(
         destinationChainSelector,

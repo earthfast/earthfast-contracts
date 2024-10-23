@@ -29,7 +29,13 @@ contract CCIPReceiverAdaptor is CCIPReceiver {
       bytes data; // the data to be sent to the contract
   }
 
-  constructor(address router, address nodes_, address projects_, address registry_, address reservations_) CCIPReceiver(router) {
+  constructor(
+    address router,
+    address nodes_,
+    address projects_,
+    address registry_,
+    address reservations_
+  ) CCIPReceiver(router) {
     nodes = ArmadaNodes(nodes_);
     projects = ArmadaProjects(projects_);
     registry = ArmadaRegistry(registry_);
