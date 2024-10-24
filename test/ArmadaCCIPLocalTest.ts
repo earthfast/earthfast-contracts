@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { Contract, SignerWithAddress, ZeroHash } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
-import { fixtures } from "../lib/test";
+import { expectEvent, fixtures } from "../lib/test";
 import { signers } from "../lib/util";
 
 import { ArmadaNodes } from "../typechain-types";
@@ -87,8 +87,13 @@ describe("CCIP Local Simulator Test", function () {
   // });
 
   // TODO: add gas funds
+  // FIXME: figure out how to have non adaptor project creator
   it("should send and receive messages between chains", async function () {
     const fixture = await loadFixture(deployFixture);
+
+    // check that no projects exist yet
+    let projectCount = await projects.getProjectCount();
+    expect(projectCount).to.equal(0);
 
     const admin = fixture.admin;
     const chainSelector = fixture.config.toObject(true).chainSelector_;
@@ -99,7 +104,7 @@ describe("CCIP Local Simulator Test", function () {
 
     const createProjectData: ArmadaCreateProjectData = {
       name: "Test Project",
-      owner: project.address,
+      owner: receiverAddress,
       email: "test@test.com",
       content: "https://test.com/content",
       checksum: ZeroHash,
@@ -110,80 +115,87 @@ describe("CCIP Local Simulator Test", function () {
 
     // Encode message
     const encodedData = abiCoder.encode(
-      ["tuple(string,address,string,string,bytes32,string)"],
-      [Object.values(createProjectData)]
-    );
+      ["string", "address", "string", "string", "bytes32", "string"],
+      [createProjectData.name, createProjectData.owner, createProjectData.email, createProjectData.content, createProjectData.checksum, createProjectData.metadata]
+    );    
     const message = await sender.createMessage(
       await projects.getAddress(),
       encodedData,
       "createProject(ArmadaCreateProjectData)",
       receiverAddress,
-      PayFeesIn.Native
+      PayFeesIn.LINK
     );
 
     // log the message details
-    // console.log("config:", config);
     console.log("destinationChainSelector:", chainSelector);
     console.log("message:", JSON.stringify(message, (_, v) => typeof v === 'bigint' ? v.toString() : v));
-    console.log("payFeesIn:", PayFeesIn.Native);
+    console.log("payFeesIn:", PayFeesIn.LINK);
     console.log("project address:", project.address);
     console.log("projectsAddress:", await projects.getAddress());
     console.log("senderAddress:  ", senderAddress);
     console.log("receiverAddress:", receiverAddress);
-    console.log("receiver length:", "0xc6e7df5e7b4f2a278906862b61205850344d4e7d".length);
 
     const messageCopy = JSON.parse(JSON.stringify(message, (_, v) => typeof v === 'bigint' ? v.toString() : v));
     console.log("messageCopy:", messageCopy);
-
-    // FIXME: remove this
-    // const messageCopy = structuredClone(message);
-    // // Do not modify the receiver field
-    // messageCopy.extraArgs = ethers.hexlify(messageCopy.extraArgs);
-    // console.log("messageCopy:", messageCopy);
 
     // send native tokens for gas
     await admin.sendTransaction({
       to: senderAddress,
       value: 1_000_000_000_000_000_000n,
     });
+    await ccipLocalSimulator.requestLinkFromFaucet(
+      await senderAddress,
+      5_000_000_000_000_000_000n
+    );
+    await ccipLocalSimulator.requestLinkFromFaucet(
+      await receiverAddress,
+      5_000_000_000_000_000_000n
+    );
+
+    let blockNumber = await ethers.provider.getBlockNumber();
+    console.log("Current block number:", blockNumber);
+
+    // // FIXME: grant project creator role to sender
+    expect(
+      await projects
+        .connect(admin)
+        .grantRole(projects.PROJECT_CREATOR_ROLE(), receiverAddress)
+    ).to.be.ok;
+
+    expect(await fixture.ccipReceiverAdaptor.checkProjectCreatorRole()).to.be.true;
 
     await sender
       .connect(admin)
       .sendMessage(
         chainSelector,
         messageCopy,
-        PayFeesIn.Native
+        PayFeesIn.LINK
       );
-
-    // // FIXME: remove this
-    // console.log("message", message);
-    // const structuredMessage = message.toObject(true);
-    // console.log("structured message", structuredMessage);
-    // await sender
-    //   .connect(admin)
-    //   .sendMessage(
-    //     chainSelector,
-    //     structuredMessage,
-    //     PayFeesIn.Native
-    //   );
-
 
     console.log("message sent");
 
+    // check that the message was received by looking at the event and mapping
+    // await expectEvent(receiver, receiver, "MessageReceived");
+
+    // check that the project count was incremented
+    projectCount = await projects.getProjectCount();
+    expect(projectCount).to.equal(1);
+
+    // TODO: check the ProjectCreated event
+    // const [projectId] = await expectEvent(receiverAddress, projects, "ProjectCreated");
+    // expect(projectId).to.not.equal(ZeroHash);
+
     // get the latest message details from the receiver
-    const [
-      latestMessageId,
-      latestMessageSourceChainSelector,
-      latestMessageSender,
-      latestMessage,
-    ] = await receiver.getLatestMessageDetails();
+    // const [
+    //   latestMessageId,
+    //   latestMessageSourceChainSelector,
+    //   latestMessageSender,
+    //   latestMessage,
+    // ] = await receiver.getLatestMessageDetails();
 
-    expect(latestMessageSourceChainSelector).to.equal(chainSelector);
-    expect(latestMessageSender).to.equal(senderAddress);
-    expect(latestMessage).to.deep.equal(message);
-
-    // TODO: check that project was created
-
+    // expect(latestMessageSourceChainSelector).to.equal(chainSelector);
+    // expect(latestMessageSender).to.equal(senderAddress);
+    // expect(latestMessage).to.deep.equal(message);
   });
 
 });

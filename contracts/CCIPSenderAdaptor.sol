@@ -32,6 +32,7 @@ contract CCIPSenderAdaptor {
       i_link = link;
   }
 
+  // TODO: enable passing in gas limit
   // @notice create a message to be sent to the receiving chain
   // @dev Expected to be called by the client to construct the message prior to sending
   // @param contractAddress the address of the contract to be called by the receiver
@@ -60,12 +61,11 @@ contract CCIPSenderAdaptor {
     // set the CCIP message struct
     Client.EVM2AnyMessage memory ccipMessage = Client.EVM2AnyMessage({
       receiver: abi.encode(receiver),
-      // receiver: abi.encode(uint256(uint160(receiver))),
-      // receiver: abi.encodePacked(uint256(uint160(receiver))), 
-      // receiver: abi.encodePacked(receiver),
       data: encodedMessage,
       tokenAmounts: new Client.EVMTokenAmount[](0),
-      extraArgs: "",
+      extraArgs: Client._argsToBytes(
+        Client.EVMExtraArgsV1({gasLimit: 500_000}) // Additional arguments, setting gas limit and non-strict sequency mode
+      ),
       feeToken: payFeesIn == PayFeesIn.LINK ? i_link : address(0)
     });
 
