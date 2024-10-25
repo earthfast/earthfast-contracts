@@ -15,7 +15,6 @@ import { ArmadaCreateProjectData } from "./ArmadaTypes.sol";
 import "hardhat/console.sol";
 
 // TODO: how do we determine project owner in a cross-chain environment?
-// TODO: how do we determine which message type to use? -> Create custom struct with two fields: messageType and data
 
 contract CCIPReceiverAdaptor is CCIPReceiver {
 
@@ -52,14 +51,6 @@ contract CCIPReceiverAdaptor is CCIPReceiver {
     reservations = ArmadaReservations(reservations_);
   }
 
-  // 
-  // Projects.createProject
-  // Projects.depositProjectEscrow
-  // Projects.withdrawProjectEscrow
-  // Projects.setProjectContent
-  // Reservations.createReservations
-  // Reservations.deleteReservations
-
   function _ccipReceive(
       Client.Any2EVMMessage memory message
   ) internal override {
@@ -68,17 +59,6 @@ contract CCIPReceiverAdaptor is CCIPReceiver {
     bytes32 functionSelector = decodedMessage.functionSelector;
     bytes memory data = decodedMessage.data;
 
-    // Decode the ArmadaCreateProjectData struct
-    (string memory name, address owner, string memory email, string memory content, bytes32 checksum, string memory metadata) = abi.decode(data, (string, address, string, string, bytes32, string));
-    ArmadaCreateProjectData memory projectData = ArmadaCreateProjectData({
-        name: name,
-        owner: owner,
-        email: email,
-        content: content,
-        checksum: checksum,
-        metadata: metadata
-    });
-    console.log("project owner:", projectData.owner);
     console.logBytes(abi.encode(message.messageId));
   
     // // store the message in the mapping
@@ -86,31 +66,6 @@ contract CCIPReceiverAdaptor is CCIPReceiver {
 
     // // emit the event
     // emit MessageReceived(message.messageId);
-
-    // Call the createProject function
-    try projects.createProject(projectData) returns (bytes32 projectId) {
-        console.log("Project created successfully with ID:");
-        console.logBytes(abi.encode(projectId));
-    } catch Error(string memory reason) {
-        console.log("createProject failed with reason:", reason);
-        revert(string(abi.encodePacked("createProject failed: ", reason)));
-    }  catch Panic(uint errorCode) {
-        console.log("createProject failed with panic code:", errorCode);
-        string memory panicReason = getPanicReason(errorCode);
-        revert(string(abi.encodePacked("createProject failed with panic: ", panicReason)));
-    } catch (bytes memory lowLevelData) {
-        console.log("createProject failed due to low-level error");
-        console.logBytes(lowLevelData);
-        if (lowLevelData.length > 4) {
-            bytes4 errorSelector = bytes4(lowLevelData);
-            console.log("Error selector:");
-            console.logBytes4(errorSelector);
-        }
-        revert("createProject failed due to low-level error");
-    }
-
-    // ArmadaCreateProjectData memory projectData = abi.decode(data, (ArmadaCreateProjectData));
-    // console.log("project owner:", projectData.owner);
 
 
     // // TODO: also check contract address against projects contract address in constructor
@@ -129,12 +84,12 @@ contract CCIPReceiverAdaptor is CCIPReceiver {
     // }
 
     // call the contract
-    // _callContract(contractAddress, functionSelector, data);
+    _callContract(contractAddress, data);
 
   }
 
-  function _callContract(address contractAddress, bytes32 functionSelector, bytes memory data) internal {
-    (bool success, bytes memory returnData) = contractAddress.call(abi.encode(functionSelector, data));
+  function _callContract(address contractAddress,bytes memory data) internal {
+    (bool success, bytes memory returnData) = contractAddress.call(data);
     if (!success) {
       if (returnData.length > 0) {
         // Bubble up the error message
@@ -146,24 +101,6 @@ contract CCIPReceiverAdaptor is CCIPReceiver {
           revert("Function call failed");
       }
     }
-  }
-
-  function checkProjectCreatorRole() public view returns (bool) {
-      return projects.hasRole(projects.PROJECT_CREATOR_ROLE(), address(this));
-  }
-
-
-  function getPanicReason(uint errorCode) internal pure returns (string memory) {
-      if (errorCode == 0x01) return "Assertion failed";
-      if (errorCode == 0x11) return "Arithmetic operation underflowed or overflowed outside of an unchecked block";
-      if (errorCode == 0x12) return "Division or modulo division by zero";
-      if (errorCode == 0x21) return "Tried to convert a value into an enum outside of its range";
-      if (errorCode == 0x22) return "Accessed storage byte array that is incorrectly encoded";
-      if (errorCode == 0x31) return "Called .pop() on an empty array";
-      if (errorCode == 0x32) return "Array index is out of bounds";
-      if (errorCode == 0x41) return "Allocated too much memory or created an array which is too large";
-      if (errorCode == 0x51) return "Called a zero-initialized variable of internal function type";
-      return "Unknown panic code";
   }
 
 }

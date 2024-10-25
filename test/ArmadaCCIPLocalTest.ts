@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { Contract, SignerWithAddress, ZeroHash } from "ethers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
-import { expectEvent, fixtures } from "../lib/test";
+import { expectEvent, expectReceipt, fixtures } from "../lib/test";
 import { signers } from "../lib/util";
 
 import { ArmadaNodes } from "../typechain-types";
@@ -46,6 +46,16 @@ describe("CCIP Local Simulator Test", function () {
   let registryAddress: string;
   let reservationsAddress: string;
 
+  let snapshotId: string;
+
+  // TEST
+  // Projects.createProject
+  // Projects.depositProjectEscrow
+  // Projects.withdrawProjectEscrow
+  // Projects.setProjectContent
+  // Reservations.createReservations
+  // Reservations.deleteReservations
+
   async function deployFixture() {
     ({ admin, operator, project } = await signers(hre));
     ({ usdc, nodes, projects, registry, reservations } = await fixtures(hre));
@@ -81,12 +91,16 @@ describe("CCIP Local Simulator Test", function () {
     return { config, ccipSenderAdaptor, ccipReceiverAdaptor, admin };
   }
 
-  // beforeEach(async function () {
-  //   const fixture = await loadFixture(deployFixture);
+  before(async function () {
+    snapshotId = await hre.ethers.provider.send("evm_snapshot", []);
+  });
 
-  // });
+  beforeEach(async function () {
+    await hre.ethers.provider.send("evm_revert", [snapshotId]);
+    snapshotId = await hre.ethers.provider.send("evm_snapshot", []);
+  });
 
-  // TODO: add gas funds
+  // FIXME: simplify adding gas funds
   // FIXME: figure out how to have non adaptor project creator
   it("should send and receive messages between chains", async function () {
     const fixture = await loadFixture(deployFixture);
@@ -101,39 +115,58 @@ describe("CCIP Local Simulator Test", function () {
     const receiver = fixture.ccipReceiverAdaptor;
     const senderAddress = await sender.getAddress();
     const receiverAddress = await receiver.getAddress();
+    const content = "https://test.com/content";
 
     const createProjectData: ArmadaCreateProjectData = {
       name: "Test Project",
       owner: receiverAddress,
       email: "test@test.com",
-      content: "https://test.com/content",
+      content: content,
       checksum: ZeroHash,
       metadata: "{}"
     };
 
     const abiCoder = new ethers.AbiCoder();
 
-    // Encode message
-    const encodedData = abiCoder.encode(
-      ["string", "address", "string", "string", "bytes32", "string"],
-      [createProjectData.name, createProjectData.owner, createProjectData.email, createProjectData.content, createProjectData.checksum, createProjectData.metadata]
-    );    
+    // encode createProject call data
+    const createProjectCallData = projects.interface.encodeFunctionData("createProject", [createProjectData]);
+    console.log("createProjectCallData:", createProjectCallData);
+
+    // create the message
     const message = await sender.createMessage(
       await projects.getAddress(),
-      encodedData,
+      createProjectCallData,
       "createProject(ArmadaCreateProjectData)",
       receiverAddress,
       PayFeesIn.LINK
     );
 
-    // log the message details
-    console.log("destinationChainSelector:", chainSelector);
-    console.log("message:", JSON.stringify(message, (_, v) => typeof v === 'bigint' ? v.toString() : v));
-    console.log("payFeesIn:", PayFeesIn.LINK);
-    console.log("project address:", project.address);
-    console.log("projectsAddress:", await projects.getAddress());
-    console.log("senderAddress:  ", senderAddress);
-    console.log("receiverAddress:", receiverAddress);
+
+    // FIXME: remove this, test calling createProject directly via calldata
+    // expect(
+    //   await projects
+    //     .connect(admin)
+    //     .grantRole(projects.PROJECT_CREATOR_ROLE(), admin.address)
+    // ).to.be.ok;
+
+    // try {
+    //   // Simulate the call
+    //   const result = await admin.call({
+    //     to: await projects.getAddress(),
+    //     data: createProjectCallData
+    //   });
+    //   console.log("Call simulation successful. Result:", result);
+    
+    //   // If simulation is successful, execute the actual transaction
+    //   const tx = await admin.sendTransaction({
+    //     to: await projects.getAddress(),
+    //     data: createProjectCallData
+    //   });
+    //   const receipt = await tx.wait();
+    //   console.log("Transaction successful. Receipt:", receipt);
+    // } catch (error) {
+    //   console.error("Error calling createProject:", error);
+    // }
 
     const messageCopy = JSON.parse(JSON.stringify(message, (_, v) => typeof v === 'bigint' ? v.toString() : v));
     console.log("messageCopy:", messageCopy);
@@ -152,9 +185,6 @@ describe("CCIP Local Simulator Test", function () {
       5_000_000_000_000_000_000n
     );
 
-    let blockNumber = await ethers.provider.getBlockNumber();
-    console.log("Current block number:", blockNumber);
-
     // // FIXME: grant project creator role to sender
     expect(
       await projects
@@ -162,28 +192,26 @@ describe("CCIP Local Simulator Test", function () {
         .grantRole(projects.PROJECT_CREATOR_ROLE(), receiverAddress)
     ).to.be.ok;
 
-    expect(await fixture.ccipReceiverAdaptor.checkProjectCreatorRole()).to.be.true;
-
-    await sender
+    const sendMessageReceipt = await expectReceipt(sender
       .connect(admin)
       .sendMessage(
         chainSelector,
         messageCopy,
         PayFeesIn.LINK
-      );
-
+      )
+    );
     console.log("message sent");
-
-    // check that the message was received by looking at the event and mapping
-    // await expectEvent(receiver, receiver, "MessageReceived");
 
     // check that the project count was incremented
     projectCount = await projects.getProjectCount();
     expect(projectCount).to.equal(1);
 
-    // TODO: check the ProjectCreated event
-    // const [projectId] = await expectEvent(receiverAddress, projects, "ProjectCreated");
-    // expect(projectId).to.not.equal(ZeroHash);
+    // check the ProjectCreated event
+    const [projectId] = await expectEvent(sendMessageReceipt, projects, "ProjectCreated");
+    expect(projectId).to.not.equal(ZeroHash);
+    const projectDetails = await projects.connect(admin).getProject(projectId);
+    expect(projectDetails.content).to.equal(content);
+
 
     // get the latest message details from the receiver
     // const [
@@ -196,6 +224,96 @@ describe("CCIP Local Simulator Test", function () {
     // expect(latestMessageSourceChainSelector).to.equal(chainSelector);
     // expect(latestMessageSender).to.equal(senderAddress);
     // expect(latestMessage).to.deep.equal(message);
+  });
+
+
+  xit("should create update and delete projects via CCIP", async function () {
+    const fixture = await loadFixture(deployFixture);
+
+    // check that no projects exist yet
+    let projectCount = await projects.getProjectCount();
+    expect(projectCount).to.equal(0);
+
+    const admin = fixture.admin;
+    const chainSelector = fixture.config.toObject(true).chainSelector_;
+    const sender = fixture.ccipSenderAdaptor;
+    const receiver = fixture.ccipReceiverAdaptor;
+    const senderAddress = await sender.getAddress();
+    const receiverAddress = await receiver.getAddress();
+    const content = "https://test.com/content";
+
+    const createProjectData: ArmadaCreateProjectData = {
+      name: "Test Project",
+      owner: receiverAddress,
+      email: "test@test.com",
+      content: content,
+      checksum: ZeroHash,
+      metadata: "{}"
+    };
+
+    const abiCoder = new ethers.AbiCoder();
+
+    // encode createProject call data
+    const createProjectCallData = projects.interface.encodeFunctionData("createProject", [createProjectData]);
+    console.log("createProjectCallData:", createProjectCallData);
+
+    // create the message
+    const createProjectMessage = await sender.createMessage(
+      await projects.getAddress(),
+      createProjectCallData,
+      "createProject(ArmadaCreateProjectData)",
+      receiverAddress,
+      PayFeesIn.LINK
+    );
+
+    const createProjectMessageCopy = JSON.parse(JSON.stringify(createProjectMessage, (_, v) => typeof v === 'bigint' ? v.toString() : v));
+    console.log("createProjectMessageCopy:", createProjectMessageCopy);
+
+    // send native tokens for gas
+    await admin.sendTransaction({
+      to: senderAddress,
+      value: 1_000_000_000_000_000_000n,
+    });
+    await ccipLocalSimulator.requestLinkFromFaucet(
+      await senderAddress,
+      5_000_000_000_000_000_000n
+    );
+    await ccipLocalSimulator.requestLinkFromFaucet(
+      await receiverAddress,
+      5_000_000_000_000_000_000n
+    );
+
+    // FIXME: grant project creator role to sender
+    expect(
+      await projects
+        .connect(admin)
+        .grantRole(projects.PROJECT_CREATOR_ROLE(), receiverAddress)
+    ).to.be.ok;
+
+    const sendMessageReceipt = await expectReceipt(sender
+      .connect(admin)
+      .sendMessage(
+        chainSelector,
+        messageCopy,
+        PayFeesIn.LINK
+      )
+    );
+    console.log("message sent");
+
+    // check that the project count was incremented
+    projectCount = await projects.getProjectCount();
+    expect(projectCount).to.equal(1);
+
+    // check the ProjectCreated event
+    const [projectId] = await expectEvent(sendMessageReceipt, projects, "ProjectCreated");
+    expect(projectId).to.not.equal(ZeroHash);
+    const projectDetails = await projects.connect(admin).getProject(projectId);
+    expect(projectDetails.content).to.equal(content);
+
+    // update the project
+    const newContent = "new content";
+    const updateProjectCallData = projects.interface.encodeFunctionData("setProjectContent", [projectId, newContent, ZeroHash]);
+    console.log("updateProjectCallData:", updateProjectCallData);
   });
 
 });
