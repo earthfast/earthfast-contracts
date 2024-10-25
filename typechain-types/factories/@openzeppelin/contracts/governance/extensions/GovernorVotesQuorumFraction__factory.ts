@@ -15,6 +15,28 @@ const _abi = [
     type: "error",
   },
   {
+    inputs: [],
+    name: "InvalidShortString",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "string",
+        name: "str",
+        type: "string",
+      },
+    ],
+    name: "StringTooLong",
+    type: "error",
+  },
+  {
+    anonymous: false,
+    inputs: [],
+    name: "EIP712DomainChanged",
+    type: "event",
+  },
+  {
     anonymous: false,
     inputs: [
       {
@@ -69,13 +91,13 @@ const _abi = [
       {
         indexed: false,
         internalType: "uint256",
-        name: "startBlock",
+        name: "voteStart",
         type: "uint256",
       },
       {
         indexed: false,
         internalType: "uint256",
-        name: "endBlock",
+        name: "voteEnd",
         type: "uint256",
       },
       {
@@ -215,6 +237,19 @@ const _abi = [
   },
   {
     inputs: [],
+    name: "CLOCK_MODE",
+    outputs: [
+      {
+        internalType: "string",
+        name: "",
+        type: "string",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "COUNTING_MODE",
     outputs: [
       {
@@ -223,7 +258,7 @@ const _abi = [
         type: "string",
       },
     ],
-    stateMutability: "pure",
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -237,6 +272,40 @@ const _abi = [
       },
     ],
     stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address[]",
+        name: "targets",
+        type: "address[]",
+      },
+      {
+        internalType: "uint256[]",
+        name: "values",
+        type: "uint256[]",
+      },
+      {
+        internalType: "bytes[]",
+        name: "calldatas",
+        type: "bytes[]",
+      },
+      {
+        internalType: "bytes32",
+        name: "descriptionHash",
+        type: "bytes32",
+      },
+    ],
+    name: "cancel",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "nonpayable",
     type: "function",
   },
   {
@@ -415,6 +484,62 @@ const _abi = [
     type: "function",
   },
   {
+    inputs: [],
+    name: "clock",
+    outputs: [
+      {
+        internalType: "uint48",
+        name: "",
+        type: "uint48",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "eip712Domain",
+    outputs: [
+      {
+        internalType: "bytes1",
+        name: "fields",
+        type: "bytes1",
+      },
+      {
+        internalType: "string",
+        name: "name",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "version",
+        type: "string",
+      },
+      {
+        internalType: "uint256",
+        name: "chainId",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "verifyingContract",
+        type: "address",
+      },
+      {
+        internalType: "bytes32",
+        name: "salt",
+        type: "bytes32",
+      },
+      {
+        internalType: "uint256[]",
+        name: "extensions",
+        type: "uint256[]",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
       {
         internalType: "address[]",
@@ -457,7 +582,7 @@ const _abi = [
       },
       {
         internalType: "uint256",
-        name: "blockNumber",
+        name: "timepoint",
         type: "uint256",
       },
     ],
@@ -481,7 +606,7 @@ const _abi = [
       },
       {
         internalType: "uint256",
-        name: "blockNumber",
+        name: "timepoint",
         type: "uint256",
       },
       {
@@ -711,6 +836,25 @@ const _abi = [
         type: "uint256",
       },
     ],
+    name: "proposalProposer",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "proposalId",
+        type: "uint256",
+      },
+    ],
     name: "proposalSnapshot",
     outputs: [
       {
@@ -773,7 +917,7 @@ const _abi = [
     inputs: [
       {
         internalType: "uint256",
-        name: "blockNumber",
+        name: "timepoint",
         type: "uint256",
       },
     ],
@@ -791,6 +935,25 @@ const _abi = [
   {
     inputs: [],
     name: "quorumDenominator",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "timepoint",
+        type: "uint256",
+      },
+    ],
+    name: "quorumNumerator",
     outputs: [
       {
         internalType: "uint256",
@@ -834,7 +997,7 @@ const _abi = [
     ],
     name: "relay",
     outputs: [],
-    stateMutability: "nonpayable",
+    stateMutability: "payable",
     type: "function",
   },
   {
@@ -880,7 +1043,7 @@ const _abi = [
     name: "token",
     outputs: [
       {
-        internalType: "contract IVotes",
+        internalType: "contract IERC5805",
         name: "",
         type: "address",
       },

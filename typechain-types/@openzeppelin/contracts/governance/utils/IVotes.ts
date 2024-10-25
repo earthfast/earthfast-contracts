@@ -192,13 +192,13 @@ export interface IVotes extends BaseContract {
   delegates: TypedContractMethod<[account: AddressLike], [string], "view">;
 
   getPastTotalSupply: TypedContractMethod<
-    [blockNumber: BigNumberish],
+    [timepoint: BigNumberish],
     [bigint],
     "view"
   >;
 
   getPastVotes: TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish],
+    [account: AddressLike, timepoint: BigNumberish],
     [bigint],
     "view"
   >;
@@ -231,11 +231,11 @@ export interface IVotes extends BaseContract {
   ): TypedContractMethod<[account: AddressLike], [string], "view">;
   getFunction(
     nameOrSignature: "getPastTotalSupply"
-  ): TypedContractMethod<[blockNumber: BigNumberish], [bigint], "view">;
+  ): TypedContractMethod<[timepoint: BigNumberish], [bigint], "view">;
   getFunction(
     nameOrSignature: "getPastVotes"
   ): TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish],
+    [account: AddressLike, timepoint: BigNumberish],
     [bigint],
     "view"
   >;

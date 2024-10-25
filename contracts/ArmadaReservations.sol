@@ -253,4 +253,8 @@ contract ArmadaReservations is AccessControlUpgradeable, PausableUpgradeable, UU
       result[i] = allNodes.getNode(nodeIds.at(skip + i));
     }
   }
+
+  // Reserve storage for future upgrades
+  uint256[10] private __gap;
+
 }

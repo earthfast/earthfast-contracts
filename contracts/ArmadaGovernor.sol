@@ -21,7 +21,7 @@ contract ArmadaGovernor is AccessControl, GovernorSettings, GovernorCountingSimp
   }
 
   function cancel(address[] memory targets, uint256[] memory values, bytes[] memory calldatas, bytes32 descriptionHash)
-  public onlyRole(DEFAULT_ADMIN_ROLE) returns (uint256) {
+  public override(Governor, IGovernor) onlyRole(DEFAULT_ADMIN_ROLE) returns (uint256) {
     return _cancel(targets, values, calldatas, descriptionHash);
   }
 

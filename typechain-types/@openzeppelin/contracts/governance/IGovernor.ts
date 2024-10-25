@@ -26,12 +26,15 @@ import type {
 export interface IGovernorInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "CLOCK_MODE"
       | "COUNTING_MODE"
+      | "cancel"
       | "castVote"
       | "castVoteBySig"
       | "castVoteWithReason"
       | "castVoteWithReasonAndParams"
       | "castVoteWithReasonAndParamsBySig"
+      | "clock"
       | "execute"
       | "getVotes"
       | "getVotesWithParams"
@@ -39,6 +42,7 @@ export interface IGovernorInterface extends Interface {
       | "hashProposal"
       | "name"
       | "proposalDeadline"
+      | "proposalProposer"
       | "proposalSnapshot"
       | "propose"
       | "quorum"
@@ -59,8 +63,16 @@ export interface IGovernorInterface extends Interface {
   ): EventFragment;
 
   encodeFunctionData(
+    functionFragment: "CLOCK_MODE",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "COUNTING_MODE",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "cancel",
+    values: [AddressLike[], BigNumberish[], BytesLike[], BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "castVote",
@@ -90,6 +102,7 @@ export interface IGovernorInterface extends Interface {
       BytesLike
     ]
   ): string;
+  encodeFunctionData(functionFragment: "clock", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "execute",
     values: [AddressLike[], BigNumberish[], BytesLike[], BytesLike]
@@ -113,6 +126,10 @@ export interface IGovernorInterface extends Interface {
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "proposalDeadline",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "proposalProposer",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
@@ -142,10 +159,12 @@ export interface IGovernorInterface extends Interface {
     values?: undefined
   ): string;
 
+  decodeFunctionResult(functionFragment: "CLOCK_MODE", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "COUNTING_MODE",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "cancel", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "castVote", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "castVoteBySig",
@@ -163,6 +182,7 @@ export interface IGovernorInterface extends Interface {
     functionFragment: "castVoteWithReasonAndParamsBySig",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "clock", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "getVotes", data: BytesLike): Result;
   decodeFunctionResult(
@@ -177,6 +197,10 @@ export interface IGovernorInterface extends Interface {
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "proposalDeadline",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "proposalProposer",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -221,8 +245,8 @@ export namespace ProposalCreatedEvent {
     values: BigNumberish[],
     signatures: string[],
     calldatas: BytesLike[],
-    startBlock: BigNumberish,
-    endBlock: BigNumberish,
+    voteStart: BigNumberish,
+    voteEnd: BigNumberish,
     description: string
   ];
   export type OutputTuple = [
@@ -232,8 +256,8 @@ export namespace ProposalCreatedEvent {
     values: bigint[],
     signatures: string[],
     calldatas: string[],
-    startBlock: bigint,
-    endBlock: bigint,
+    voteStart: bigint,
+    voteEnd: bigint,
     description: string
   ];
   export interface OutputObject {
@@ -243,8 +267,8 @@ export namespace ProposalCreatedEvent {
     values: bigint[];
     signatures: string[];
     calldatas: string[];
-    startBlock: bigint;
-    endBlock: bigint;
+    voteStart: bigint;
+    voteEnd: bigint;
     description: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -367,7 +391,20 @@ export interface IGovernor extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  CLOCK_MODE: TypedContractMethod<[], [string], "view">;
+
   COUNTING_MODE: TypedContractMethod<[], [string], "view">;
+
+  cancel: TypedContractMethod<
+    [
+      targets: AddressLike[],
+      values: BigNumberish[],
+      calldatas: BytesLike[],
+      descriptionHash: BytesLike
+    ],
+    [bigint],
+    "nonpayable"
+  >;
 
   castVote: TypedContractMethod<
     [proposalId: BigNumberish, support: BigNumberish],
@@ -418,6 +455,8 @@ export interface IGovernor extends BaseContract {
     "nonpayable"
   >;
 
+  clock: TypedContractMethod<[], [bigint], "view">;
+
   execute: TypedContractMethod<
     [
       targets: AddressLike[],
@@ -430,13 +469,13 @@ export interface IGovernor extends BaseContract {
   >;
 
   getVotes: TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish],
+    [account: AddressLike, timepoint: BigNumberish],
     [bigint],
     "view"
   >;
 
   getVotesWithParams: TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish, params: BytesLike],
+    [account: AddressLike, timepoint: BigNumberish, params: BytesLike],
     [bigint],
     "view"
   >;
@@ -466,6 +505,12 @@ export interface IGovernor extends BaseContract {
     "view"
   >;
 
+  proposalProposer: TypedContractMethod<
+    [proposalId: BigNumberish],
+    [string],
+    "view"
+  >;
+
   proposalSnapshot: TypedContractMethod<
     [proposalId: BigNumberish],
     [bigint],
@@ -483,7 +528,7 @@ export interface IGovernor extends BaseContract {
     "nonpayable"
   >;
 
-  quorum: TypedContractMethod<[blockNumber: BigNumberish], [bigint], "view">;
+  quorum: TypedContractMethod<[timepoint: BigNumberish], [bigint], "view">;
 
   state: TypedContractMethod<[proposalId: BigNumberish], [bigint], "view">;
 
@@ -504,8 +549,23 @@ export interface IGovernor extends BaseContract {
   ): T;
 
   getFunction(
+    nameOrSignature: "CLOCK_MODE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "COUNTING_MODE"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "cancel"
+  ): TypedContractMethod<
+    [
+      targets: AddressLike[],
+      values: BigNumberish[],
+      calldatas: BytesLike[],
+      descriptionHash: BytesLike
+    ],
+    [bigint],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "castVote"
   ): TypedContractMethod<
@@ -561,6 +621,9 @@ export interface IGovernor extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "clock"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "execute"
   ): TypedContractMethod<
     [
@@ -575,14 +638,14 @@ export interface IGovernor extends BaseContract {
   getFunction(
     nameOrSignature: "getVotes"
   ): TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish],
+    [account: AddressLike, timepoint: BigNumberish],
     [bigint],
     "view"
   >;
   getFunction(
     nameOrSignature: "getVotesWithParams"
   ): TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish, params: BytesLike],
+    [account: AddressLike, timepoint: BigNumberish, params: BytesLike],
     [bigint],
     "view"
   >;
@@ -612,6 +675,9 @@ export interface IGovernor extends BaseContract {
     nameOrSignature: "proposalDeadline"
   ): TypedContractMethod<[proposalId: BigNumberish], [bigint], "view">;
   getFunction(
+    nameOrSignature: "proposalProposer"
+  ): TypedContractMethod<[proposalId: BigNumberish], [string], "view">;
+  getFunction(
     nameOrSignature: "proposalSnapshot"
   ): TypedContractMethod<[proposalId: BigNumberish], [bigint], "view">;
   getFunction(
@@ -628,7 +694,7 @@ export interface IGovernor extends BaseContract {
   >;
   getFunction(
     nameOrSignature: "quorum"
-  ): TypedContractMethod<[blockNumber: BigNumberish], [bigint], "view">;
+  ): TypedContractMethod<[timepoint: BigNumberish], [bigint], "view">;
   getFunction(
     nameOrSignature: "state"
   ): TypedContractMethod<[proposalId: BigNumberish], [bigint], "view">;

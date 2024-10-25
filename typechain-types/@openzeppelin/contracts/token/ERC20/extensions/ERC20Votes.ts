@@ -38,16 +38,19 @@ export declare namespace ERC20Votes {
 export interface ERC20VotesInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "CLOCK_MODE"
       | "DOMAIN_SEPARATOR"
       | "allowance"
       | "approve"
       | "balanceOf"
       | "checkpoints"
+      | "clock"
       | "decimals"
       | "decreaseAllowance"
       | "delegate"
       | "delegateBySig"
       | "delegates"
+      | "eip712Domain"
       | "getPastTotalSupply"
       | "getPastVotes"
       | "getVotes"
@@ -67,9 +70,14 @@ export interface ERC20VotesInterface extends Interface {
       | "Approval"
       | "DelegateChanged"
       | "DelegateVotesChanged"
+      | "EIP712DomainChanged"
       | "Transfer"
   ): EventFragment;
 
+  encodeFunctionData(
+    functionFragment: "CLOCK_MODE",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "DOMAIN_SEPARATOR",
     values?: undefined
@@ -90,6 +98,7 @@ export interface ERC20VotesInterface extends Interface {
     functionFragment: "checkpoints",
     values: [AddressLike, BigNumberish]
   ): string;
+  encodeFunctionData(functionFragment: "clock", values?: undefined): string;
   encodeFunctionData(functionFragment: "decimals", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "decreaseAllowance",
@@ -113,6 +122,10 @@ export interface ERC20VotesInterface extends Interface {
   encodeFunctionData(
     functionFragment: "delegates",
     values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "eip712Domain",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "getPastTotalSupply",
@@ -162,6 +175,7 @@ export interface ERC20VotesInterface extends Interface {
     values: [AddressLike, AddressLike, BigNumberish]
   ): string;
 
+  decodeFunctionResult(functionFragment: "CLOCK_MODE", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "DOMAIN_SEPARATOR",
     data: BytesLike
@@ -173,6 +187,7 @@ export interface ERC20VotesInterface extends Interface {
     functionFragment: "checkpoints",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "clock", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "decreaseAllowance",
@@ -184,6 +199,10 @@ export interface ERC20VotesInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "delegates", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "eip712Domain",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getPastTotalSupply",
     data: BytesLike
@@ -278,6 +297,16 @@ export namespace DelegateVotesChangedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace EIP712DomainChangedEvent {
+  export type InputTuple = [];
+  export type OutputTuple = [];
+  export interface OutputObject {}
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace TransferEvent {
   export type InputTuple = [
     from: AddressLike,
@@ -339,6 +368,8 @@ export interface ERC20Votes extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  CLOCK_MODE: TypedContractMethod<[], [string], "view">;
+
   DOMAIN_SEPARATOR: TypedContractMethod<[], [string], "view">;
 
   allowance: TypedContractMethod<
@@ -360,6 +391,8 @@ export interface ERC20Votes extends BaseContract {
     [ERC20Votes.CheckpointStructOutput],
     "view"
   >;
+
+  clock: TypedContractMethod<[], [bigint], "view">;
 
   decimals: TypedContractMethod<[], [bigint], "view">;
 
@@ -386,14 +419,30 @@ export interface ERC20Votes extends BaseContract {
 
   delegates: TypedContractMethod<[account: AddressLike], [string], "view">;
 
+  eip712Domain: TypedContractMethod<
+    [],
+    [
+      [string, string, string, bigint, string, string, bigint[]] & {
+        fields: string;
+        name: string;
+        version: string;
+        chainId: bigint;
+        verifyingContract: string;
+        salt: string;
+        extensions: bigint[];
+      }
+    ],
+    "view"
+  >;
+
   getPastTotalSupply: TypedContractMethod<
-    [blockNumber: BigNumberish],
+    [timepoint: BigNumberish],
     [bigint],
     "view"
   >;
 
   getPastVotes: TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish],
+    [account: AddressLike, timepoint: BigNumberish],
     [bigint],
     "view"
   >;
@@ -447,6 +496,9 @@ export interface ERC20Votes extends BaseContract {
   ): T;
 
   getFunction(
+    nameOrSignature: "CLOCK_MODE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "DOMAIN_SEPARATOR"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -473,6 +525,9 @@ export interface ERC20Votes extends BaseContract {
     [ERC20Votes.CheckpointStructOutput],
     "view"
   >;
+  getFunction(
+    nameOrSignature: "clock"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "decimals"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -504,12 +559,29 @@ export interface ERC20Votes extends BaseContract {
     nameOrSignature: "delegates"
   ): TypedContractMethod<[account: AddressLike], [string], "view">;
   getFunction(
+    nameOrSignature: "eip712Domain"
+  ): TypedContractMethod<
+    [],
+    [
+      [string, string, string, bigint, string, string, bigint[]] & {
+        fields: string;
+        name: string;
+        version: string;
+        chainId: bigint;
+        verifyingContract: string;
+        salt: string;
+        extensions: bigint[];
+      }
+    ],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "getPastTotalSupply"
-  ): TypedContractMethod<[blockNumber: BigNumberish], [bigint], "view">;
+  ): TypedContractMethod<[timepoint: BigNumberish], [bigint], "view">;
   getFunction(
     nameOrSignature: "getPastVotes"
   ): TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish],
+    [account: AddressLike, timepoint: BigNumberish],
     [bigint],
     "view"
   >;
@@ -590,6 +662,13 @@ export interface ERC20Votes extends BaseContract {
     DelegateVotesChangedEvent.OutputObject
   >;
   getEvent(
+    key: "EIP712DomainChanged"
+  ): TypedContractEvent<
+    EIP712DomainChangedEvent.InputTuple,
+    EIP712DomainChangedEvent.OutputTuple,
+    EIP712DomainChangedEvent.OutputObject
+  >;
+  getEvent(
     key: "Transfer"
   ): TypedContractEvent<
     TransferEvent.InputTuple,
@@ -629,6 +708,17 @@ export interface ERC20Votes extends BaseContract {
       DelegateVotesChangedEvent.InputTuple,
       DelegateVotesChangedEvent.OutputTuple,
       DelegateVotesChangedEvent.OutputObject
+    >;
+
+    "EIP712DomainChanged()": TypedContractEvent<
+      EIP712DomainChangedEvent.InputTuple,
+      EIP712DomainChangedEvent.OutputTuple,
+      EIP712DomainChangedEvent.OutputObject
+    >;
+    EIP712DomainChanged: TypedContractEvent<
+      EIP712DomainChangedEvent.InputTuple,
+      EIP712DomainChangedEvent.OutputTuple,
+      EIP712DomainChangedEvent.OutputObject
     >;
 
     "Transfer(address,address,uint256)": TypedContractEvent<

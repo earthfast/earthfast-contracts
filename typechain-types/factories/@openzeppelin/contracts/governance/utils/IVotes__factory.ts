@@ -133,7 +133,7 @@ const _abi = [
     inputs: [
       {
         internalType: "uint256",
-        name: "blockNumber",
+        name: "timepoint",
         type: "uint256",
       },
     ],
@@ -157,7 +157,7 @@ const _abi = [
       },
       {
         internalType: "uint256",
-        name: "blockNumber",
+        name: "timepoint",
         type: "uint256",
       },
     ],
