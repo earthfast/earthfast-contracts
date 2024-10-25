@@ -8,6 +8,7 @@ import type {
   FunctionFragment,
   Result,
   Interface,
+  EventFragment,
   AddressLike,
   ContractRunner,
   ContractMethod,
@@ -17,6 +18,7 @@ import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
   TypedEventLog,
+  TypedLogDescription,
   TypedListener,
   TypedContractMethod,
 } from "../common";
@@ -57,14 +59,21 @@ export declare namespace Client {
 
 export interface CCIPReceiverAdaptorInterface extends Interface {
   getFunction(
-    nameOrSignature: "ccipReceive" | "getRouter" | "supportsInterface"
+    nameOrSignature:
+      | "ccipReceive"
+      | "getRouter"
+      | "messages"
+      | "supportsInterface"
   ): FunctionFragment;
+
+  getEvent(nameOrSignatureOrTopic: "MessageReceived"): EventFragment;
 
   encodeFunctionData(
     functionFragment: "ccipReceive",
     values: [Client.Any2EVMMessageStruct]
   ): string;
   encodeFunctionData(functionFragment: "getRouter", values?: undefined): string;
+  encodeFunctionData(functionFragment: "messages", values: [BytesLike]): string;
   encodeFunctionData(
     functionFragment: "supportsInterface",
     values: [BytesLike]
@@ -75,10 +84,23 @@ export interface CCIPReceiverAdaptorInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getRouter", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "messages", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "supportsInterface",
     data: BytesLike
   ): Result;
+}
+
+export namespace MessageReceivedEvent {
+  export type InputTuple = [latestMessageId: BytesLike];
+  export type OutputTuple = [latestMessageId: string];
+  export interface OutputObject {
+    latestMessageId: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export interface CCIPReceiverAdaptor extends BaseContract {
@@ -132,6 +154,18 @@ export interface CCIPReceiverAdaptor extends BaseContract {
 
   getRouter: TypedContractMethod<[], [string], "view">;
 
+  messages: TypedContractMethod<
+    [arg0: BytesLike],
+    [
+      [string, string, string] & {
+        contractAddress: string;
+        functionSelector: string;
+        data: string;
+      }
+    ],
+    "view"
+  >;
+
   supportsInterface: TypedContractMethod<
     [interfaceId: BytesLike],
     [boolean],
@@ -153,8 +187,40 @@ export interface CCIPReceiverAdaptor extends BaseContract {
     nameOrSignature: "getRouter"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "messages"
+  ): TypedContractMethod<
+    [arg0: BytesLike],
+    [
+      [string, string, string] & {
+        contractAddress: string;
+        functionSelector: string;
+        data: string;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "supportsInterface"
   ): TypedContractMethod<[interfaceId: BytesLike], [boolean], "view">;
 
-  filters: {};
+  getEvent(
+    key: "MessageReceived"
+  ): TypedContractEvent<
+    MessageReceivedEvent.InputTuple,
+    MessageReceivedEvent.OutputTuple,
+    MessageReceivedEvent.OutputObject
+  >;
+
+  filters: {
+    "MessageReceived(bytes32)": TypedContractEvent<
+      MessageReceivedEvent.InputTuple,
+      MessageReceivedEvent.OutputTuple,
+      MessageReceivedEvent.OutputObject
+    >;
+    MessageReceived: TypedContractEvent<
+      MessageReceivedEvent.InputTuple,
+      MessageReceivedEvent.OutputTuple,
+      MessageReceivedEvent.OutputObject
+    >;
+  };
 }

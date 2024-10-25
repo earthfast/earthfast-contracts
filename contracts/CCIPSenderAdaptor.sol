@@ -32,7 +32,6 @@ contract CCIPSenderAdaptor {
       i_link = link;
   }
 
-  // TODO: enable passing in gas limit
   // @notice create a message to be sent to the receiving chain
   // @dev Expected to be called by the client to construct the message prior to sending
   // @param contractAddress the address of the contract to be called by the receiver

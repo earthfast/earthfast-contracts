@@ -14,8 +14,7 @@ import { ArmadaCreateProjectData } from "./ArmadaTypes.sol";
 // TODO: remove this, for debugging
 import "hardhat/console.sol";
 
-// TODO: how do we determine project owner in a cross-chain environment?
-
+// TODO: how do we handle project owner in a cross-chain environment?
 contract CCIPReceiverAdaptor is CCIPReceiver {
 
   // store messages in a mapping
@@ -51,6 +50,7 @@ contract CCIPReceiverAdaptor is CCIPReceiver {
     reservations = ArmadaReservations(reservations_);
   }
 
+  // TODO: store messageId along with the message in the mapping?
   function _ccipReceive(
       Client.Any2EVMMessage memory message
   ) internal override {
@@ -60,28 +60,6 @@ contract CCIPReceiverAdaptor is CCIPReceiver {
     bytes memory data = decodedMessage.data;
 
     console.logBytes(abi.encode(message.messageId));
-  
-    // // store the message in the mapping
-    // messages[message.messageId] = decodedMessage;
-
-    // // emit the event
-    // emit MessageReceived(message.messageId);
-
-
-    // // TODO: also check contract address against projects contract address in constructor
-    // // Decode the data based on the function selector
-    // if (functionSelector == bytes4(keccak256("createProject(ArmadaCreateProjectData)"))) {
-    // ArmadaCreateProjectData memory projectData = abi.decode(data, (ArmadaCreateProjectData));
-    // projects.createProject(projectData);
-    // } else if (functionSelector == bytes4(keccak256("setProjectContent(bytes32,string,bytes32)"))) {
-    //     (bytes32 projectId, string memory content, bytes32 checksum) = abi.decode(data, (bytes32, string, bytes32));
-    //     projects.setProjectContent(projectId, content, checksum);
-    // } else if (functionSelector == bytes4(keccak256("setProjectMetadata(bytes32,string)"))) {
-    //     (bytes32 projectId, string memory metadata) = abi.decode(data, (bytes32, string));
-    //     projects.setProjectMetadata(projectId, metadata);
-    // } else {
-    //     revert("Unknown function selector");
-    // }
 
     // call the contract
     _callContract(contractAddress, data);
