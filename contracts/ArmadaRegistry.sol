@@ -243,4 +243,8 @@ contract ArmadaRegistry is AccessControlUpgradeable, PausableUpgradeable, Reentr
     _nextEpochLength = _cuedEpochLength;
     emit EpochAdvanced(_lastEpochStart);
   }
+
+  // Reserve storage for future upgrades
+  uint256[10] private __gap;
+
 }

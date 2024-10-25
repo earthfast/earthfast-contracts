@@ -299,4 +299,8 @@ contract ArmadaProjects is AccessControlUpgradeable, PausableUpgradeable, Reentr
       values[i] = _projects[_projectIds.at(skip + i)];
     }
   }
+
+  // Reserve storage for future upgrades
+  uint256[10] private __gap;
+
 }

@@ -38,6 +38,7 @@ export declare namespace ERC20Votes {
 export interface ArmadaTokenInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "CLOCK_MODE"
       | "DEFAULT_ADMIN_ROLE"
       | "DOMAIN_SEPARATOR"
       | "MINTER_ROLE"
@@ -48,11 +49,13 @@ export interface ArmadaTokenInterface extends Interface {
       | "burn"
       | "burnFrom"
       | "checkpoints"
+      | "clock"
       | "decimals"
       | "decreaseAllowance"
       | "delegate"
       | "delegateBySig"
       | "delegates"
+      | "eip712Domain"
       | "getPastTotalSupply"
       | "getPastVotes"
       | "getRoleAdmin"
@@ -82,6 +85,7 @@ export interface ArmadaTokenInterface extends Interface {
       | "Approval"
       | "DelegateChanged"
       | "DelegateVotesChanged"
+      | "EIP712DomainChanged"
       | "Paused"
       | "RoleAdminChanged"
       | "RoleGranted"
@@ -90,6 +94,10 @@ export interface ArmadaTokenInterface extends Interface {
       | "Unpaused"
   ): EventFragment;
 
+  encodeFunctionData(
+    functionFragment: "CLOCK_MODE",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "DEFAULT_ADMIN_ROLE",
     values?: undefined
@@ -127,6 +135,7 @@ export interface ArmadaTokenInterface extends Interface {
     functionFragment: "checkpoints",
     values: [AddressLike, BigNumberish]
   ): string;
+  encodeFunctionData(functionFragment: "clock", values?: undefined): string;
   encodeFunctionData(functionFragment: "decimals", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "decreaseAllowance",
@@ -150,6 +159,10 @@ export interface ArmadaTokenInterface extends Interface {
   encodeFunctionData(
     functionFragment: "delegates",
     values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "eip712Domain",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "getPastTotalSupply",
@@ -230,6 +243,7 @@ export interface ArmadaTokenInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
 
+  decodeFunctionResult(functionFragment: "CLOCK_MODE", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "DEFAULT_ADMIN_ROLE",
     data: BytesLike
@@ -255,6 +269,7 @@ export interface ArmadaTokenInterface extends Interface {
     functionFragment: "checkpoints",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "clock", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "decreaseAllowance",
@@ -266,6 +281,10 @@ export interface ArmadaTokenInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "delegates", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "eip712Domain",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getPastTotalSupply",
     data: BytesLike
@@ -373,6 +392,16 @@ export namespace DelegateVotesChangedEvent {
     previousBalance: bigint;
     newBalance: bigint;
   }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace EIP712DomainChangedEvent {
+  export type InputTuple = [];
+  export type OutputTuple = [];
+  export interface OutputObject {}
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
   export type Log = TypedEventLog<Event>;
@@ -522,6 +551,8 @@ export interface ArmadaToken extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  CLOCK_MODE: TypedContractMethod<[], [string], "view">;
+
   DEFAULT_ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
 
   DOMAIN_SEPARATOR: TypedContractMethod<[], [string], "view">;
@@ -558,6 +589,8 @@ export interface ArmadaToken extends BaseContract {
     "view"
   >;
 
+  clock: TypedContractMethod<[], [bigint], "view">;
+
   decimals: TypedContractMethod<[], [bigint], "view">;
 
   decreaseAllowance: TypedContractMethod<
@@ -583,14 +616,30 @@ export interface ArmadaToken extends BaseContract {
 
   delegates: TypedContractMethod<[account: AddressLike], [string], "view">;
 
+  eip712Domain: TypedContractMethod<
+    [],
+    [
+      [string, string, string, bigint, string, string, bigint[]] & {
+        fields: string;
+        name: string;
+        version: string;
+        chainId: bigint;
+        verifyingContract: string;
+        salt: string;
+        extensions: bigint[];
+      }
+    ],
+    "view"
+  >;
+
   getPastTotalSupply: TypedContractMethod<
-    [blockNumber: BigNumberish],
+    [timepoint: BigNumberish],
     [bigint],
     "view"
   >;
 
   getPastVotes: TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish],
+    [account: AddressLike, timepoint: BigNumberish],
     [bigint],
     "view"
   >;
@@ -688,6 +737,9 @@ export interface ArmadaToken extends BaseContract {
   ): T;
 
   getFunction(
+    nameOrSignature: "CLOCK_MODE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "DEFAULT_ADMIN_ROLE"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -734,6 +786,9 @@ export interface ArmadaToken extends BaseContract {
     "view"
   >;
   getFunction(
+    nameOrSignature: "clock"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "decimals"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
@@ -764,12 +819,29 @@ export interface ArmadaToken extends BaseContract {
     nameOrSignature: "delegates"
   ): TypedContractMethod<[account: AddressLike], [string], "view">;
   getFunction(
+    nameOrSignature: "eip712Domain"
+  ): TypedContractMethod<
+    [],
+    [
+      [string, string, string, bigint, string, string, bigint[]] & {
+        fields: string;
+        name: string;
+        version: string;
+        chainId: bigint;
+        verifyingContract: string;
+        salt: string;
+        extensions: bigint[];
+      }
+    ],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "getPastTotalSupply"
-  ): TypedContractMethod<[blockNumber: BigNumberish], [bigint], "view">;
+  ): TypedContractMethod<[timepoint: BigNumberish], [bigint], "view">;
   getFunction(
     nameOrSignature: "getPastVotes"
   ): TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish],
+    [account: AddressLike, timepoint: BigNumberish],
     [bigint],
     "view"
   >;
@@ -900,6 +972,13 @@ export interface ArmadaToken extends BaseContract {
     DelegateVotesChangedEvent.OutputObject
   >;
   getEvent(
+    key: "EIP712DomainChanged"
+  ): TypedContractEvent<
+    EIP712DomainChangedEvent.InputTuple,
+    EIP712DomainChangedEvent.OutputTuple,
+    EIP712DomainChangedEvent.OutputObject
+  >;
+  getEvent(
     key: "Paused"
   ): TypedContractEvent<
     PausedEvent.InputTuple,
@@ -974,6 +1053,17 @@ export interface ArmadaToken extends BaseContract {
       DelegateVotesChangedEvent.InputTuple,
       DelegateVotesChangedEvent.OutputTuple,
       DelegateVotesChangedEvent.OutputObject
+    >;
+
+    "EIP712DomainChanged()": TypedContractEvent<
+      EIP712DomainChangedEvent.InputTuple,
+      EIP712DomainChangedEvent.OutputTuple,
+      EIP712DomainChangedEvent.OutputObject
+    >;
+    EIP712DomainChanged: TypedContractEvent<
+      EIP712DomainChangedEvent.InputTuple,
+      EIP712DomainChangedEvent.OutputTuple,
+      EIP712DomainChangedEvent.OutputObject
     >;
 
     "Paused(address)": TypedContractEvent<

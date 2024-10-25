@@ -287,4 +287,8 @@ contract ArmadaNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUpgra
       values[i] = _nodes[nodeIds.at(skip + i)];
     }
   }
+
+  // Reserve storage for future upgrades
+  uint256[10] private __gap;
+
 }

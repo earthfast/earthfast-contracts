@@ -2,6 +2,7 @@ import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/defender-sdk";
 import "@openzeppelin/hardhat-upgrades";
 import "hardhat-deploy";
+import "hardhat-contract-sizer";
 
 import "./tasks/deploy";
 import "./tasks/node";

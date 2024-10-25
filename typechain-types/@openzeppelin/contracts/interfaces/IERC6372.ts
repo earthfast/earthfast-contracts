@@ -3,12 +3,10 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumberish,
   BytesLike,
   FunctionFragment,
   Result,
   Interface,
-  AddressLike,
   ContractRunner,
   ContractMethod,
   Listener,
@@ -19,44 +17,26 @@ import type {
   TypedEventLog,
   TypedListener,
   TypedContractMethod,
-} from "../../../../../../common";
+} from "../../../common";
 
-export interface IERC20PermitInterface extends Interface {
-  getFunction(
-    nameOrSignature: "DOMAIN_SEPARATOR" | "nonces" | "permit"
-  ): FunctionFragment;
+export interface IERC6372Interface extends Interface {
+  getFunction(nameOrSignature: "CLOCK_MODE" | "clock"): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "DOMAIN_SEPARATOR",
+    functionFragment: "CLOCK_MODE",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "nonces", values: [AddressLike]): string;
-  encodeFunctionData(
-    functionFragment: "permit",
-    values: [
-      AddressLike,
-      AddressLike,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish,
-      BytesLike,
-      BytesLike
-    ]
-  ): string;
+  encodeFunctionData(functionFragment: "clock", values?: undefined): string;
 
-  decodeFunctionResult(
-    functionFragment: "DOMAIN_SEPARATOR",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "nonces", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "permit", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "CLOCK_MODE", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "clock", data: BytesLike): Result;
 }
 
-export interface IERC20Permit extends BaseContract {
-  connect(runner?: ContractRunner | null): IERC20Permit;
+export interface IERC6372 extends BaseContract {
+  connect(runner?: ContractRunner | null): IERC6372;
   waitForDeployment(): Promise<this>;
 
-  interface: IERC20PermitInterface;
+  interface: IERC6372Interface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -95,49 +75,20 @@ export interface IERC20Permit extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  DOMAIN_SEPARATOR: TypedContractMethod<[], [string], "view">;
+  CLOCK_MODE: TypedContractMethod<[], [string], "view">;
 
-  nonces: TypedContractMethod<[owner: AddressLike], [bigint], "view">;
-
-  permit: TypedContractMethod<
-    [
-      owner: AddressLike,
-      spender: AddressLike,
-      value: BigNumberish,
-      deadline: BigNumberish,
-      v: BigNumberish,
-      r: BytesLike,
-      s: BytesLike
-    ],
-    [void],
-    "nonpayable"
-  >;
+  clock: TypedContractMethod<[], [bigint], "view">;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
   getFunction(
-    nameOrSignature: "DOMAIN_SEPARATOR"
+    nameOrSignature: "CLOCK_MODE"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "nonces"
-  ): TypedContractMethod<[owner: AddressLike], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "permit"
-  ): TypedContractMethod<
-    [
-      owner: AddressLike,
-      spender: AddressLike,
-      value: BigNumberish,
-      deadline: BigNumberish,
-      v: BigNumberish,
-      r: BytesLike,
-      s: BytesLike
-    ],
-    [void],
-    "nonpayable"
-  >;
+    nameOrSignature: "clock"
+  ): TypedContractMethod<[], [bigint], "view">;
 
   filters: {};
 }

@@ -27,6 +27,7 @@ export interface ArmadaGovernorInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "BALLOT_TYPEHASH"
+      | "CLOCK_MODE"
       | "COUNTING_MODE"
       | "DEFAULT_ADMIN_ROLE"
       | "EXTENDED_BALLOT_TYPEHASH"
@@ -36,6 +37,8 @@ export interface ArmadaGovernorInterface extends Interface {
       | "castVoteWithReason"
       | "castVoteWithReasonAndParams"
       | "castVoteWithReasonAndParamsBySig"
+      | "clock"
+      | "eip712Domain"
       | "execute"
       | "getRoleAdmin"
       | "getVotes"
@@ -50,6 +53,7 @@ export interface ArmadaGovernorInterface extends Interface {
       | "onERC721Received"
       | "proposalDeadline"
       | "proposalEta"
+      | "proposalProposer"
       | "proposalSnapshot"
       | "proposalThreshold"
       | "proposalVotes"
@@ -78,6 +82,7 @@ export interface ArmadaGovernorInterface extends Interface {
 
   getEvent(
     nameOrSignatureOrTopic:
+      | "EIP712DomainChanged"
       | "ProposalCanceled"
       | "ProposalCreated"
       | "ProposalExecuted"
@@ -96,6 +101,10 @@ export interface ArmadaGovernorInterface extends Interface {
 
   encodeFunctionData(
     functionFragment: "BALLOT_TYPEHASH",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "CLOCK_MODE",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -141,6 +150,11 @@ export interface ArmadaGovernorInterface extends Interface {
       BytesLike,
       BytesLike
     ]
+  ): string;
+  encodeFunctionData(functionFragment: "clock", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "eip712Domain",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "execute",
@@ -199,6 +213,10 @@ export interface ArmadaGovernorInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "proposalEta",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "proposalProposer",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
@@ -290,6 +308,7 @@ export interface ArmadaGovernorInterface extends Interface {
     functionFragment: "BALLOT_TYPEHASH",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "CLOCK_MODE", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "COUNTING_MODE",
     data: BytesLike
@@ -318,6 +337,11 @@ export interface ArmadaGovernorInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "castVoteWithReasonAndParamsBySig",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "clock", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "eip712Domain",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
@@ -356,6 +380,10 @@ export interface ArmadaGovernorInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "proposalEta",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "proposalProposer",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -429,6 +457,16 @@ export interface ArmadaGovernorInterface extends Interface {
   ): Result;
 }
 
+export namespace EIP712DomainChangedEvent {
+  export type InputTuple = [];
+  export type OutputTuple = [];
+  export interface OutputObject {}
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace ProposalCanceledEvent {
   export type InputTuple = [proposalId: BigNumberish];
   export type OutputTuple = [proposalId: bigint];
@@ -449,8 +487,8 @@ export namespace ProposalCreatedEvent {
     values: BigNumberish[],
     signatures: string[],
     calldatas: BytesLike[],
-    startBlock: BigNumberish,
-    endBlock: BigNumberish,
+    voteStart: BigNumberish,
+    voteEnd: BigNumberish,
     description: string
   ];
   export type OutputTuple = [
@@ -460,8 +498,8 @@ export namespace ProposalCreatedEvent {
     values: bigint[],
     signatures: string[],
     calldatas: string[],
-    startBlock: bigint,
-    endBlock: bigint,
+    voteStart: bigint,
+    voteEnd: bigint,
     description: string
   ];
   export interface OutputObject {
@@ -471,8 +509,8 @@ export namespace ProposalCreatedEvent {
     values: bigint[];
     signatures: string[];
     calldatas: string[];
-    startBlock: bigint;
-    endBlock: bigint;
+    voteStart: bigint;
+    voteEnd: bigint;
     description: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -751,6 +789,8 @@ export interface ArmadaGovernor extends BaseContract {
 
   BALLOT_TYPEHASH: TypedContractMethod<[], [string], "view">;
 
+  CLOCK_MODE: TypedContractMethod<[], [string], "view">;
+
   COUNTING_MODE: TypedContractMethod<[], [string], "view">;
 
   DEFAULT_ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
@@ -817,6 +857,24 @@ export interface ArmadaGovernor extends BaseContract {
     "nonpayable"
   >;
 
+  clock: TypedContractMethod<[], [bigint], "view">;
+
+  eip712Domain: TypedContractMethod<
+    [],
+    [
+      [string, string, string, bigint, string, string, bigint[]] & {
+        fields: string;
+        name: string;
+        version: string;
+        chainId: bigint;
+        verifyingContract: string;
+        salt: string;
+        extensions: bigint[];
+      }
+    ],
+    "view"
+  >;
+
   execute: TypedContractMethod<
     [
       targets: AddressLike[],
@@ -831,13 +889,13 @@ export interface ArmadaGovernor extends BaseContract {
   getRoleAdmin: TypedContractMethod<[role: BytesLike], [string], "view">;
 
   getVotes: TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish],
+    [account: AddressLike, timepoint: BigNumberish],
     [bigint],
     "view"
   >;
 
   getVotesWithParams: TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish, params: BytesLike],
+    [account: AddressLike, timepoint: BigNumberish, params: BytesLike],
     [bigint],
     "view"
   >;
@@ -915,6 +973,12 @@ export interface ArmadaGovernor extends BaseContract {
     "view"
   >;
 
+  proposalProposer: TypedContractMethod<
+    [proposalId: BigNumberish],
+    [string],
+    "view"
+  >;
+
   proposalSnapshot: TypedContractMethod<
     [proposalId: BigNumberish],
     [bigint],
@@ -957,12 +1021,12 @@ export interface ArmadaGovernor extends BaseContract {
     "nonpayable"
   >;
 
-  quorum: TypedContractMethod<[blockNumber: BigNumberish], [bigint], "view">;
+  quorum: TypedContractMethod<[timepoint: BigNumberish], [bigint], "view">;
 
   quorumDenominator: TypedContractMethod<[], [bigint], "view">;
 
   "quorumNumerator(uint256)": TypedContractMethod<
-    [blockNumber: BigNumberish],
+    [timepoint: BigNumberish],
     [bigint],
     "view"
   >;
@@ -972,7 +1036,7 @@ export interface ArmadaGovernor extends BaseContract {
   relay: TypedContractMethod<
     [target: AddressLike, value: BigNumberish, data: BytesLike],
     [void],
-    "nonpayable"
+    "payable"
   >;
 
   renounceRole: TypedContractMethod<
@@ -1041,6 +1105,9 @@ export interface ArmadaGovernor extends BaseContract {
 
   getFunction(
     nameOrSignature: "BALLOT_TYPEHASH"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "CLOCK_MODE"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "COUNTING_MODE"
@@ -1118,6 +1185,26 @@ export interface ArmadaGovernor extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "clock"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "eip712Domain"
+  ): TypedContractMethod<
+    [],
+    [
+      [string, string, string, bigint, string, string, bigint[]] & {
+        fields: string;
+        name: string;
+        version: string;
+        chainId: bigint;
+        verifyingContract: string;
+        salt: string;
+        extensions: bigint[];
+      }
+    ],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "execute"
   ): TypedContractMethod<
     [
@@ -1135,14 +1222,14 @@ export interface ArmadaGovernor extends BaseContract {
   getFunction(
     nameOrSignature: "getVotes"
   ): TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish],
+    [account: AddressLike, timepoint: BigNumberish],
     [bigint],
     "view"
   >;
   getFunction(
     nameOrSignature: "getVotesWithParams"
   ): TypedContractMethod<
-    [account: AddressLike, blockNumber: BigNumberish, params: BytesLike],
+    [account: AddressLike, timepoint: BigNumberish, params: BytesLike],
     [bigint],
     "view"
   >;
@@ -1222,6 +1309,9 @@ export interface ArmadaGovernor extends BaseContract {
     nameOrSignature: "proposalEta"
   ): TypedContractMethod<[proposalId: BigNumberish], [bigint], "view">;
   getFunction(
+    nameOrSignature: "proposalProposer"
+  ): TypedContractMethod<[proposalId: BigNumberish], [string], "view">;
+  getFunction(
     nameOrSignature: "proposalSnapshot"
   ): TypedContractMethod<[proposalId: BigNumberish], [bigint], "view">;
   getFunction(
@@ -1266,13 +1356,13 @@ export interface ArmadaGovernor extends BaseContract {
   >;
   getFunction(
     nameOrSignature: "quorum"
-  ): TypedContractMethod<[blockNumber: BigNumberish], [bigint], "view">;
+  ): TypedContractMethod<[timepoint: BigNumberish], [bigint], "view">;
   getFunction(
     nameOrSignature: "quorumDenominator"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "quorumNumerator(uint256)"
-  ): TypedContractMethod<[blockNumber: BigNumberish], [bigint], "view">;
+  ): TypedContractMethod<[timepoint: BigNumberish], [bigint], "view">;
   getFunction(
     nameOrSignature: "quorumNumerator()"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -1281,7 +1371,7 @@ export interface ArmadaGovernor extends BaseContract {
   ): TypedContractMethod<
     [target: AddressLike, value: BigNumberish, data: BytesLike],
     [void],
-    "nonpayable"
+    "payable"
   >;
   getFunction(
     nameOrSignature: "renounceRole"
@@ -1342,6 +1432,13 @@ export interface ArmadaGovernor extends BaseContract {
     nameOrSignature: "votingPeriod"
   ): TypedContractMethod<[], [bigint], "view">;
 
+  getEvent(
+    key: "EIP712DomainChanged"
+  ): TypedContractEvent<
+    EIP712DomainChangedEvent.InputTuple,
+    EIP712DomainChangedEvent.OutputTuple,
+    EIP712DomainChangedEvent.OutputObject
+  >;
   getEvent(
     key: "ProposalCanceled"
   ): TypedContractEvent<
@@ -1442,6 +1539,17 @@ export interface ArmadaGovernor extends BaseContract {
   >;
 
   filters: {
+    "EIP712DomainChanged()": TypedContractEvent<
+      EIP712DomainChangedEvent.InputTuple,
+      EIP712DomainChangedEvent.OutputTuple,
+      EIP712DomainChangedEvent.OutputObject
+    >;
+    EIP712DomainChanged: TypedContractEvent<
+      EIP712DomainChangedEvent.InputTuple,
+      EIP712DomainChangedEvent.OutputTuple,
+      EIP712DomainChangedEvent.OutputObject
+    >;
+
     "ProposalCanceled(uint256)": TypedContractEvent<
       ProposalCanceledEvent.InputTuple,
       ProposalCanceledEvent.OutputTuple,

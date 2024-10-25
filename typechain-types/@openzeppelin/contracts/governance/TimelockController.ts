@@ -59,6 +59,7 @@ export interface TimelockControllerInterface extends Interface {
   getEvent(
     nameOrSignatureOrTopic:
       | "CallExecuted"
+      | "CallSalt"
       | "CallScheduled"
       | "Cancelled"
       | "MinDelayChange"
@@ -314,6 +315,19 @@ export namespace CallExecutedEvent {
     target: string;
     value: bigint;
     data: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace CallSaltEvent {
+  export type InputTuple = [id: BytesLike, salt: BytesLike];
+  export type OutputTuple = [id: string, salt: string];
+  export interface OutputObject {
+    id: string;
+    salt: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -849,6 +863,13 @@ export interface TimelockController extends BaseContract {
     CallExecutedEvent.OutputObject
   >;
   getEvent(
+    key: "CallSalt"
+  ): TypedContractEvent<
+    CallSaltEvent.InputTuple,
+    CallSaltEvent.OutputTuple,
+    CallSaltEvent.OutputObject
+  >;
+  getEvent(
     key: "CallScheduled"
   ): TypedContractEvent<
     CallScheduledEvent.InputTuple,
@@ -901,6 +922,17 @@ export interface TimelockController extends BaseContract {
       CallExecutedEvent.InputTuple,
       CallExecutedEvent.OutputTuple,
       CallExecutedEvent.OutputObject
+    >;
+
+    "CallSalt(bytes32,bytes32)": TypedContractEvent<
+      CallSaltEvent.InputTuple,
+      CallSaltEvent.OutputTuple,
+      CallSaltEvent.OutputObject
+    >;
+    CallSalt: TypedContractEvent<
+      CallSaltEvent.InputTuple,
+      CallSaltEvent.OutputTuple,
+      CallSaltEvent.OutputObject
     >;
 
     "CallScheduled(bytes32,uint256,address,uint256,bytes,bytes32,uint256)": TypedContractEvent<
