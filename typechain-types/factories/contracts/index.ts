@@ -13,3 +13,5 @@ export { ArmadaRegistry__factory } from "./ArmadaRegistry__factory";
 export { ArmadaReservations__factory } from "./ArmadaReservations__factory";
 export { ArmadaTimelock__factory } from "./ArmadaTimelock__factory";
 export { ArmadaToken__factory } from "./ArmadaToken__factory";
+export { CCIPReceiverAdaptor__factory } from "./CCIPReceiverAdaptor__factory";
+export { CCIPSenderAdaptor__factory } from "./CCIPSenderAdaptor__factory";
