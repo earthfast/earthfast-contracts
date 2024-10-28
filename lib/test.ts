@@ -111,7 +111,9 @@ export async function fixtures(hre: HardhatRuntimeEnvironment): Promise<{
   const stakePerNode = parseTokens("1");
   const operatorsFactory = await hre.ethers.getContractFactory("EarthfastOperators");
   const operatorsArgs = [[admin.address], registryAddress, stakePerNode, true];
-  const operators = <EarthfastOperators>await hre.upgrades.deployProxy(operatorsFactory, operatorsArgs, { kind: "uups" });
+  const operators = <EarthfastOperators>(
+    await hre.upgrades.deployProxy(operatorsFactory, operatorsArgs, { kind: "uups" })
+  );
   const operatorsAddress = await operators.getAddress();
   await hre.network.provider.request({ method: "hardhat_impersonateAccount", params: [operatorsAddress] });
 
