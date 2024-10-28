@@ -10,10 +10,10 @@ async function main() {
   }
 
   const { guardian } = await signers(hre);
-  await upgradeProxy(hre, "ArmadaNodes", {
+  await upgradeProxy(hre, "EarthfastNodes", {
     from: guardian.address,
-    contract: "ArmadaNodesV2",
-    libraries: ["ArmadaNodesImpl"],
+    contract: "EarthfastNodesV2",
+    libraries: ["EarthfastNodesImpl"],
   });
 }
 

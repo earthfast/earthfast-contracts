@@ -182,49 +182,49 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.DoubleEndedQueue__factory>;
     getContractFactory(
-      name: "ArmadaBilling",
+      name: "EarthfastBilling",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ArmadaBilling__factory>;
+    ): Promise<Contracts.EarthfastBilling__factory>;
     getContractFactory(
-      name: "ArmadaGovernor",
+      name: "EarthfastGovernor",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ArmadaGovernor__factory>;
+    ): Promise<Contracts.EarthfastGovernor__factory>;
     getContractFactory(
-      name: "ArmadaNodes",
+      name: "EarthfastNodes",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ArmadaNodes__factory>;
+    ): Promise<Contracts.EarthfastNodes__factory>;
     getContractFactory(
-      name: "ArmadaNodesImpl",
+      name: "EarthfastNodesImpl",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ArmadaNodesImpl__factory>;
+    ): Promise<Contracts.EarthfastNodesImpl__factory>;
     getContractFactory(
-      name: "ArmadaNodesV2",
+      name: "EarthfastNodesV2",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ArmadaNodesV2__factory>;
+    ): Promise<Contracts.EarthfastNodesV2__factory>;
     getContractFactory(
-      name: "ArmadaOperators",
+      name: "EarthfastOperators",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ArmadaOperators__factory>;
+    ): Promise<Contracts.EarthfastOperators__factory>;
     getContractFactory(
-      name: "ArmadaProjects",
+      name: "EarthfastProjects",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ArmadaProjects__factory>;
+    ): Promise<Contracts.EarthfastProjects__factory>;
     getContractFactory(
-      name: "ArmadaRegistry",
+      name: "EarthfastRegistry",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ArmadaRegistry__factory>;
+    ): Promise<Contracts.EarthfastRegistry__factory>;
     getContractFactory(
-      name: "ArmadaReservations",
+      name: "EarthfastReservations",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ArmadaReservations__factory>;
+    ): Promise<Contracts.EarthfastReservations__factory>;
     getContractFactory(
-      name: "ArmadaTimelock",
+      name: "EarthfastTimelock",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ArmadaTimelock__factory>;
+    ): Promise<Contracts.EarthfastTimelock__factory>;
     getContractFactory(
-      name: "ArmadaToken",
+      name: "EarthfastToken",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ArmadaToken__factory>;
+    ): Promise<Contracts.EarthfastToken__factory>;
     getContractFactory(
       name: "USDC",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -441,60 +441,60 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.DoubleEndedQueue>;
     getContractAt(
-      name: "ArmadaBilling",
+      name: "EarthfastBilling",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.ArmadaBilling>;
+    ): Promise<Contracts.EarthfastBilling>;
     getContractAt(
-      name: "ArmadaGovernor",
+      name: "EarthfastGovernor",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.ArmadaGovernor>;
+    ): Promise<Contracts.EarthfastGovernor>;
     getContractAt(
-      name: "ArmadaNodes",
+      name: "EarthfastNodes",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.ArmadaNodes>;
+    ): Promise<Contracts.EarthfastNodes>;
     getContractAt(
-      name: "ArmadaNodesImpl",
+      name: "EarthfastNodesImpl",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.ArmadaNodesImpl>;
+    ): Promise<Contracts.EarthfastNodesImpl>;
     getContractAt(
-      name: "ArmadaNodesV2",
+      name: "EarthfastNodesV2",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.ArmadaNodesV2>;
+    ): Promise<Contracts.EarthfastNodesV2>;
     getContractAt(
-      name: "ArmadaOperators",
+      name: "EarthfastOperators",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.ArmadaOperators>;
+    ): Promise<Contracts.EarthfastOperators>;
     getContractAt(
-      name: "ArmadaProjects",
+      name: "EarthfastProjects",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.ArmadaProjects>;
+    ): Promise<Contracts.EarthfastProjects>;
     getContractAt(
-      name: "ArmadaRegistry",
+      name: "EarthfastRegistry",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.ArmadaRegistry>;
+    ): Promise<Contracts.EarthfastRegistry>;
     getContractAt(
-      name: "ArmadaReservations",
+      name: "EarthfastReservations",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.ArmadaReservations>;
+    ): Promise<Contracts.EarthfastReservations>;
     getContractAt(
-      name: "ArmadaTimelock",
+      name: "EarthfastTimelock",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.ArmadaTimelock>;
+    ): Promise<Contracts.EarthfastTimelock>;
     getContractAt(
-      name: "ArmadaToken",
+      name: "EarthfastToken",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.ArmadaToken>;
+    ): Promise<Contracts.EarthfastToken>;
     getContractAt(
       name: "USDC",
       address: string | ethers.Addressable,
@@ -670,49 +670,49 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.DoubleEndedQueue>;
     deployContract(
-      name: "ArmadaBilling",
+      name: "EarthfastBilling",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaBilling>;
+    ): Promise<Contracts.EarthfastBilling>;
     deployContract(
-      name: "ArmadaGovernor",
+      name: "EarthfastGovernor",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaGovernor>;
+    ): Promise<Contracts.EarthfastGovernor>;
     deployContract(
-      name: "ArmadaNodes",
+      name: "EarthfastNodes",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaNodes>;
+    ): Promise<Contracts.EarthfastNodes>;
     deployContract(
-      name: "ArmadaNodesImpl",
+      name: "EarthfastNodesImpl",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaNodesImpl>;
+    ): Promise<Contracts.EarthfastNodesImpl>;
     deployContract(
-      name: "ArmadaNodesV2",
+      name: "EarthfastNodesV2",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaNodesV2>;
+    ): Promise<Contracts.EarthfastNodesV2>;
     deployContract(
-      name: "ArmadaOperators",
+      name: "EarthfastOperators",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaOperators>;
+    ): Promise<Contracts.EarthfastOperators>;
     deployContract(
-      name: "ArmadaProjects",
+      name: "EarthfastProjects",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaProjects>;
+    ): Promise<Contracts.EarthfastProjects>;
     deployContract(
-      name: "ArmadaRegistry",
+      name: "EarthfastRegistry",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaRegistry>;
+    ): Promise<Contracts.EarthfastRegistry>;
     deployContract(
-      name: "ArmadaReservations",
+      name: "EarthfastReservations",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaReservations>;
+    ): Promise<Contracts.EarthfastReservations>;
     deployContract(
-      name: "ArmadaTimelock",
+      name: "EarthfastTimelock",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaTimelock>;
+    ): Promise<Contracts.EarthfastTimelock>;
     deployContract(
-      name: "ArmadaToken",
+      name: "EarthfastToken",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaToken>;
+    ): Promise<Contracts.EarthfastToken>;
     deployContract(
       name: "USDC",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -929,60 +929,60 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.DoubleEndedQueue>;
     deployContract(
-      name: "ArmadaBilling",
+      name: "EarthfastBilling",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaBilling>;
+    ): Promise<Contracts.EarthfastBilling>;
     deployContract(
-      name: "ArmadaGovernor",
+      name: "EarthfastGovernor",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaGovernor>;
+    ): Promise<Contracts.EarthfastGovernor>;
     deployContract(
-      name: "ArmadaNodes",
+      name: "EarthfastNodes",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaNodes>;
+    ): Promise<Contracts.EarthfastNodes>;
     deployContract(
-      name: "ArmadaNodesImpl",
+      name: "EarthfastNodesImpl",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaNodesImpl>;
+    ): Promise<Contracts.EarthfastNodesImpl>;
     deployContract(
-      name: "ArmadaNodesV2",
+      name: "EarthfastNodesV2",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaNodesV2>;
+    ): Promise<Contracts.EarthfastNodesV2>;
     deployContract(
-      name: "ArmadaOperators",
+      name: "EarthfastOperators",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaOperators>;
+    ): Promise<Contracts.EarthfastOperators>;
     deployContract(
-      name: "ArmadaProjects",
+      name: "EarthfastProjects",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaProjects>;
+    ): Promise<Contracts.EarthfastProjects>;
     deployContract(
-      name: "ArmadaRegistry",
+      name: "EarthfastRegistry",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaRegistry>;
+    ): Promise<Contracts.EarthfastRegistry>;
     deployContract(
-      name: "ArmadaReservations",
+      name: "EarthfastReservations",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaReservations>;
+    ): Promise<Contracts.EarthfastReservations>;
     deployContract(
-      name: "ArmadaTimelock",
+      name: "EarthfastTimelock",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaTimelock>;
+    ): Promise<Contracts.EarthfastTimelock>;
     deployContract(
-      name: "ArmadaToken",
+      name: "EarthfastToken",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ArmadaToken>;
+    ): Promise<Contracts.EarthfastToken>;
     deployContract(
       name: "USDC",
       args: any[],

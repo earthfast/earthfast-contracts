@@ -5,16 +5,16 @@ import { attach, signers } from "../lib/util";
 export default main;
 async function main() {
   const { deployer, guardian } = await signers(hre);
-  const timelock = await attach(hre, "ArmadaTimelock");
+  const timelock = await attach(hre, "EarthfastTimelock");
   const timelockAddress = await timelock.getAddress();
   const admins = [guardian.address, timelockAddress];
   const minters = [...admins, deployer.address];
   const pausers = admins;
-  const name = hre.network.name === "mainnet" ? "Armada Access" : "Armada";
+  const name = hre.network.name === "mainnet" ? "Earthfast Access" : "Earthfast";
   const symbol = hre.network.name === "mainnet" ? "ACCESS" : "ARMADA";
   const args = [name, symbol, admins, minters, pausers];
   const salt = hre.ethers.id(hre.network.name);
-  await deployDeterministic(hre, "ArmadaToken", { args, from: deployer.address, salt });
+  await deployDeterministic(hre, "EarthfastToken", { args, from: deployer.address, salt });
 }
 
-main.tags = ["v1", "ArmadaToken"];
+main.tags = ["v1", "EarthfastToken"];

@@ -3,23 +3,23 @@ import { task } from "hardhat/config";
 import { approve, attach, decodeEvent, parseTokens, parseUSDC, signers, wait } from "../lib/util";
 
 // @ts-ignore Type created during hardhat compile
-type ArmadaToken = import("../typechain-types").Token;
+type EarthfastToken = import("../typechain-types").Token;
 // @ts-ignore Type created during hardhat compile
-type ArmadaRegistry = import("../typechain-types").ArmadaRegistry;
+type EarthfastRegistry = import("../typechain-types").EarthfastRegistry;
 // @ts-ignore Type created during hardhat compile
-type ArmadaNodes = import("../typechain-types").ArmadaNodes;
+type EarthfastNodes = import("../typechain-types").EarthfastNodes;
 // @ts-ignore Type created during hardhat compile
-type ArmadaOperators = import("../typechain-types").ArmadaOperators;
+type EarthfastOperators = import("../typechain-types").EarthfastOperators;
 // @ts-ignore Type created during hardhat compile
-type ArmadaOperatorStruct = import("../typechain-types").ArmadaOperatorStruct;
+type EarthfastOperatorStruct = import("../typechain-types").EarthfastOperatorStruct;
 // @ts-ignore Type created during hardhat compile
-type ArmadaProjects = import("../typechain-types").ArmadaProjects;
+type EarthfastProjects = import("../typechain-types").EarthfastProjects;
 // @ts-ignore Type created during hardhat compile
-type ArmadaReservations = import("../typechain-types").ArmadaReservations;
+type EarthfastReservations = import("../typechain-types").EarthfastReservations;
 // @ts-ignore Type created during hardhat compile
-type ArmadaCreateNodeDataStruct = import("../typechain-types").ArmadaCreateNodeDataStruct;
+type EarthfastCreateNodeDataStruct = import("../typechain-types").EarthfastCreateNodeDataStruct;
 // @ts-ignore Type created during hardhat compile
-type ArmadaCreateProjectDataStruct = import("../typechain-types").ArmadaCreateProjectDataStruct;
+type EarthfastCreateProjectDataStruct = import("../typechain-types").EarthfastCreateProjectDataStruct;
 // @ts-ignore Type created during hardhat compile
 type USDC = import("../typechain-types").USDC;
 
@@ -31,12 +31,12 @@ task("seed", "Uploads dummy programmatic contract data").setAction(async (_args,
   const { admin, operator, project } = await signers(hre);
 
   const usdc = <USDC>await attach(hre, "USDC");
-  const token = <ArmadaToken>await attach(hre, "ArmadaToken");
-  const registry = <ArmadaRegistry>await attach(hre, "ArmadaRegistry");
-  const nodes = <ArmadaNodes>await attach(hre, "ArmadaNodes");
-  const operators = <ArmadaOperators>await attach(hre, "ArmadaOperators");
-  const projects = <ArmadaProjects>await attach(hre, "ArmadaProjects");
-  const reservations = <ArmadaReservations>await attach(hre, "ArmadaReservations");
+  const token = <EarthfastToken>await attach(hre, "EarthfastToken");
+  const registry = <EarthfastRegistry>await attach(hre, "EarthfastRegistry");
+  const nodes = <EarthfastNodes>await attach(hre, "EarthfastNodes");
+  const operators = <EarthfastOperators>await attach(hre, "EarthfastOperators");
+  const projects = <EarthfastProjects>await attach(hre, "EarthfastProjects");
+  const reservations = <EarthfastReservations>await attach(hre, "EarthfastReservations");
 
   if (!(await registry.getNonce()).isZero()) {
     throw Error("Contracts already have data");
@@ -46,7 +46,7 @@ task("seed", "Uploads dummy programmatic contract data").setAction(async (_args,
   const price1 = parseUSDC("1");
 
   // Create operator
-  const o1: ArmadaOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "", stake: 0 };
+  const o1: EarthfastOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "", stake: 0 };
   const createOperator1 = await wait(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
   const [operatorId1] = await decodeEvent(createOperator1, operators, "OperatorCreated");
   const operatorsAddress = await operators.getAddress();
@@ -55,15 +55,15 @@ task("seed", "Uploads dummy programmatic contract data").setAction(async (_args,
 
   // Create nodes
   await wait(nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address));
-  const n1: ArmadaCreateNodeDataStruct = { topology: true, disabled: false, host: "h1", region: "r1", price: price0 };
-  const n2: ArmadaCreateNodeDataStruct = { topology: false, disabled: false, host: "h2", region: "r1", price: price1 };
+  const n1: EarthfastCreateNodeDataStruct = { topology: true, disabled: false, host: "h1", region: "r1", price: price0 };
+  const n2: EarthfastCreateNodeDataStruct = { topology: false, disabled: false, host: "h2", region: "r1", price: price1 };
   await wait(nodes.connect(operator).createNodes(operatorId1, true, [n1]));
   const createNodes2 = await wait(nodes.connect(operator).createNodes(operatorId1, false, [n2]));
   const [nodeId2] = await decodeEvent(createNodes2, nodes, "NodeCreated");
 
   // Create project
   await wait(projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address));
-  const p1: ArmadaCreateProjectDataStruct = { owner: project.address, name: "p1", email: "", content: "", checksum: ZeroHash, metadata: "" }; // prettier-ignore
+  const p1: EarthfastCreateProjectDataStruct = { owner: project.address, name: "p1", email: "", content: "", checksum: ZeroHash, metadata: "" }; // prettier-ignore
   const createProject1 = await wait(projects.connect(project).createProject(p1));
   const [projectId1] = await decodeEvent(createProject1, projects, "ProjectCreated");
   const projectsAddress = await projects.getAddress();

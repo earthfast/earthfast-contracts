@@ -21,10 +21,10 @@ async function main() {
   let amount = BigInt(0);
   const data = await loadData(hre);
   const usdc = <USDC>await attach(hre, "USDC");
-  const registry = await attach(hre, "ArmadaRegistry");
+  const registry = await attach(hre, "EarthfastRegistry");
   const registryAddress = await registry.getAddress();
-  const projectsData = data?.ArmadaProjects?.projects ?? [];
-  const operatorsData = data?.ArmadaOperators?.operators ?? [];
+  const projectsData = data?.EarthfastProjects?.projects ?? [];
+  const operatorsData = data?.EarthfastOperators?.operators ?? [];
   for (const project of projectsData) {
     amount = amount + parseUSDC(project.escrow ?? "0");
   }

@@ -3,14 +3,14 @@
 /* eslint-disable */
 import type * as test from "./test";
 export type { test };
-export type { ArmadaBilling } from "./ArmadaBilling";
-export type { ArmadaGovernor } from "./ArmadaGovernor";
-export type { ArmadaNodes } from "./ArmadaNodes";
-export type { ArmadaNodesImpl } from "./ArmadaNodesImpl";
-export type { ArmadaNodesV2 } from "./ArmadaNodesV2";
-export type { ArmadaOperators } from "./ArmadaOperators";
-export type { ArmadaProjects } from "./ArmadaProjects";
-export type { ArmadaRegistry } from "./ArmadaRegistry";
-export type { ArmadaReservations } from "./ArmadaReservations";
-export type { ArmadaTimelock } from "./ArmadaTimelock";
-export type { ArmadaToken } from "./ArmadaToken";
+export type { EarthfastBilling } from "./EarthfastBilling";
+export type { EarthfastGovernor } from "./EarthfastGovernor";
+export type { EarthfastNodes } from "./EarthfastNodes";
+export type { EarthfastNodesImpl } from "./EarthfastNodesImpl";
+export type { EarthfastNodesV2 } from "./EarthfastNodesV2";
+export type { EarthfastOperators } from "./EarthfastOperators";
+export type { EarthfastProjects } from "./EarthfastProjects";
+export type { EarthfastRegistry } from "./EarthfastRegistry";
+export type { EarthfastReservations } from "./EarthfastReservations";
+export type { EarthfastTimelock } from "./EarthfastTimelock";
+export type { EarthfastToken } from "./EarthfastToken";

@@ -12,7 +12,7 @@ async function main() {
   const executors = [ZeroAddress]; // everyone
   const args = [minDelay, admins, proposers, executors];
   const salt = hre.ethers.id(hre.network.name);
-  await deployDeterministic(hre, "ArmadaTimelock", { args, from: deployer.address, salt });
+  await deployDeterministic(hre, "EarthfastTimelock", { args, from: deployer.address, salt });
 }
 
-main.tags = ["v1", "ArmadaTimelock"];
+main.tags = ["v1", "EarthfastTimelock"];

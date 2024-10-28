@@ -2,7 +2,7 @@ import hre from "hardhat";
 import { attach, confirm, loadData, signers, stringify, wait } from "../lib/util";
 
 // @ts-ignore Type created during hardhat compile
-type ArmadaRegistry = import("../typechain-types").ArmadaRegistry;
+type EarthfastRegistry = import("../typechain-types").EarthfastRegistry;
 
 const USDC_GOERLI_ADDRESS = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
 // deployed and minted by hand on sepolia
@@ -13,18 +13,18 @@ const USDC_MAINNET_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 export default main;
 async function main() {
   const { guardian } = await signers(hre);
-  const timelock = await attach(hre, "ArmadaTimelock");
+  const timelock = await attach(hre, "EarthfastTimelock");
   const timelockAddress = await timelock.getAddress();
   const admins = [guardian.address, timelockAddress];
 
   const data = await loadData(hre);
-  const token = await attach(hre, "ArmadaToken");
-  const billing = await attach(hre, "ArmadaBilling");
-  const nodes = await attach(hre, "ArmadaNodes");
-  const operators = await attach(hre, "ArmadaOperators");
-  const projects = await attach(hre, "ArmadaProjects");
-  const reservations = await attach(hre, "ArmadaReservations");
-  const registry = <ArmadaRegistry>await attach(hre, "ArmadaRegistry");
+  const token = await attach(hre, "EarthfastToken");
+  const billing = await attach(hre, "EarthfastBilling");
+  const nodes = await attach(hre, "EarthfastNodes");
+  const operators = await attach(hre, "EarthfastOperators");
+  const projects = await attach(hre, "EarthfastProjects");
+  const reservations = await attach(hre, "EarthfastReservations");
+  const registry = <EarthfastRegistry>await attach(hre, "EarthfastRegistry");
 
   // get addresses of deployed contracts
   const tokenAddress = await token.getAddress();
@@ -34,11 +34,11 @@ async function main() {
   const projectsAddress = await projects.getAddress();
   const reservationsAddress = await reservations.getAddress();
 
-  const nodesData = data?.ArmadaNodes?.nodes ?? [];
-  const operatorsData = data?.ArmadaOperators?.operators ?? [];
-  const projectsData = data?.ArmadaProjects?.projects ?? [];
+  const nodesData = data?.EarthfastNodes?.nodes ?? [];
+  const operatorsData = data?.EarthfastOperators?.operators ?? [];
+  const projectsData = data?.EarthfastProjects?.projects ?? [];
   const idCount = nodesData.length + operatorsData.length + projectsData.length;
-  if (BigInt(data?.ArmadaRegistry?.nonce ?? "0") !== BigInt(idCount)) {
+  if (BigInt(data?.EarthfastRegistry?.nonce ?? "0") !== BigInt(idCount)) {
     throw Error("Mismatched nonce");
   }
 
@@ -48,13 +48,13 @@ async function main() {
   date.setUTCDate(date.getUTCDate() - date.getUTCDay());
   console.log(`Setting epochStart to ${date}`);
   const epochStart = Math.round(date.getTime() / 1000);
-  if (![undefined, epochStart].includes(data?.ArmadaRegistry?.epochStart)) {
+  if (![undefined, epochStart].includes(data?.EarthfastRegistry?.epochStart)) {
     throw Error("Mismatched epochStart");
   }
 
-  const lastEpochLength = data?.ArmadaRegistry?.lastEpochLength ?? "604800"; // 1 week
-  const nextEpochLength = data?.ArmadaRegistry?.nextEpochLength ?? "604800"; // 1 week
-  const cuedEpochLength = data?.ArmadaRegistry?.cuedEpochLength ?? "604800"; // 1 week
+  const lastEpochLength = data?.EarthfastRegistry?.lastEpochLength ?? "604800"; // 1 week
+  const nextEpochLength = data?.EarthfastRegistry?.nextEpochLength ?? "604800"; // 1 week
+  const cuedEpochLength = data?.EarthfastRegistry?.cuedEpochLength ?? "604800"; // 1 week
   if (cuedEpochLength !== nextEpochLength) {
     throw Error("Mismatched cuedEpochStart");
   }
@@ -78,12 +78,12 @@ async function main() {
   const args = [
     admins,
     {
-      version: data?.ArmadaRegistry?.version ?? "",
-      nonce: data?.ArmadaRegistry?.nonce ?? "0",
+      version: data?.EarthfastRegistry?.version ?? "",
+      nonce: data?.EarthfastRegistry?.nonce ?? "0",
       epochStart,
       lastEpochLength,
       nextEpochLength,
-      gracePeriod: data?.ArmadaRegistry?.gracePeriod ?? "86400", // 1 day
+      gracePeriod: data?.EarthfastRegistry?.gracePeriod ?? "86400", // 1 day
       usdc: usdcAddress,
       token: tokenAddress,
       billing: billingAddress,
@@ -94,7 +94,7 @@ async function main() {
     },
   ] as const;
 
-  if (confirm(hre, `Execute ArmadaRegistry.initialize args: ${stringify(args)}`)) {
+  if (confirm(hre, `Execute EarthfastRegistry.initialize args: ${stringify(args)}`)) {
     await wait(registry.initialize(...args));
   }
 }

@@ -3,28 +3,28 @@ import { deployProxy } from "../lib/deploy";
 import { attach, confirm, loadData, parseUSDC, signers, stringify, wait } from "../lib/util";
 
 // @ts-ignore Type created during hardhat compile
-type ArmadaProjects = import("../typechain-types").ArmadaProjects;
+type EarthfastProjects = import("../typechain-types").EarthfastProjects;
 
 export default main;
 async function main() {
   const { deployer, guardian } = await signers(hre);
-  const timelock = await attach(hre, "ArmadaTimelock");
+  const timelock = await attach(hre, "EarthfastTimelock");
   const timelockAddress = await timelock.getAddress();
   const admins = [guardian.address, timelockAddress];
-  const registry = await attach(hre, "ArmadaRegistry");
+  const registry = await attach(hre, "EarthfastRegistry");
   const registryAddress = await registry.getAddress();
   const args = [admins, registryAddress, true];
-  await deployProxy(hre, "ArmadaProjects", { args, from: deployer.address });
+  await deployProxy(hre, "EarthfastProjects", { args, from: deployer.address });
   const data = await loadData(hre);
-  const projects = <ArmadaProjects>await attach(hre, "ArmadaProjects");
-  const projectsData = data?.ArmadaProjects?.projects ?? [];
+  const projects = <EarthfastProjects>await attach(hre, "EarthfastProjects");
+  const projectsData = data?.EarthfastProjects?.projects ?? [];
   for (const project of projectsData) {
     if (project?.escrow !== undefined) project.escrow = parseUSDC(project.escrow).toString();
     if (project?.reserve !== undefined) project.reserve = parseUSDC(project.reserve).toString();
   }
-  const creators = data?.ArmadaProjects?.projectCreators ?? [];
+  const creators = data?.EarthfastProjects?.projectCreators ?? [];
   const importArgs = [projectsData, creators, true] as const;
-  if (confirm(hre, `Execute ArmadaProjects.unsafeImportData ${stringify(importArgs)}`)) {
+  if (confirm(hre, `Execute EarthfastProjects.unsafeImportData ${stringify(importArgs)}`)) {
     await wait(projects.unsafeImportData(...importArgs));
   }
 }

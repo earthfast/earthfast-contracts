@@ -8,7 +8,7 @@ const abi = [
   // ABI entry for grantRole function:
   "function grantRole(bytes32 role, address account) external",
 ];
-const contractAddress = ""; // ArmadaBilling / ArmadaRegistry address
+const contractAddress = ""; // EarthfastBilling / EarthfastRegistry address
 
 const provider = new ethers.providers.JsonRpcProvider(sepoliaUrl);
 const wallet = new ethers.Wallet(privateKey, provider);
