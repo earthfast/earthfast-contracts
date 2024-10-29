@@ -1,5 +1,32 @@
 # Earthfast Contracts
 
+Earthfast is a decentralized protocol for managing compute infrastructure and workload orchestration on the blockchain. The protocol consists of several key smart contracts:
+
+- **EarthfastToken (EARTHFAST)**: The protocol's governance token used for staking and voting
+- **EarthfastNodes**: Manages registration and verification of compute nodes
+- **EarthfastOperators**: Handles node operator staking and rewards
+- **EarthfastProjects**: Tracks project deployments and configurations
+- **EarthfastReservations**: Manages compute resource reservations and scheduling
+- **EarthfastRegistry**: Central registry connecting all protocol contracts
+- **EarthfastBilling**: Handles payments and billing for compute usage
+- **EarthfastGovernor**: Governance contract for protocol upgrades and parameter changes
+- **EarthfastTimelock**: Time-delayed execution of governance decisions
+
+The protocol enables:
+- Decentralized compute infrastructure provisioning
+- Secure workload orchestration and scheduling
+- Transparent billing and payments
+- Community governance of protocol parameters
+- Incentivized node operation through staking and rewards
+
+All contracts are upgradeable via UUPS proxy pattern and secured through role-based access control.
+
+Payments for compute resources are made in USDC.
+
+## Architecture
+
+See the [contract inheritance graph](docs/InheritanceGraph.md) for details on how the contracts interact and inherit from each other.
+
 ## Requirements
 
 - Node 20 - install [manually](https://nodejs.org/en/download/) or using
