@@ -13,6 +13,7 @@ Earthfast is a decentralized protocol for managing compute infrastructure and wo
 - **EarthfastTimelock**: Time-delayed execution of governance decisions
 
 The protocol enables:
+
 - Decentralized compute infrastructure provisioning
 - Secure workload orchestration and scheduling
 - Transparent billing and payments
@@ -25,7 +26,9 @@ Payments for compute resources are made in USDC.
 
 ## Architecture
 
-See the [contract inheritance graph](docs/InheritanceGraph.md) for details on how the contracts interact and inherit from each other.
+See the for details on how the contracts interact and inherit from each other.
+
+![Contract Inheritance Graph](docs/InheritanceGraph.svg)
 
 ## Requirements
 
