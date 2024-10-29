@@ -73,7 +73,7 @@ export async function fixtures(hre: HardhatRuntimeEnvironment): Promise<{
 
   const initialSupply = parseTokens("1000000000");
   const tokenFactory = await hre.ethers.getContractFactory("EarthfastToken");
-  const tokenArgs = ["Earthfast", "ARMADA", [admin.address], [admin.address], [admin.address]];
+  const tokenArgs = ["Earthfast", "EARTHFAST", [admin.address], [admin.address], [admin.address]];
   const token = <EarthfastToken>await tokenFactory.deploy(...tokenArgs);
   const tokenAddress = await token.getAddress();
   const tokenMint = await token.connect(admin).mint(admin.address, initialSupply);

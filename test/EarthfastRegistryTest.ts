@@ -218,7 +218,7 @@ describe("EarthfastRegistry", function () {
 
     // Set token address
     const tokenFactory = await hre.ethers.getContractFactory("EarthfastToken");
-    const tokenArgs = ["Earthfast", "ARMADA", [admin.address], [admin.address], [admin.address]];
+    const tokenArgs = ["Earthfast", "EARTHFAST", [admin.address], [admin.address], [admin.address]];
     const newTokenContract = <EarthfastToken>await tokenFactory.deploy(...tokenArgs);
     const newTokenAddress = await newTokenContract.getAddress();
     expect(await registry.connect(admin).unsafeSetToken(newTokenAddress)).to.be.ok;
@@ -403,7 +403,7 @@ describe("EarthfastRegistry", function () {
   it("Should test the EarthfastToken upgrade path", async function () {
     // Deploy new EarthfastToken contract
     const tokenFactory = await hre.ethers.getContractFactory("EarthfastToken");
-    const tokenArgs = ["Earthfast", "ARMADA", [admin.address], [admin.address], [admin.address]];
+    const tokenArgs = ["Earthfast", "EARTHFAST", [admin.address], [admin.address], [admin.address]];
     const newTokenContract = <EarthfastToken>await tokenFactory.deploy(...tokenArgs);
     const newTokenAddress = await newTokenContract.getAddress();
     expect(await newTokenContract.connect(admin).mint(admin.address, parseTokens("1000"))).to.be.ok;

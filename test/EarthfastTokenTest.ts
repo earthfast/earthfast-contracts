@@ -32,10 +32,10 @@ describe("EarthfastToken", function () {
 
   it("Should check constructor args", async function () {
     const factory = await hre.ethers.getContractFactory("EarthfastToken");
-    await expect(factory.deploy("Earthfast", "ARMADA", [], [admin.address], [admin.address])).to.be.revertedWith("no admins");
-    await expect(factory.deploy("Earthfast", "ARMADA", [ZeroAddress], [admin.address], [admin.address])).to.be.revertedWith("zero admin");
-    await expect(factory.deploy("Earthfast", "ARMADA", [admin.address], [ZeroAddress], [admin.address])).to.be.revertedWith("zero minter");
-    await expect(factory.deploy("Earthfast", "ARMADA", [admin.address], [admin.address], [ZeroAddress])).to.be.revertedWith("zero pauser");
+    await expect(factory.deploy("Earthfast", "EARTHFAST", [], [admin.address], [admin.address])).to.be.revertedWith("no admins");
+    await expect(factory.deploy("Earthfast", "EARTHFAST", [ZeroAddress], [admin.address], [admin.address])).to.be.revertedWith("zero admin");
+    await expect(factory.deploy("Earthfast", "EARTHFAST", [admin.address], [ZeroAddress], [admin.address])).to.be.revertedWith("zero minter");
+    await expect(factory.deploy("Earthfast", "EARTHFAST", [admin.address], [admin.address], [ZeroAddress])).to.be.revertedWith("zero pauser");
   });
 
   it("Should mint/burn ok", async function () {

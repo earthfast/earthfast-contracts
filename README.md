@@ -1,4 +1,4 @@
-# Armada Contracts
+# Earthfast Contracts
 
 ## Requirements
 
@@ -35,8 +35,8 @@ $ npx hardhat coverage --network ganache # Uses ganache network ran by solidity-
 $ npx hardhat node [--data data/foo.json] # Starts localhost network, seeds contract data
 $ npx hardhat --network localhost|staging seed # Uploads dummy programmatic contract data
 $ npx hardhat --network localhost|staging deploy [--data data/foo.json] # Deploys everything
-$ npx hardhat --network localhost|staging deploy --tags ArmadaNodesImpl # Redeploys a library
-$ npx hardhat --network localhost|staging upgrade ArmadaNodes [--libs ...] # Upgrades a proxy
+$ npx hardhat --network localhost|staging deploy --tags EarthfastNodesImpl # Redeploys a library
+$ npx hardhat --network localhost|staging upgrade EarthfastNodes [--libs ...] # Upgrades a proxy
 $ npx hardhat size-contracts # Reports contract sizes
 $ git commit -a # Commit deployed ABI
 ```
@@ -44,7 +44,7 @@ $ git commit -a # Commit deployed ABI
 ### Production
 
 ```shell
-$ npx hardhat --network staging|testnet upgrade ArmadaNodes [--libs ...] # Upgrades a proxy
+$ npx hardhat --network staging|testnet upgrade EarthfastNodes [--libs ...] # Upgrades a proxy
 $ npx hardhat --network staging|testnet deploy [--tags v2] [--data ...] # Runs a migration
 $ git commit -a # Commit deployed ABI
 ```
