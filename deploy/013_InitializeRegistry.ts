@@ -34,14 +34,6 @@ async function main() {
   const projectsAddress = await projects.getAddress();
   const reservationsAddress = await reservations.getAddress();
 
-  const nodesData = data?.EarthfastNodes?.nodes ?? [];
-  const operatorsData = data?.EarthfastOperators?.operators ?? [];
-  const projectsData = data?.EarthfastProjects?.projects ?? [];
-  const idCount = nodesData.length + operatorsData.length + projectsData.length;
-  if (BigInt(data?.EarthfastRegistry?.nonce ?? "0") !== BigInt(idCount)) {
-    throw Error("Mismatched nonce");
-  }
-
   // Round epoch start to the preceding Sunday
   const date = new Date();
   date.setUTCHours(0, 0, 0, 0);

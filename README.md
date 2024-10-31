@@ -26,7 +26,7 @@ Payments for compute resources are made in USDC.
 
 ## Architecture
 
-See the for details on how the contracts interact and inherit from each other.
+See the below diagram for details on how the contracts interact and inherit from each other.
 
 ![Contract Inheritance Graph](docs/InheritanceGraph.svg)
 
