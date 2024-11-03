@@ -1,4 +1,5 @@
 import hre from "hardhat";
+import { ZeroAddress } from "ethers";
 import { deployProxy } from "../lib/deploy";
 import { attach, confirm, loadData, parseUSDC, signers, stringify, wait } from "../lib/util";
 
@@ -18,6 +19,11 @@ async function main() {
   const data = await loadData(hre);
   const projects = <EarthfastProjects>await attach(hre, "EarthfastProjects");
   const projectsData = data?.EarthfastProjects?.projects ?? [];
+
+  // grant project creator role to address(0) to circumvent the need for a project creator
+  await projects.connect(guardian).grantRole(projects.PROJECT_CREATOR_ROLE(), ZeroAddress);
+
+  // load and format projects data for unsafeImportData
   for (const project of projectsData) {
     if (project?.escrow !== undefined) project.escrow = parseUSDC(project.escrow).toString();
     if (project?.reserve !== undefined) project.reserve = parseUSDC(project.reserve).toString();
