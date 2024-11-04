@@ -8,4 +8,4 @@ async function main() {
   await deployProxy(hre, "EarthfastRegistry", { from: deployer.address, initializer: false });
 }
 
-main.tags = ["v1"];
+main.tags = ["v1", "DeployRegistry"];

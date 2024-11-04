@@ -94,12 +94,16 @@ const config: HardhatUserConfig = {
       localhost: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", // Hardhat #2
       hardhat:   "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", // Hardhat #2
       ganache:   "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", // Hardhat #2
+      "testnet-sepolia":   "0x8E0d75dEF5212698F6A2DA4546536acDBfF134b9", // Earthfast operator
+      "testnet-sepolia-staging":   "0x3f9BBfadFC2Fd358Bd6EF43abE2E82D21E2D9B5D", // Earthfast operator
     },
     project: {
       // Testing
       localhost: "0x90F79bf6EB2c4f870365E785982E1f101E93b906", // Hardhat #3
       hardhat:   "0x90F79bf6EB2c4f870365E785982E1f101E93b906", // Hardhat #3
       ganache:   "0x90F79bf6EB2c4f870365E785982E1f101E93b906", // Hardhat #3
+      "testnet-sepolia":   "0x7a0604B7B60A306F0360ff3CccE7e1bE52A5AabE", // Earthfast dashboard owner
+      "testnet-sepolia-staging":   "0xe4a2F521293a12D2824b9D144E99BADf49c56cB9", // Earthfast dashboard owner
     },
   },
   gasReporter: {
@@ -107,10 +111,11 @@ const config: HardhatUserConfig = {
     gasPrice: 100,
     coinmarketcap: process.env.COINMARKETCAP_API_KEY,
   },
-  defender: {
-    apiKey: process.env.DEFENDER_API_KEY!,
-    apiSecret: process.env.DEFENDER_API_SECRET!,
-  },
+  // uncomment this to register newly deployed contracts with OZ Defender
+  // defender: {
+  //   apiKey: process.env.DEFENDER_API_KEY!,
+  //   apiSecret: process.env.DEFENDER_API_SECRET!,
+  // },
   verify: {
     etherscan: {
       apiKey: process.env.ETHERSCAN_API_KEY,

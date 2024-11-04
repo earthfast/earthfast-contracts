@@ -14,4 +14,4 @@ async function main() {
   await deployProxy(hre, "EarthfastBilling", { args, from: deployer.address });
 }
 
-main.tags = ["v1"];
+main.tags = ["v1", "DeployBilling"];

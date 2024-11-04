@@ -37,4 +37,4 @@ async function main() {
   }
 }
 
-main.tags = ["v1"];
+main.tags = ["v1", "DeployUSDC"];
