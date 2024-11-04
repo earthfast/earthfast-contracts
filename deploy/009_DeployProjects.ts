@@ -1,4 +1,3 @@
-import { ZeroAddress } from "ethers";
 import hre from "hardhat";
 import { deployProxy } from "../lib/deploy";
 import { attach, confirm, loadData, parseUSDC, signers, stringify, wait } from "../lib/util";
@@ -35,7 +34,7 @@ async function main() {
     for (let i = 0; i < projectsData.length; i += BATCH_SIZE) {
       const batch = projectsData.slice(i, i + BATCH_SIZE);
 
-      console.log(`Importing projects batch ${i/BATCH_SIZE + 1} (${batch.length} projects)`);
+      console.log(`Importing projects batch ${i / BATCH_SIZE + 1} (${batch.length} projects)`);
 
       // Import this batch
       await wait(
