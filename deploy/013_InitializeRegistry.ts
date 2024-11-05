@@ -34,10 +34,14 @@ async function main() {
   const projectsAddress = await projects.getAddress();
   const reservationsAddress = await reservations.getAddress();
 
-  // Round epoch start to the preceding Sunday
+  // Round epoch start to Wednesday at 16:00 UTC
   const date = new Date();
-  date.setUTCHours(0, 0, 0, 0);
-  date.setUTCDate(date.getUTCDate() - date.getUTCDay());
+  date.setUTCHours(16, 0, 0, 0);
+  // Get current day (0 = Sunday, 3 = Wednesday)
+  const currentDay = date.getUTCDay();
+  // Calculate days to subtract to reach previous Wednesday
+  const daysToSubtract = ((currentDay - 3) + 7) % 7;
+  date.setUTCDate(date.getUTCDate() - daysToSubtract);
   console.log(`Setting epochStart to ${date}`);
   const epochStart = Math.round(date.getTime() / 1000);
   if (![undefined, epochStart].includes(data?.EarthfastRegistry?.epochStart)) {
