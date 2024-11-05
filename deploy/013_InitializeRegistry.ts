@@ -40,7 +40,7 @@ async function main() {
   // Get current day (0 = Sunday, 3 = Wednesday)
   const currentDay = date.getUTCDay();
   // Calculate days to subtract to reach previous Wednesday
-  const daysToSubtract = ((currentDay - 3) + 7) % 7;
+  const daysToSubtract = (currentDay - 3 + 7) % 7;
   date.setUTCDate(date.getUTCDate() - daysToSubtract);
   console.log(`Setting epochStart to ${date}`);
   const epochStart = Math.round(date.getTime() / 1000);
