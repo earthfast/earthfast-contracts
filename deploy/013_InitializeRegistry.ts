@@ -4,7 +4,6 @@ import { attach, confirm, loadData, signers, stringify, wait } from "../lib/util
 // @ts-ignore Type created during hardhat compile
 type EarthfastRegistry = import("../typechain-types").EarthfastRegistry;
 
-const USDC_GOERLI_ADDRESS = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F";
 // deployed and minted by hand on sepolia
 const USDC_SEPOLIA_ADDRESS = "0x0e9ad5c78b926f3368b1bcfc2dede9042c2d2a18";
 const USDC_SEPOLIA_STAGING_ADDRESS = "0x152C5Ddd523890A49ba5b7E73eda0E6a3Bae7710";
@@ -58,8 +57,6 @@ async function main() {
   let usdc;
   if (hre.network.tags.local) {
     usdc = await attach(hre, "USDC");
-  } else if (hre.network.tags.goerli) {
-    usdc = await hre.ethers.getContractAt([], USDC_GOERLI_ADDRESS);
   } else if (hre.network.tags.sepolia) {
     usdc = await hre.ethers.getContractAt([], USDC_SEPOLIA_ADDRESS);
   } else if (hre.network.tags["sepolia-staging"]) {

@@ -44,16 +44,6 @@ const config: HardhatUserConfig = {
       tags: ["local", "ganache"],
       url: "http://127.0.0.1:8545",
     },
-    staging: {
-      tags: ["goerli"],
-      url: `https://eth-goerli.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
-      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
-    },
-    testnet: {
-      tags: ["goerli"],
-      url: `https://eth-goerli.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
-      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
-    },
     "testnet-sepolia": {
       tags: ["sepolia"],
       url: `https://eth-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
@@ -73,8 +63,6 @@ const config: HardhatUserConfig = {
       hardhat:   "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", // Hardhat #0
       ganache:   "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", // Hardhat #0
       // Production
-      staging:   getAddress(process.env.DEPLOYER_PRIVATE_KEY)!, // Developer (private key)
-      testnet:   getAddress(process.env.DEPLOYER_PRIVATE_KEY)!, // Developer (private key)
       "testnet-sepolia": getAddress(process.env.DEPLOYER_PRIVATE_KEY)!, // Developer (private key)
       "testnet-sepolia-staging": getAddress(process.env.DEPLOYER_PRIVATE_KEY)!, // Developer (private key)
     },
@@ -84,8 +72,6 @@ const config: HardhatUserConfig = {
       hardhat:   "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", // Hardhat #1
       ganache:   "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", // Hardhat #1
       // Production
-      staging:   "0x90bC78b839fCC1c652CCF8d6A527687AE432A3Bc", // Gnosis Safe (public key)
-      testnet:   "0xF62e46336335f2344D451bAA23696CF77e5C52fC", // Gnosis Safe (public key)
       "testnet-sepolia":   "0x76824F74dE8C1E4985D73A9ea475B7E01432CdF5", // Gnosis Safe (public key)
       "testnet-sepolia-staging": "0x8459DDE54CB9dA738A9e52c937d086A8FC665A23", // Gnosis Safe (public key)
     },

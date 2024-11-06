@@ -63,10 +63,10 @@ $ npx hardhat coverage # Uses built-in hardhat network
 $ npx hardhat coverage --network localhost # Requires "npx hardhat node" in separate terminal
 $ npx hardhat coverage --network ganache # Uses ganache network ran by solidity-coverage
 $ npx hardhat node [--data data/foo.json] # Starts localhost network, seeds contract data
-$ npx hardhat --network localhost|staging seed # Uploads dummy programmatic contract data
-$ npx hardhat --network localhost|staging deploy [--data data/foo.json] # Deploys everything
-$ npx hardhat --network localhost|staging deploy --tags EarthfastNodesImpl # Redeploys a library
-$ npx hardhat --network localhost|staging upgrade EarthfastNodes [--libs ...] # Upgrades a proxy
+$ npx hardhat --network localhost|testnet-sepolia-staging seed # Uploads dummy programmatic contract data
+$ npx hardhat --network localhost|testnet-sepolia-staging deploy [--data data/foo.json] # Deploys everything
+$ npx hardhat --network localhost|testnet-sepolia-staging deploy --tags EarthfastNodesImpl # Redeploys a library
+$ npx hardhat --network localhost|testnet-sepolia-staging upgrade EarthfastNodes [--libs ...] # Upgrades a proxy
 $ npx hardhat size-contracts # Reports contract sizes
 $ git commit -a # Commit deployed ABI
 ```
@@ -74,7 +74,7 @@ $ git commit -a # Commit deployed ABI
 ### Production
 
 ```shell
-$ npx hardhat --network staging|testnet upgrade EarthfastNodes [--libs ...] # Upgrades a proxy
-$ npx hardhat --network staging|testnet deploy [--tags v2] [--data ...] # Runs a migration
+$ npx hardhat --network testnet-sepolia-staging|testnet-sepolia upgrade EarthfastNodes [--libs ...] # Upgrades a proxy
+$ npx hardhat --network testnet-sepolia-staging|testnet-sepolia deploy [--tags v2] [--data ...] # Runs a migration
 $ git commit -a # Commit deployed ABI
 ```
