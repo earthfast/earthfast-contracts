@@ -1,6 +1,6 @@
 FROM node:20
 
-WORKDIR /armada-contracts
+WORKDIR /earthfast-contracts
 
 # Install npm dependencies
 COPY package.json .
