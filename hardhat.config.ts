@@ -73,7 +73,7 @@ const config: HardhatUserConfig = {
       ganache:   "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", // Hardhat #1
       // Production
       "testnet-sepolia":   "0x76824F74dE8C1E4985D73A9ea475B7E01432CdF5", // Gnosis Safe (public key)
-      "testnet-sepolia-staging": "0x8459DDE54CB9dA738A9e52c937d086A8FC665A23", // Gnosis Safe (public key)
+      "testnet-sepolia-staging": "0x8459DDE54CB9dA738A9e52c937d086A8FC665A23", // MetaMask wallet
     },
     operator: {
       // Testing

@@ -69,6 +69,11 @@ $ npx hardhat --network localhost|testnet-sepolia-staging deploy --tags Earthfas
 $ npx hardhat --network localhost|testnet-sepolia-staging upgrade EarthfastNodes [--libs ...] # Upgrades a proxy
 $ npx hardhat size-contracts # Reports contract sizes
 $ git commit -a # Commit deployed ABI
+
+# Scripts (must run in scripts/ folder)
+$ npx ts-node submitRawTx.ts # sign and submit a raw tx
+$ sh abigen.sh # generate golang models for contracts and put them in earthfast-services
+$ sh copy-contract-deployments.sh # copy deployment artifacts (address & abi props only) to everywhere they're used like keeper, cli, etc
 ```
 
 ### Production
