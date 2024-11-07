@@ -5,7 +5,7 @@ import { signers } from "../lib/util";
 export default main;
 async function main() {
   const { deployer } = await signers(hre);
-  await deployProxy(hre, "ArmadaRegistry", { from: deployer.address, initializer: false });
+  await deployProxy(hre, "EarthfastRegistry", { from: deployer.address, initializer: false });
 }
 
-main.tags = ["v1"];
+main.tags = ["v1", "DeployRegistry"];

@@ -2,14 +2,14 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as test from "./test";
-export { ArmadaBilling__factory } from "./ArmadaBilling__factory";
-export { ArmadaGovernor__factory } from "./ArmadaGovernor__factory";
-export { ArmadaNodes__factory } from "./ArmadaNodes__factory";
-export { ArmadaNodesImpl__factory } from "./ArmadaNodesImpl__factory";
-export { ArmadaNodesV2__factory } from "./ArmadaNodesV2__factory";
-export { ArmadaOperators__factory } from "./ArmadaOperators__factory";
-export { ArmadaProjects__factory } from "./ArmadaProjects__factory";
-export { ArmadaRegistry__factory } from "./ArmadaRegistry__factory";
-export { ArmadaReservations__factory } from "./ArmadaReservations__factory";
-export { ArmadaTimelock__factory } from "./ArmadaTimelock__factory";
-export { ArmadaToken__factory } from "./ArmadaToken__factory";
+export { EarthfastBilling__factory } from "./EarthfastBilling__factory";
+export { EarthfastGovernor__factory } from "./EarthfastGovernor__factory";
+export { EarthfastNodes__factory } from "./EarthfastNodes__factory";
+export { EarthfastNodesImpl__factory } from "./EarthfastNodesImpl__factory";
+export { EarthfastNodesV2__factory } from "./EarthfastNodesV2__factory";
+export { EarthfastOperators__factory } from "./EarthfastOperators__factory";
+export { EarthfastProjects__factory } from "./EarthfastProjects__factory";
+export { EarthfastRegistry__factory } from "./EarthfastRegistry__factory";
+export { EarthfastReservations__factory } from "./EarthfastReservations__factory";
+export { EarthfastTimelock__factory } from "./EarthfastTimelock__factory";
+export { EarthfastToken__factory } from "./EarthfastToken__factory";

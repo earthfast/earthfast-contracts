@@ -1,8 +1,8 @@
 {
-  "ArmadaToken": {
+  "EarthfastToken": {
     "holders": [
       {
-        "address": "ArmadaRegistry",
+        "address": "EarthfastRegistry",
         "balance": "200.0"
       },
       {
@@ -15,7 +15,7 @@
       }
     ]
   },
-  "ArmadaRegistry": {
+  "EarthfastRegistry": {
     "version": "",
     "nonce": "4",
     "lastEpochLength": "604800",
@@ -23,7 +23,7 @@
     "cuedEpochLength": "604800",
     "gracePeriod": "86400"
   },
-  "ArmadaNodes": {
+  "EarthfastNodes": {
     "topologyCreators": [
       "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
     ],
@@ -62,20 +62,20 @@
       }
     ]
   },
-  "ArmadaOperators": {
+  "EarthfastOperators": {
     "stakePerNode": "1.0",
     "operators": [
       {
         "id": "0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563",
         "owner": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
-        "name": "armada",
+        "name": "earthfast",
         "email": "@",
         "stake": "100.0",
         "balance": "100.0"
       }
     ]
   },
-  "ArmadaProjects": {
+  "EarthfastProjects": {
     "projectCreators": [
       "0x90F79bf6EB2c4f870365E785982E1f101E93b906"
     ],
@@ -93,7 +93,7 @@
       }
     ]
   },
-  "ArmadaBilling": {
+  "EarthfastBilling": {
     "billingNodeIndex": "0",
     "renewalNodeIndex": "0"
   }

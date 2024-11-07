@@ -3,22 +3,22 @@ import { deployProxy } from "../lib/deploy";
 import { attach, confirm, loadData, parseTokens, parseUSDC, signers, stringify, wait } from "../lib/util";
 
 // @ts-ignore Type created during hardhat compile
-type ArmadaOperators = import("../typechain-types").ArmadaOperators;
+type EarthfastOperators = import("../typechain-types").EarthfastOperators;
 
 export default main;
 async function main() {
   const { deployer, guardian } = await signers(hre);
-  const timelock = await attach(hre, "ArmadaTimelock");
+  const timelock = await attach(hre, "EarthfastTimelock");
   const timelockAddress = await timelock.getAddress();
   const admins = [guardian.address, timelockAddress];
   const data = await loadData(hre);
-  const registry = await attach(hre, "ArmadaRegistry");
+  const registry = await attach(hre, "EarthfastRegistry");
   const registryAddress = await registry.getAddress();
-  const stakePerNode = parseTokens(data?.ArmadaOperators?.stakePerNode ?? "0").toString();
+  const stakePerNode = parseTokens(data?.EarthfastOperators?.stakePerNode ?? "0").toString();
   const args = [admins, registryAddress, stakePerNode, true];
-  await deployProxy(hre, "ArmadaOperators", { args, from: deployer.address });
-  const operators = <ArmadaOperators>await attach(hre, "ArmadaOperators");
-  const operatorsData = data?.ArmadaOperators?.operators ?? [];
+  await deployProxy(hre, "EarthfastOperators", { args, from: deployer.address });
+  const operators = <EarthfastOperators>await attach(hre, "EarthfastOperators");
+  const operatorsData = data?.EarthfastOperators?.operators ?? [];
   for (const operator of operatorsData) {
     if (operator?.stake !== undefined) {
       operator.stake = parseTokens(operator.stake).toString();
@@ -28,9 +28,9 @@ async function main() {
     }
   }
   const importArgs = [operatorsData, true] as const;
-  if (confirm(hre, `Execute ArmadaOperators.unsafeImportData ${stringify(importArgs)}`)) {
+  if (confirm(hre, `Execute EarthfastOperators.unsafeImportData ${stringify(importArgs)}`)) {
     await wait(operators.unsafeImportData(...importArgs));
   }
 }
 
-main.tags = ["v1"];
+main.tags = ["v1", "DeployOperators"];

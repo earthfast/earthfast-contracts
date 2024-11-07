@@ -1,16 +1,16 @@
 import { expect } from "chai";
 import { Contract, ethers, randomBytes, Result, TransactionReceipt, TransactionResponse, ZeroAddress } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { ArmadaBilling } from "../typechain-types/contracts/ArmadaBilling";
-import { ArmadaGovernor } from "../typechain-types/contracts/ArmadaGovernor";
-import { ArmadaNodes } from "../typechain-types/contracts/ArmadaNodes";
-import { ArmadaNodesV2 } from "../typechain-types/contracts/ArmadaNodesV2";
-import { ArmadaOperators } from "../typechain-types/contracts/ArmadaOperators";
-import { ArmadaProjects } from "../typechain-types/contracts/ArmadaProjects";
-import { ArmadaRegistry } from "../typechain-types/contracts/ArmadaRegistry";
-import { ArmadaReservations } from "../typechain-types/contracts/ArmadaReservations";
-import { ArmadaTimelock } from "../typechain-types/contracts/ArmadaTimelock";
-import { ArmadaToken } from "../typechain-types/contracts/ArmadaToken";
+import { EarthfastBilling } from "../typechain-types/contracts/EarthfastBilling";
+import { EarthfastGovernor } from "../typechain-types/contracts/EarthfastGovernor";
+import { EarthfastNodes } from "../typechain-types/contracts/EarthfastNodes";
+import { EarthfastNodesV2 } from "../typechain-types/contracts/EarthfastNodesV2";
+import { EarthfastOperators } from "../typechain-types/contracts/EarthfastOperators";
+import { EarthfastProjects } from "../typechain-types/contracts/EarthfastProjects";
+import { EarthfastRegistry } from "../typechain-types/contracts/EarthfastRegistry";
+import { EarthfastReservations } from "../typechain-types/contracts/EarthfastReservations";
+import { EarthfastTimelock } from "../typechain-types/contracts/EarthfastTimelock";
+import { EarthfastToken } from "../typechain-types/contracts/EarthfastToken";
 import { USDC } from "../typechain-types/contracts/test/USDC";
 import { decodeEvent, parseTokens, signers, toHexString } from "./util";
 
@@ -54,15 +54,15 @@ export async function automine(hre: HardhatRuntimeEnvironment, automine: boolean
 // Deploys test contracts and uploads test data
 export async function fixtures(hre: HardhatRuntimeEnvironment): Promise<{
   usdc: USDC;
-  token: ArmadaToken;
-  registry: ArmadaRegistry;
-  billing: ArmadaBilling;
-  nodes: ArmadaNodesV2;
-  operators: ArmadaOperators;
-  projects: ArmadaProjects;
-  reservations: ArmadaReservations;
-  timelock: ArmadaTimelock;
-  governor: ArmadaGovernor;
+  token: EarthfastToken;
+  registry: EarthfastRegistry;
+  billing: EarthfastBilling;
+  nodes: EarthfastNodesV2;
+  operators: EarthfastOperators;
+  projects: EarthfastProjects;
+  reservations: EarthfastReservations;
+  timelock: EarthfastTimelock;
+  governor: EarthfastGovernor;
 }> {
   const { admin, deployer } = await signers(hre);
 
@@ -72,62 +72,64 @@ export async function fixtures(hre: HardhatRuntimeEnvironment): Promise<{
   const usdcAddress = await usdc.getAddress();
 
   const initialSupply = parseTokens("1000000000");
-  const tokenFactory = await hre.ethers.getContractFactory("ArmadaToken");
-  const tokenArgs = ["Armada", "ARMADA", [admin.address], [admin.address], [admin.address]];
-  const token = <ArmadaToken>await tokenFactory.deploy(...tokenArgs);
+  const tokenFactory = await hre.ethers.getContractFactory("EarthfastToken");
+  const tokenArgs = ["Earthfast", "EARTHFAST", [admin.address], [admin.address], [admin.address]];
+  const token = <EarthfastToken>await tokenFactory.deploy(...tokenArgs);
   const tokenAddress = await token.getAddress();
   const tokenMint = await token.connect(admin).mint(admin.address, initialSupply);
   await tokenMint.wait();
 
   // timelockArgs: minDelay, admins, proposers, executors
   const timelockArgs = [0, [deployer.address], [deployer.address], [ZeroAddress]];
-  const timelockFactory = await hre.ethers.getContractFactory("ArmadaTimelock");
-  const timelock = <ArmadaTimelock>await timelockFactory.deploy(...timelockArgs);
+  const timelockFactory = await hre.ethers.getContractFactory("EarthfastTimelock");
+  const timelock = <EarthfastTimelock>await timelockFactory.deploy(...timelockArgs);
   const timelockAddress = await timelock.getAddress();
 
   // governorArgs: token, timelock, votingDelay, votingPeriod, proposalThreshold, quorumNumerator
   const governorArgs = [admin.address, tokenAddress, timelockAddress, 0, 25, 0, 51];
-  const governorFactory = await hre.ethers.getContractFactory("ArmadaGovernor");
-  const governor = <ArmadaGovernor>await governorFactory.deploy(...governorArgs);
+  const governorFactory = await hre.ethers.getContractFactory("EarthfastGovernor");
+  const governor = <EarthfastGovernor>await governorFactory.deploy(...governorArgs);
   const governorAddress = await governor.getAddress();
 
   // Grant govenor ability to execute, queue proposals
   await timelock.grantRole(await timelock.PROPOSER_ROLE(), governorAddress);
 
-  const registryFactory = await hre.ethers.getContractFactory("ArmadaRegistry");
-  const registry = <ArmadaRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false }); // prettier-ignore
+  const registryFactory = await hre.ethers.getContractFactory("EarthfastRegistry");
+  const registry = <EarthfastRegistry>await hre.upgrades.deployProxy(registryFactory, { kind: "uups", initializer: false }); // prettier-ignore
   const registryAddress = await registry.getAddress();
 
-  const nodesImplFactory = await hre.ethers.getContractFactory("ArmadaNodesImpl");
-  const nodesImpl = <ArmadaNodes>await nodesImplFactory.deploy();
+  const nodesImplFactory = await hre.ethers.getContractFactory("EarthfastNodesImpl");
+  const nodesImpl = <EarthfastNodes>await nodesImplFactory.deploy();
   const nodesImplAddress = await nodesImpl.getAddress();
 
-  const nodesFactory = await hre.ethers.getContractFactory("ArmadaNodes", { libraries: { ArmadaNodesImpl: nodesImplAddress } }); // prettier-ignore
+  const nodesFactory = await hre.ethers.getContractFactory("EarthfastNodes", { libraries: { EarthfastNodesImpl: nodesImplAddress } }); // prettier-ignore
   const nodesArgs = [[admin.address], registryAddress, true];
-  const nodes = <ArmadaNodes>await hre.upgrades.deployProxy(nodesFactory, nodesArgs, { kind: "uups" });
+  const nodes = <EarthfastNodes>await hre.upgrades.deployProxy(nodesFactory, nodesArgs, { kind: "uups" });
   const nodesAddress = await nodes.getAddress();
   await hre.network.provider.request({ method: "hardhat_impersonateAccount", params: [nodesAddress] });
 
   const stakePerNode = parseTokens("1");
-  const operatorsFactory = await hre.ethers.getContractFactory("ArmadaOperators");
+  const operatorsFactory = await hre.ethers.getContractFactory("EarthfastOperators");
   const operatorsArgs = [[admin.address], registryAddress, stakePerNode, true];
-  const operators = <ArmadaOperators>await hre.upgrades.deployProxy(operatorsFactory, operatorsArgs, { kind: "uups" });
+  const operators = <EarthfastOperators>(
+    await hre.upgrades.deployProxy(operatorsFactory, operatorsArgs, { kind: "uups" })
+  );
   const operatorsAddress = await operators.getAddress();
   await hre.network.provider.request({ method: "hardhat_impersonateAccount", params: [operatorsAddress] });
 
-  const projectsFactory = await hre.ethers.getContractFactory("ArmadaProjects");
+  const projectsFactory = await hre.ethers.getContractFactory("EarthfastProjects");
   const projectsArgs = [[admin.address], registryAddress, true];
-  const projects = <ArmadaProjects>await hre.upgrades.deployProxy(projectsFactory, projectsArgs, { kind: "uups" });
+  const projects = <EarthfastProjects>await hre.upgrades.deployProxy(projectsFactory, projectsArgs, { kind: "uups" });
   const projectsAddress = await projects.getAddress();
 
-  const reservationsFactory = await hre.ethers.getContractFactory("ArmadaReservations");
+  const reservationsFactory = await hre.ethers.getContractFactory("EarthfastReservations");
   const reservationsArgs = [[admin.address], registryAddress, true];
-  const reservations = <ArmadaReservations>await hre.upgrades.deployProxy(reservationsFactory, reservationsArgs, { kind: "uups" }); // prettier-ignore
+  const reservations = <EarthfastReservations>await hre.upgrades.deployProxy(reservationsFactory, reservationsArgs, { kind: "uups" }); // prettier-ignore
   const reservationsAddress = await reservations.getAddress();
 
-  const billingFactory = await hre.ethers.getContractFactory("ArmadaBilling");
+  const billingFactory = await hre.ethers.getContractFactory("EarthfastBilling");
   const billingArgs = [[admin.address], registryAddress];
-  const billing = <ArmadaBilling>await hre.upgrades.deployProxy(billingFactory, billingArgs, { kind: "uups" });
+  const billing = <EarthfastBilling>await hre.upgrades.deployProxy(billingFactory, billingArgs, { kind: "uups" });
   const billingAddress = await billing.getAddress();
 
   const block = await hre.ethers.provider.getBlock("latest");
@@ -149,11 +151,11 @@ export async function fixtures(hre: HardhatRuntimeEnvironment): Promise<{
   const registryInitialize = await registry.connect(admin).initialize([admin.address], registryArgs);
   await registryInitialize.wait();
 
-  const nodesV2Factory = await hre.ethers.getContractFactory("ArmadaNodesV2", {
+  const nodesV2Factory = await hre.ethers.getContractFactory("EarthfastNodesV2", {
     signer: admin,
-    libraries: { ArmadaNodesImpl: nodesImplAddress },
+    libraries: { EarthfastNodesImpl: nodesImplAddress },
   });
-  const nodesV2 = <ArmadaNodesV2>await hre.upgrades.upgradeProxy(nodesAddress, nodesV2Factory);
+  const nodesV2 = <EarthfastNodesV2>await hre.upgrades.upgradeProxy(nodesAddress, nodesV2Factory);
 
   return { usdc, token, registry, nodes: nodesV2, operators, projects, reservations, timelock, governor, billing };
 }

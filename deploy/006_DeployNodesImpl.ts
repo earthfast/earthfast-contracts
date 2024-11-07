@@ -6,7 +6,7 @@ export default main;
 async function main() {
   const { deployer } = await signers(hre);
   const salt = hre.ethers.id(hre.network.name);
-  await deployDeterministic(hre, "ArmadaNodesImpl", { from: deployer.address, salt });
+  await deployDeterministic(hre, "EarthfastNodesImpl", { from: deployer.address, salt });
 }
 
-main.tags = ["v1", "ArmadaNodesImpl"];
+main.tags = ["v1", "EarthfastNodesImpl"];

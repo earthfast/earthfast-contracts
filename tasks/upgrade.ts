@@ -4,9 +4,9 @@ import { signers } from "../lib/util";
 
 task("upgrade")
   .addFlag("ask", "Ask for confirmations (always on for production)")
-  .addPositionalParam("name", "Which deployment to upgrade (ex. ArmadaNodes)")
-  .addOptionalPositionalParam("contract", "New contract (if name changed, ex. ArmadaNodesV2)")
-  .addOptionalParam("libs", "Libraries to link, comma separated (ex. ArmadaNodesImpl)")
+  .addPositionalParam("name", "Which deployment to upgrade (ex. EarthfastNodes)")
+  .addOptionalPositionalParam("contract", "New contract (if name changed, ex. EarthfastNodesV2)")
+  .addOptionalParam("libs", "Libraries to link, comma separated (ex. EarthfastNodesImpl)")
   .setAction(async (args, hre, runSuper) => {
     hre.config.ask = args.ask;
     if (!hre.network.tags.local) hre.config.ask = true;
