@@ -203,9 +203,9 @@ describe("EarthfastReservations", function () {
     expect((await projects.getProject(projectId1)).reserve).to.equal(0);
 
     await mine(hre, epochLength);
-    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
 
     const proratedPrice2 = pricePerSec * BigInt(2) * (await epochRemainder());
     expect(proratedPrice2 > price);
@@ -222,11 +222,11 @@ describe("EarthfastReservations", function () {
   it("Should reserve nodes in the same block after epoch start", async function () {
     await mine(hre, epochLength);
     if (hre.network.tags.ganache) await mine(hre, 1);
-    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
     if (hre.network.tags.ganache) await mine(hre, 0);
-    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.ok;
     if (hre.network.tags.ganache) await mine(hre, 0);
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
     if (hre.network.tags.ganache) await mine(hre, 0);
     const proratedPrice = pricePerSec * (await epochRemainder());
     expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok;
@@ -239,9 +239,9 @@ describe("EarthfastReservations", function () {
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice * BigInt(2));
 
     await mine(hre, epochLength);
-    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
     // FIXME: proratedPrice = pricePerSec * await epochRemainder(); should this be recalculated here since we are in a new epoch?
     expect(await reservations.getReservationCount(projectId1)).to.equal(0);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
@@ -261,9 +261,9 @@ describe("EarthfastReservations", function () {
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice * BigInt(2));
 
-    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
     expect(await reservations.getReservationCount(projectId1)).to.equal(0);
     expect((await projects.getProject(projectId1)).reserve).to.equal(0);
 

@@ -156,10 +156,10 @@ describe("EarthfastBilling", function () {
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice * BigInt(2));
 
     await mine(hre, epochLength);
-    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
+    expect(await billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.ok;
     if (hre.network.tags.ganache) await mine(hre, 1);
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
     expect(await reservations.getReservationCount(projectId1)).to.equal(0);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice * BigInt(2));
@@ -167,36 +167,26 @@ describe("EarthfastBilling", function () {
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(0));
   });
 
-  it("Should not allow non-reconciler to reconcile without topology node", async function () {
-    await expect(billing.connect(project).processBilling(ZeroHash, [nodeId1, nodeId2], [10000, 10000])).to.be.revertedWith("not reconciler");
-    await expect(billing.connect(project).processRenewal(ZeroHash, [nodeId1, nodeId2])).to.be.revertedWith("not reconciler");
-    await expect(billing.connect(admin).processBilling(ZeroHash, [nodeId1, nodeId2], [10000, 10000])).to.be.revertedWith("not reconciler");
-    await expect(billing.connect(admin).processRenewal(ZeroHash, [nodeId1, nodeId2])).to.be.revertedWith("not reconciler");
-  });
-
   it("Should allow reconciler to reconcile without topology node", async function () {
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
     await mine(hre, epochLength);
-    expect(await billing.connect(admin).grantRole(billing.RECONCILER_ROLE(), admin.address)).to.be.ok;
-    expect(await billing.connect(admin).processBilling(ZeroHash, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    expect(await billing.connect(admin).processRenewal(ZeroHash, [nodeId1, nodeId2])).to.be.ok;
+    expect(await billing.connect(admin).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(admin).processRenewal([nodeId1, nodeId2])).to.be.ok;
   });
 
   it("Should check node reconcilication order", async function () {
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
     await mine(hre, epochLength);
-    expect(await billing.connect(admin).grantRole(billing.RECONCILER_ROLE(), admin.address)).to.be.ok;
-    await expect(billing.connect(admin).processBilling(ZeroHash, [nodeId2, nodeId1], [10000, 10000])).to.be.revertedWith("order mismatch");
-    expect(await billing.connect(admin).processBilling(ZeroHash, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    await expect(billing.connect(admin).processRenewal(ZeroHash, [nodeId2, nodeId1])).to.be.revertedWith("order mismatch");
+    await expect(billing.connect(admin).processBilling([nodeId2, nodeId1], [10000, 10000])).to.be.revertedWith("order mismatch");
+    expect(await billing.connect(admin).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    await expect(billing.connect(admin).processRenewal([nodeId2, nodeId1])).to.be.revertedWith("order mismatch");
   });
 
   it("Should check node uptime bounds", async function () {
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
     await mine(hre, epochLength);
-    expect(await billing.connect(admin).grantRole(billing.RECONCILER_ROLE(), admin.address)).to.be.ok;
-    await expect(billing.connect(admin).processBilling(ZeroHash, [nodeId1, nodeId2], [10001, 10001])).to.be.revertedWith("invalid uptime");
-    expect(await billing.connect(admin).processBilling(ZeroHash, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    await expect(billing.connect(admin).processBilling([nodeId1, nodeId2], [10001, 10001])).to.be.revertedWith("invalid uptime");
+    expect(await billing.connect(admin).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
   });
 
   it("Should allow admin to unsafe set registry", async function () {
@@ -230,9 +220,9 @@ describe("EarthfastBilling", function () {
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice * BigInt(2));
 
     await mine(hre, epochLength);
-    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
     expect(await reservations.getReservationCount(projectId1)).to.equal(0);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice * BigInt(2));
@@ -255,9 +245,9 @@ describe("EarthfastBilling", function () {
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice * BigInt(2));
 
     await mine(hre, epochLength);
-    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
     expect(await reservations.getReservationCount(projectId1)).to.equal(0);
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await operators.getOperator(operatorId1)).balance).to.equal(proratedPrice * BigInt(2));
@@ -276,25 +266,25 @@ describe("EarthfastBilling", function () {
     expect((await projects.getProject(projectId1)).reserve).to.equal((proratedPrice + price) * BigInt(2));
 
     await mine(hre, epochLength);
-    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
     expect(await reservations.getReservationCount(projectId1)).to.equal(BigInt(2));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(6) - proratedPrice * BigInt(2));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(4));
 
     await mine(hre, epochLength);
-    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
     expect(await reservations.getReservationCount(projectId1)).to.equal(BigInt(2));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(4) - proratedPrice * BigInt(2));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(2));
 
     await mine(hre, epochLength);
-    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
     expect(await reservations.getReservationCount(projectId1)).to.equal(0);
     expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(2) - proratedPrice * BigInt(2));
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(0));
@@ -324,9 +314,9 @@ describe("EarthfastBilling", function () {
 
     // Reconcile last epoch
     await mine(hre, epochLength);
-    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
     expect(await registry.getLastEpochLength()).to.equal(BigInt(100));
     expect(await registry.getNextEpochLength()).to.equal(BigInt(200));
     expect(await registry.getCuedEpochLength()).to.equal(BigInt(200));
@@ -346,9 +336,9 @@ describe("EarthfastBilling", function () {
 
     // Reconcile next epoch
     await mine(hre, epochLength);
-    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
     expect(await registry.getLastEpochLength()).to.equal(BigInt(200));
     expect(await registry.getNextEpochLength()).to.equal(BigInt(200));
     expect(await registry.getCuedEpochLength()).to.equal(BigInt(200));
@@ -368,9 +358,9 @@ describe("EarthfastBilling", function () {
 
     // Reconcile cued epoch
     await mine(hre, epochLength * BigInt(2));
-    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
     expect(await registry.getLastEpochLength()).to.equal(BigInt(200));
     expect(await registry.getNextEpochLength()).to.equal(BigInt(200));
     expect(await registry.getCuedEpochLength()).to.equal(BigInt(200));
@@ -414,9 +404,9 @@ describe("EarthfastBilling", function () {
 
     // Reconcile last epoch - node #2 gets loses renewal
     await mine(hre, epochLength);
-    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
     expect(await registry.getLastEpochLength()).to.equal(100);
     expect(await registry.getNextEpochLength()).to.equal(50);
     expect(await registry.getCuedEpochLength()).to.equal(50);
@@ -436,9 +426,9 @@ describe("EarthfastBilling", function () {
 
     // Reconcile next epoch - node #1 loses renewal, node #2 gets released
     await mine(hre, epochLength);
-    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
     expect(await registry.getLastEpochLength()).to.equal(50);
     expect(await registry.getNextEpochLength()).to.equal(50);
     expect(await registry.getCuedEpochLength()).to.equal(50);
@@ -458,9 +448,9 @@ describe("EarthfastBilling", function () {
 
     // Reconcile cued epoch - node #1 gets released
     await mine(hre, epochLength / BigInt(2));
-    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
-    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    expect(await billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
     expect(await registry.getLastEpochLength()).to.equal(50);
     expect(await registry.getNextEpochLength()).to.equal(50);
     expect(await registry.getCuedEpochLength()).to.equal(50);

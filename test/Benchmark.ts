@@ -87,8 +87,8 @@ describe("Benchmark", function () {
 
     await mine(hre, epochLength);
     const uptimes = (nodeIds as []).map(() => 10000);
-    expect(await billing.connect(operator).processBilling(nodeId0, nodeIds, uptimes)).to.be.ok;
-    expect(await billing.connect(operator).processRenewal(nodeId0, nodeIds)).to.be.ok;
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await billing.connect(operator).processBilling(nodeIds, uptimes)).to.be.ok;
+    expect(await billing.connect(operator).processRenewal(nodeIds)).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
   });
 });

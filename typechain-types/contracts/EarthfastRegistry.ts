@@ -73,7 +73,6 @@ export interface EarthfastRegistryInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "DEFAULT_ADMIN_ROLE"
-      | "RECONCILER_ROLE"
       | "advanceEpoch"
       | "getBilling"
       | "getCuedEpochLength"
@@ -141,12 +140,8 @@ export interface EarthfastRegistryInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "RECONCILER_ROLE",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "advanceEpoch",
-    values: [BytesLike]
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "getBilling",
@@ -307,10 +302,6 @@ export interface EarthfastRegistryInterface extends Interface {
 
   decodeFunctionResult(
     functionFragment: "DEFAULT_ADMIN_ROLE",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "RECONCILER_ROLE",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -642,13 +633,7 @@ export interface EarthfastRegistry extends BaseContract {
 
   DEFAULT_ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
 
-  RECONCILER_ROLE: TypedContractMethod<[], [string], "view">;
-
-  advanceEpoch: TypedContractMethod<
-    [topologyNodeId: BytesLike],
-    [void],
-    "nonpayable"
-  >;
+  advanceEpoch: TypedContractMethod<[], [void], "nonpayable">;
 
   getBilling: TypedContractMethod<[], [string], "view">;
 
@@ -824,11 +809,8 @@ export interface EarthfastRegistry extends BaseContract {
     nameOrSignature: "DEFAULT_ADMIN_ROLE"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "RECONCILER_ROLE"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "advanceEpoch"
-  ): TypedContractMethod<[topologyNodeId: BytesLike], [void], "nonpayable">;
+  ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "getBilling"
   ): TypedContractMethod<[], [string], "view">;

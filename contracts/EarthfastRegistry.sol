@@ -17,8 +17,6 @@ import "./EarthfastToken.sol";
 
 /// @title Main entry point for the core contracts and functionality
 contract EarthfastRegistry is AccessControlUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeable {
-  // Controls who in addition to topology nodes can reconcile the network. Grant to zero address to allow everybody.
-  bytes32 public constant RECONCILER_ROLE = keccak256("RECONCILER_ROLE");
 
   string private _version;          // Interpreted by the node software, used for automatic upgrading of the nodes
   uint256 private _nonce;           // Auto-incremented value used for generating unique ids
@@ -50,18 +48,6 @@ contract EarthfastRegistry is AccessControlUpgradeable, PausableUpgradeable, Ree
 
   modifier onlyAdmin {
     require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "not admin");
-    _;
-  }
-
-  modifier onlyReconcilerOrTopologyNode(bytes32 nodeIdOrZero) {
-    if (nodeIdOrZero == 0) {
-      require(
-        hasRole(RECONCILER_ROLE, address(0)) ||
-        hasRole(RECONCILER_ROLE, msg.sender),
-        "not reconciler");
-    } else {
-      _operators.requireTopologyNode(nodeIdOrZero, msg.sender);
-    }
     _;
   }
 
@@ -223,16 +209,14 @@ contract EarthfastRegistry is AccessControlUpgradeable, PausableUpgradeable, Ree
     require(block.timestamp + _gracePeriod < _lastEpochStart + _lastEpochLength, "grace period");
   }
 
-  /// @notice Called by the leader topology node to finish epoch reconciliation and unfreeze the network state.
-  /// @param topologyNodeId The topology node calling this function (zero is OK if caller has reconciler role)
+  /// @notice Called to finish epoch reconciliation and unfreeze the network state.
   ///
   /// The core contracts automatically enter reconciliation mode when the last epoch ends. During reconciliation,
   /// the operations that change contract state, such as node pricing or reservations, are disallowed and will revert.
   /// The leader topology node is expected to call processBilling(), processRenewal(), and advanceEpoch() in this
   /// order, to execute reconcilication. Calling advanceEpoch() completes reconciliation and unfreezes the contracts.
   /// The reconciliation process should normally only take a few blocks.
-  function advanceEpoch(bytes32 topologyNodeId)
-  public virtual onlyReconcilerOrTopologyNode(topologyNodeId) whenReconciling whenNotPaused {
+  function advanceEpoch() public virtual whenReconciling whenNotPaused {
     uint256 nodeCount = _nodes.getNodeCount(0, false);
     require(_billing.getBillingNodeIndex() == nodeCount, "billing in progress");
     require(_billing.getRenewalNodeIndex() == nodeCount, "renewal in progress");

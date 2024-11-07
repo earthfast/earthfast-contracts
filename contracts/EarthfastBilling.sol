@@ -16,9 +16,6 @@ import "./EarthfastTypes.sol";
 contract EarthfastBilling is AccessControlUpgradeable, PausableUpgradeable, UUPSUpgradeable {
   using EnumerableSet for EnumerableSet.Bytes32Set;
 
-  // Controls who in addition to topology nodes can reconcile the network. Grant to zero address to allow everybody.
-  bytes32 public constant RECONCILER_ROLE = keccak256("RECONCILER_ROLE");
-
   EarthfastRegistry private _registry;
 
   uint256 private _billingNodeIndex; // Ensures consistency during incremental reconciliation
@@ -35,18 +32,6 @@ contract EarthfastBilling is AccessControlUpgradeable, PausableUpgradeable, UUPS
 
   modifier onlyAdmin {
     require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "not admin");
-    _;
-  }
-
-  modifier onlyReconcilerOrTopologyNode(bytes32 nodeIdOrZero) {
-    if (nodeIdOrZero == 0) {
-      require(
-        hasRole(RECONCILER_ROLE, address(0)) ||
-        hasRole(RECONCILER_ROLE, msg.sender),
-        "not reconciler");
-    } else {
-      _registry.getOperators().requireTopologyNode(nodeIdOrZero, msg.sender);
-    }
     _;
   }
 
@@ -91,19 +76,17 @@ contract EarthfastBilling is AccessControlUpgradeable, PausableUpgradeable, UUPS
   /// @notice Called by the leader topology node to disburse escrow payments to operators.
   /// @dev This must be called sequentially and fully, for all the nodes in the network.
   /// @dev See EarthfastRegistry.advanceEpoch() for more details about reconciliation process.
-  /// @param topologyNodeId The topology node calling this function (zero is OK if caller has reconciler role)
   /// @param nodeIds Content nodes being reported
   /// @param uptimeBips Uptime of corresponding content node in basis points (1 is 0.01%)
   /// @dev Note that uptimeBips is ignored (forced to 100%) if RECONCILER_ROLE is granted to zero address.
-  function processBilling(bytes32 topologyNodeId, bytes32[] memory nodeIds, uint256[] memory uptimeBips)
-  public virtual onlyReconcilerOrTopologyNode(topologyNodeId) whenReconciling whenNotPaused {
+  function processBilling(bytes32[] memory nodeIds, uint256[] memory uptimeBips)
+  public virtual whenReconciling whenNotPaused {
     EarthfastNodes allNodes = _registry.getNodes();
     EarthfastProjects projects = _registry.getProjects();
     EarthfastOperators operators = _registry.getOperators();
     require(_renewalNodeIndex == 0, "renewal in progress");
     require(_billingNodeIndex < allNodes.getNodeCount(0, false), "billing finished");
     uint256 lastEpochStart = _registry.getLastEpochStart();
-    bool everybody = hasRole(RECONCILER_ROLE, address(0));
     for (uint256 i = 0; i < nodeIds.length; i++) {
       EarthfastNode[] memory nodeCopy0 = allNodes.getNodes(0, false, _billingNodeIndex++, 1);
       EarthfastNode memory nodeCopy = allNodes.getNode(nodeIds[i]);
@@ -111,7 +94,9 @@ contract EarthfastBilling is AccessControlUpgradeable, PausableUpgradeable, UUPS
       require(uptimeBips[i] <= 10000, "invalid uptime");
       if (nodeCopy.projectIds[EARTHFAST_LAST_EPOCH] != 0) {
         bytes32 projectId = nodeCopy.projectIds[EARTHFAST_LAST_EPOCH];
-        uint256 uptimeBip = everybody ? 10000 : uptimeBips[i];
+        // FIXME: update this once we have a way to verify uptimeBips
+        // uint256 uptimeBip = uptimeBips[i];
+        uint256 uptimeBip = 10000;
         uint256 payout = nodeCopy.prices[EARTHFAST_LAST_EPOCH] * uptimeBip / 10000;
         projects.setProjectEscrowImpl(projectId, payout, 0);
         projects.setProjectReserveImpl(projectId, nodeCopy.prices[EARTHFAST_LAST_EPOCH], 0);
@@ -128,10 +113,9 @@ contract EarthfastBilling is AccessControlUpgradeable, PausableUpgradeable, UUPS
   /// @notice Called by the leader topology node to roll over reservations between epochs.
   /// @dev This must be called sequentially and fully, for all the nodes in the network.
   /// @dev See EarthfastRegistry.advanceEpoch() for more details about reconciliation process.
-  /// @param topologyNodeId The topology node calling this function (zero is OK if caller has reconciler role)
   /// @param nodeIds Content nodes being reported
-  function processRenewal(bytes32 topologyNodeId, bytes32[] memory nodeIds)
-  public virtual onlyReconcilerOrTopologyNode(topologyNodeId) whenReconciling whenNotPaused {
+  function processRenewal(bytes32[] memory nodeIds)
+  public virtual whenReconciling whenNotPaused {
     EarthfastNodes allNodes = _registry.getNodes();
     EarthfastProjects projects = _registry.getProjects();
     require(_billingNodeIndex == allNodes.getNodeCount(0, false), "billing in progress");

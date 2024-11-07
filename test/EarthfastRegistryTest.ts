@@ -141,31 +141,31 @@ describe("EarthfastRegistry", function () {
     const createNodes12Result = await expectEvent(createNodes12, nodes, "NodeCreated");
     const [{ nodeId: nodeId1 }, { nodeId: nodeId2 }] = createNodes12Result;
 
-    await expect(billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.revertedWith("not reconciling");
-    await expect(billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.revertedWith("not reconciling");
-    await expect(registry.connect(operator).advanceEpoch(nodeId0)).to.be.revertedWith("not reconciling");
+    await expect(billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.revertedWith("not reconciling");
+    await expect(billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.revertedWith("not reconciling");
+    await expect(registry.connect(operator).advanceEpoch()).to.be.revertedWith("not reconciling");
 
     await mine(hre, epochLength);
 
     await expect(operators.connect(admin).createOperator(operator.address, "o", "e")).to.be.revertedWith("reconciling");
-    await expect(registry.connect(operator).advanceEpoch(nodeId0)).to.be.revertedWith("billing in progress");
-    await expect(billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.revertedWith("billing in progress");
-    expect(await billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.ok;
+    await expect(registry.connect(operator).advanceEpoch()).to.be.revertedWith("billing in progress");
+    await expect(billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.revertedWith("billing in progress");
+    expect(await billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
 
     await expect(operators.connect(admin).createOperator(operator.address, "o", "e")).to.be.revertedWith("reconciling");
-    await expect(billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.revertedWith("billing finished");
-    await expect(registry.connect(operator).advanceEpoch(nodeId0)).to.be.revertedWith("renewal in progress");
-    expect(await billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.ok;
+    await expect(billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.revertedWith("billing finished");
+    await expect(registry.connect(operator).advanceEpoch()).to.be.revertedWith("renewal in progress");
+    expect(await billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.ok;
 
     await expect(operators.connect(admin).createOperator(operator.address, "o", "e")).to.be.revertedWith("reconciling");
-    await expect(billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.revertedWith("renewal in progress");
-    await expect(billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.revertedWith("renewal finished");
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    await expect(billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.revertedWith("renewal in progress");
+    await expect(billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.revertedWith("renewal finished");
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
 
     expect(await operators.connect(admin).createOperator(operator.address, "o", "e")).to.be.ok;
-    await expect(billing.connect(operator).processBilling(nodeId0, [nodeId1, nodeId2], [10000, 10000])).to.be.revertedWith("not reconciling");
-    await expect(billing.connect(operator).processRenewal(nodeId0, [nodeId1, nodeId2])).to.be.revertedWith("not reconciling");
-    await expect(registry.connect(operator).advanceEpoch(nodeId0)).to.be.revertedWith("not reconciling");
+    await expect(billing.connect(operator).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.revertedWith("not reconciling");
+    await expect(billing.connect(operator).processRenewal([nodeId1, nodeId2])).to.be.revertedWith("not reconciling");
+    await expect(registry.connect(operator).advanceEpoch()).to.be.revertedWith("not reconciling");
   });
 
   it("Should allow admin to unsafeSet{USDC|Token|Projects|Operators}", async function () {
@@ -320,16 +320,6 @@ describe("EarthfastRegistry", function () {
 
     // Set new registry by admin
     expect(await hre.upgrades.upgradeProxy(proxy, registryFactory)).to.be.ok;
-  });
-
-  it("Should not allow non-reconciler to advance epoch without topology node", async function () {
-    // non-reconciler call should revert
-    await expect(registry.advanceEpoch(ZeroHash)).to.be.revertedWith("not reconciler");
-    await expect(registry.connect(admin).advanceEpoch(ZeroHash)).to.be.revertedWith("not reconciler");
-
-    // reconciler call should pass "not reconciler" check and fail "not reconciling" check
-    expect(await registry.connect(admin).grantRole(registry.RECONCILER_ROLE(), admin.address)).to.be.ok;
-    await expect(registry.connect(admin).advanceEpoch(ZeroHash)).to.be.revertedWith("not reconciling");
   });
 
   it("Should fail initialization if requirements aren't met", async function () {
