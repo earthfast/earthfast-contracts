@@ -1,6 +1,6 @@
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
-import { BigNumber, Result, SignerWithAddress, ZeroAddress, ZeroHash } from "ethers";
+import { BigNumber, SignerWithAddress, ZeroAddress, ZeroHash } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine, mineWith, newId } from "../lib/test";
 import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
@@ -34,7 +34,6 @@ describe("EarthfastReservations", function () {
   let operatorsAddress: string;
   let projectsAddress: string;
 
-  let nodeId0: string;
   let nodeId1: string;
   let nodeId2: string;
   let projectId1: string;
@@ -80,8 +79,7 @@ describe("EarthfastReservations", function () {
     expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
     const n0: EarthfastCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r0", price: parseUSDC("0") };
     const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(operatorId1, true, [n0]));
-    const createNodes0Result = await expectEvent(createNodes0, nodes, "NodeCreated");
-    ({ nodeId: nodeId0 } = createNodes0Result as Result);
+    await expectEvent(createNodes0, nodes, "NodeCreated");
 
     // Create content nodes
     const n1: EarthfastCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price };

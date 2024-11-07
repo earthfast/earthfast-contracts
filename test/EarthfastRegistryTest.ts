@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Result, SignerWithAddress, ZeroAddress, ZeroHash } from "ethers";
+import { SignerWithAddress, ZeroAddress, ZeroHash } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine } from "../lib/test";
 import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
@@ -131,8 +131,7 @@ describe("EarthfastRegistry", function () {
     expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
     const n0: EarthfastCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r0", price: parseUSDC("0") };
     const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(operatorId1, true, [n0]));
-    const createNodes0Result = await expectEvent(createNodes0, nodes, "NodeCreated");
-    const { nodeId: nodeId0 } = createNodes0Result as Result;
+    await expectEvent(createNodes0, nodes, "NodeCreated");
 
     // Create content nodes
     const n1: EarthfastCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseUSDC("1") };
