@@ -12,5 +12,5 @@ fi
 
 for contract in nodes projects registry reservations; do
     CONTRACT_UPPER="$(tr '[:lower:]' '[:upper:]' <<<"${contract:0:1}")${contract:1}"
-    jq '.abi' "../deployments/localhost/Earthfast$CONTRACT_UPPER.json" | abigen --abi=- --pkg=$contract --out="../../earthfast-services/src/contracts/$contract/$contract.go"
+    jq '.abi' "../deployments/testnet-sepolia/Earthfast$CONTRACT_UPPER.json" | abigen --abi=- --pkg=$contract --out="../../earthfast-services/src/contracts/$contract/$contract.go"
   done
