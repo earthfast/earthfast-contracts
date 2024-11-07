@@ -85,7 +85,7 @@ async function main() {
   // Validate contract address
   if (!ethers.isAddress(contractAddress)) {
     throw new Error("Invalid contract address");
-  } 
+  }
 
   // Ensure data is properly formatted
   const formattedData = data.startsWith("0x") ? data : `0x${data}`;
