@@ -27,7 +27,6 @@ export interface EarthfastBillingInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "DEFAULT_ADMIN_ROLE"
-      | "RECONCILER_ROLE"
       | "getBillingNodeIndex"
       | "getRegistry"
       | "getRenewalNodeIndex"
@@ -71,10 +70,6 @@ export interface EarthfastBillingInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "RECONCILER_ROLE",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "getBillingNodeIndex",
     values?: undefined
   ): string;
@@ -106,11 +101,11 @@ export interface EarthfastBillingInterface extends Interface {
   encodeFunctionData(functionFragment: "paused", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "processBilling",
-    values: [BytesLike, BytesLike[], BigNumberish[]]
+    values: [BytesLike[], BigNumberish[]]
   ): string;
   encodeFunctionData(
     functionFragment: "processRenewal",
-    values: [BytesLike, BytesLike[]]
+    values: [BytesLike[]]
   ): string;
   encodeFunctionData(
     functionFragment: "proxiableUUID",
@@ -152,10 +147,6 @@ export interface EarthfastBillingInterface extends Interface {
 
   decodeFunctionResult(
     functionFragment: "DEFAULT_ADMIN_ROLE",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "RECONCILER_ROLE",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -455,8 +446,6 @@ export interface EarthfastBilling extends BaseContract {
 
   DEFAULT_ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
 
-  RECONCILER_ROLE: TypedContractMethod<[], [string], "view">;
-
   getBillingNodeIndex: TypedContractMethod<[], [bigint], "view">;
 
   getRegistry: TypedContractMethod<[], [string], "view">;
@@ -488,17 +477,13 @@ export interface EarthfastBilling extends BaseContract {
   paused: TypedContractMethod<[], [boolean], "view">;
 
   processBilling: TypedContractMethod<
-    [
-      topologyNodeId: BytesLike,
-      nodeIds: BytesLike[],
-      uptimeBips: BigNumberish[]
-    ],
+    [nodeIds: BytesLike[], uptimeBips: BigNumberish[]],
     [void],
     "nonpayable"
   >;
 
   processRenewal: TypedContractMethod<
-    [topologyNodeId: BytesLike, nodeIds: BytesLike[]],
+    [nodeIds: BytesLike[]],
     [void],
     "nonpayable"
   >;
@@ -563,9 +548,6 @@ export interface EarthfastBilling extends BaseContract {
     nameOrSignature: "DEFAULT_ADMIN_ROLE"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "RECONCILER_ROLE"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "getBillingNodeIndex"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
@@ -607,21 +589,13 @@ export interface EarthfastBilling extends BaseContract {
   getFunction(
     nameOrSignature: "processBilling"
   ): TypedContractMethod<
-    [
-      topologyNodeId: BytesLike,
-      nodeIds: BytesLike[],
-      uptimeBips: BigNumberish[]
-    ],
+    [nodeIds: BytesLike[], uptimeBips: BigNumberish[]],
     [void],
     "nonpayable"
   >;
   getFunction(
     nameOrSignature: "processRenewal"
-  ): TypedContractMethod<
-    [topologyNodeId: BytesLike, nodeIds: BytesLike[]],
-    [void],
-    "nonpayable"
-  >;
+  ): TypedContractMethod<[nodeIds: BytesLike[]], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "proxiableUUID"
   ): TypedContractMethod<[], [string], "view">;

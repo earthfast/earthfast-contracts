@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Result, SignerWithAddress, ZeroHash } from "ethers";
+import { SignerWithAddress, ZeroHash } from "ethers";
 import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine } from "../lib/test";
 import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
@@ -63,8 +63,7 @@ describe("Benchmark", function () {
     expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
     const n0: EarthfastCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r0", price: parseUSDC("0") };
     const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, true, [n0]));
-    const createNodes0Result = await expectEvent(createNodes0, nodes, "NodeCreated");
-    const { nodeId: nodeId0 } = createNodes0Result as Result;
+    await expectEvent(createNodes0, nodes, "NodeCreated");
 
     // Create content nodes
     const nodesData = new Array(20).fill(0).map(() => ({ topology: false, disabled: false, host: "h", region: "r1", price: 1 }));
@@ -87,8 +86,8 @@ describe("Benchmark", function () {
 
     await mine(hre, epochLength);
     const uptimes = (nodeIds as []).map(() => 10000);
-    expect(await billing.connect(operator).processBilling(nodeId0, nodeIds, uptimes)).to.be.ok;
-    expect(await billing.connect(operator).processRenewal(nodeId0, nodeIds)).to.be.ok;
-    expect(await registry.connect(operator).advanceEpoch(nodeId0)).to.be.ok;
+    expect(await billing.connect(operator).processBilling(nodeIds, uptimes)).to.be.ok;
+    expect(await billing.connect(operator).processRenewal(nodeIds)).to.be.ok;
+    expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
   });
 });
