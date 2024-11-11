@@ -185,6 +185,33 @@ contract EarthfastOperators is AccessControlUpgradeable, PausableUpgradeable, Re
     emit OperatorDeleted(operatorId, operatorCopy.owner, operatorCopy.name, operatorCopy.email);
   }
 
+  function forceRemoveOperator(bytes32 operatorId)
+  public virtual nonReentrant onlyAdmin whenNotReconciling whenNotPaused {
+    EarthfastOperator memory operatorCopy = _operators[operatorId];
+    require(operatorCopy.id != 0, "unknown operator");
+
+    // Deregister operator nodes
+    EarthfastNodes nodesContract = _registry.getNodes();
+    bytes32[] memory nodeIds = nodesContract.getOperatorNodeIds(operatorId, false);
+    // FIXME: need to update node reservations and projects
+    nodesContract.deleteNodes(operatorId, false, nodeIds);
+
+    // Transfer operator stake to the owner
+    withdrawOperatorStake(operatorId, operatorCopy.stake, operatorCopy.owner);
+    // Transfer operator balance to the owner
+    withdrawOperatorBalance(operatorId, operatorCopy.balance, operatorCopy.owner);
+
+    // check that the operator has no stake or balance left
+    require(operatorCopy.stake == 0, "operator has stake");
+    require(operatorCopy.balance == 0, "operator has balance");
+
+    // Delete operator
+    delete _operators[operatorId];
+    assert(_operatorIds.remove(operatorId));
+
+    emit OperatorDeleted(operatorId, operatorCopy.owner, operatorCopy.name, operatorCopy.email);
+  }
+
   function setOperatorOwner(bytes32 operatorId, address owner)
   public virtual onlyAdminOrOperator(operatorId) whenNotReconciling whenNotPaused {
     require(owner != address(0), "zero owner");

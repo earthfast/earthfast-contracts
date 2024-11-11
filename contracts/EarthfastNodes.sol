@@ -153,6 +153,11 @@ contract EarthfastNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUp
     return topology ? _operatorTopologyNodeIds : _operatorContentNodeIds;
   }
 
+  function getOperatorNodeIds(bytes32 operatorId, bool topology) external virtual view returns (bytes32[] memory) {
+    EnumerableSet.Bytes32Set storage nodeIds = getOperatorNodeIdsRef(topology)[operatorId];
+    return nodeIds.values();
+  }
+
   function setNodePriceImpl(bytes32 nodeId, uint256 epochSlot, uint256 price)
   public virtual onlyImpl whenNotPaused {
     EarthfastNode storage node = _nodes[nodeId];
@@ -232,6 +237,13 @@ contract EarthfastNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUp
         nodeCopy.disabled, nodeCopy.prices[EARTHFAST_NEXT_EPOCH]);
     }
   }
+
+  // function forceDeleteNodes(bytes32 operatorId, bool topology, bytes32[] memory nodeIds)
+  // public virtual onlyAdmin {
+  //   for (uint256 i = 0; i < nodeIds.length; i++) {
+  //     delete _nodes[nodeIds[i]];
+  //   }
+  // }
 
   /// @notice Changes content node or topology node hosts and regions. Reverts if nodes are reserved (unless admin).
   /// @dev Does not check host or region for validity or uniqueness
