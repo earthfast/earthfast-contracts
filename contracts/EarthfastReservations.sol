@@ -151,7 +151,6 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
     EarthfastNodes allNodes, EarthfastProjects projects, bytes32 projectId, EarthfastNode memory nodeCopy,
     uint256 epochRemainder, uint256 maxPrice, EarthfastSlot calldata slot)
   internal virtual {
-    require(!nodeCopy.topology, "topology node");
     require(!nodeCopy.disabled, "node disabled");
     uint256 lastPrice = 0;
     uint256 nextPrice = 0;

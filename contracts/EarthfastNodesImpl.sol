@@ -47,7 +47,6 @@ library EarthfastNodesImpl {
       EarthfastNode storage node = _nodes[nodeIds[i]];
       require(node.id != 0, "unknown node");
       require(node.operatorId == operatorId, "operator mismatch");
-      require(!node.topology, "topology node");
       uint256 oldLastPrice = node.prices[EARTHFAST_LAST_EPOCH];
       uint256 oldNextPrice = node.prices[EARTHFAST_NEXT_EPOCH];
       if (slot.last) {

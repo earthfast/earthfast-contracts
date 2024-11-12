@@ -69,36 +69,6 @@ describe("EarthfastOperators", function () {
     expect(await hre.upgrades.deployProxy(operatorsFactory, operatorsArgs, { kind: "uups" })).to.be.ok;
   });
 
-  it("Should require topology node", async function () {
-    // Create operator
-    const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o", "@"));
-    const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
-
-    // Deposit stake
-    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
-    expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
-
-    // Grant creator role
-    expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
-
-    // Create topology node
-    const n0: EarthfastCreateNodeDataStruct = { topology: true, disabled: false, host: "h", region: "xx", price: parseUSDC("0") };
-    const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, true, [n0]));
-    const createNodes0Result = await expectEvent(createNodes0, nodes, "NodeCreated");
-    const { nodeId: nodeId0 } = createNodes0Result as Result;
-
-    // Create content node
-    const n1: EarthfastCreateNodeDataStruct = { topology: false, disabled: false, host: "h", region: "xx", price: parseUSDC("0") };
-    const createNodes1 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, [n1]));
-    const createNodes1Result = await expectEvent(createNodes1, nodes, "NodeCreated");
-    const { nodeId: nodeId1 } = createNodes1Result as Result;
-
-    expect(await operators.requireTopologyNode(nodeId0, operator.address)).to.be.ok;
-    await expect(operators.requireTopologyNode(nodeId0, deployer.address)).to.be.revertedWith("not operator");
-    await expect(operators.requireTopologyNode(nodeId0, ZeroAddress)).to.be.revertedWith("zero sender");
-    await expect(operators.requireTopologyNode(nodeId1, ZeroAddress)).to.be.revertedWith("not topology node");
-  });
-
   it("Should check operator create parameters", async function () {
     await expect(operators.connect(admin).createOperator(ZeroAddress, "", "@")).to.be.revertedWith("zero owner");
     await expect(operators.connect(admin).createOperator(operator.address, "", "@")).to.be.revertedWith("empty name");
@@ -192,21 +162,10 @@ describe("EarthfastOperators", function () {
     expect(o1.id !== ZeroHash);
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: o1 });
 
-    // Create topology node as non-admin
-    const n0: EarthfastCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r1", price: parseUSDC("0") };
-    await expect(nodes.connect(operator).createNodes(o1.id, true, [n0])).to.be.revertedWith("not topology creator");
-
-    // Create topology node
-    expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
-    const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(o1.id, true, [n0]));
-    const createNodes0Result = await expectEvent(createNodes0, nodes, "NodeCreated");
-    const { nodeId: nodeId0 } = createNodes0Result as Result;
-    expect(nodeId0).to.not.equal(ZeroHash);
-
     // Create content nodes without stake
-    const n1: EarthfastCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseUSDC("1") };
-    const n2: EarthfastCreateNodeDataStruct = { topology: false, disabled: false, host: "h2", region: "r1", price: parseUSDC("1") };
-    await expect(nodes.connect(operator).createNodes(o1.id, false, [n1, n2])).to.be.revertedWith("not enough stake");
+    const n1: EarthfastCreateNodeDataStruct = { disabled: false, host: "h1", region: "r1", price: parseUSDC("1") };
+    const n2: EarthfastCreateNodeDataStruct = { disabled: false, host: "h2", region: "r1", price: parseUSDC("1") };
+    await expect(nodes.connect(operator).createNodes(o1.id, [n1, n2])).to.be.revertedWith("not enough stake");
 
     // Deposit stake
     const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
@@ -217,7 +176,7 @@ describe("EarthfastOperators", function () {
     expect((await operators.getOperator(o1.id)).stake).to.equal(parseTokens("100"));
 
     // Create content nodes
-    const createNodes12 = await expectReceipt(nodes.connect(operator).createNodes(o1.id, false, [n1, n2]));
+    const createNodes12 = await expectReceipt(nodes.connect(operator).createNodes(o1.id, [n1, n2]));
     const createNodes12Result = await expectEvent(createNodes12, nodes, "NodeCreated");
     const { length: createNodes12Length, 0: { nodeId: nodeId1 }, 1: { nodeId: nodeId2 } } = createNodes12Result; // prettier-ignore
     expect(createNodes12Length).to.equal(2);
@@ -237,14 +196,8 @@ describe("EarthfastOperators", function () {
     // Delete operator with nodes
     await expect(operators.connect(admin).deleteOperator(o1.id)).to.be.revertedWith("operator has nodes");
 
-    // Delete topology node
-    expect(await nodes.connect(operator).deleteNodes(o1.id, true, [nodeId0])).to.be.ok;
-
-    // Delete operator with nodes
-    await expect(operators.connect(admin).deleteOperator(o1.id)).to.be.revertedWith("operator has nodes");
-
     // Delete content nodes
-    expect(await nodes.connect(operator).deleteNodes(o1.id, false, [nodeId1, nodeId2])).to.be.ok;
+    expect(await nodes.connect(operator).deleteNodes(o1.id, [nodeId1, nodeId2])).to.be.ok;
 
     // Delete operator with stake
     await expect(operators.connect(admin).deleteOperator(o1.id)).to.be.revertedWith("operator has stake");

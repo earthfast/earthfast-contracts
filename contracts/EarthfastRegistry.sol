@@ -213,11 +213,11 @@ contract EarthfastRegistry is AccessControlUpgradeable, PausableUpgradeable, Ree
   ///
   /// The core contracts automatically enter reconciliation mode when the last epoch ends. During reconciliation,
   /// the operations that change contract state, such as node pricing or reservations, are disallowed and will revert.
-  /// The leader topology node is expected to call processBilling(), processRenewal(), and advanceEpoch() in this
+  /// The updater is expected to call processBilling(), processRenewal(), and advanceEpoch() in this
   /// order, to execute reconcilication. Calling advanceEpoch() completes reconciliation and unfreezes the contracts.
   /// The reconciliation process should normally only take a few blocks.
   function advanceEpoch() public virtual whenReconciling whenNotPaused {
-    uint256 nodeCount = _nodes.getNodeCount(0, false);
+    uint256 nodeCount = _nodes.getNodeCount(0);
     require(_billing.getBillingNodeIndex() == nodeCount, "billing in progress");
     require(_billing.getRenewalNodeIndex() == nodeCount, "renewal in progress");
     _billing.setBillingNodeIndexImpl(0);

@@ -76,16 +76,10 @@ describe("EarthfastBilling", function () {
     const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId1, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
-    // Create topology node
-    expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
-    const n0: EarthfastCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r0", price: parseUSDC("0") };
-    const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(operatorId1, true, [n0]));
-    await expectEvent(createNodes0, nodes, "NodeCreated");
-
     // Create content nodes
-    const n1: EarthfastCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price };
-    const n2: EarthfastCreateNodeDataStruct = { topology: false, disabled: false, host: "h2", region: "r1", price };
-    const createNodes12 = await expectReceipt(nodes.connect(operator).createNodes(operatorId1, false, [n1, n2]));
+    const n1: EarthfastCreateNodeDataStruct = { disabled: false, host: "h1", region: "r1", price };
+    const n2: EarthfastCreateNodeDataStruct = { disabled: false, host: "h2", region: "r1", price };
+    const createNodes12 = await expectReceipt(nodes.connect(operator).createNodes(operatorId1, [n1, n2]));
     const createNodes12Result = await expectEvent(createNodes12, nodes, "NodeCreated");
     [{ nodeId: nodeId1 }, { nodeId: nodeId2 }] = createNodes12Result;
 
