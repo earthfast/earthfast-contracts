@@ -4,7 +4,7 @@ import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine } from "../lib/test";
 import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
 import { EarthfastBilling } from "../typechain-types/contracts/EarthfastBilling";
-import { EarthfastCreateNodeDataStruct, EarthfastNodes } from "../typechain-types/contracts/EarthfastNodes";
+import { EarthfastNodes } from "../typechain-types/contracts/EarthfastNodes";
 import { EarthfastOperators } from "../typechain-types/contracts/EarthfastOperators";
 import { EarthfastCreateProjectDataStruct, EarthfastProjects } from "../typechain-types/contracts/EarthfastProjects";
 import { EarthfastRegistry } from "../typechain-types/contracts/EarthfastRegistry";

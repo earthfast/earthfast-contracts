@@ -159,7 +159,7 @@ describe("EarthfastBilling", function () {
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(0));
   });
 
-  it("Should allow reconciler to reconcile without topology node", async function () {
+  it("Should allow reconciler to reconcile", async function () {
     await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
     await mine(hre, epochLength);
     expect(await billing.connect(admin).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;

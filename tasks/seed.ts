@@ -56,14 +56,12 @@ task("seed", "Uploads dummy programmatic contract data").setAction(async (_args,
   // Create nodes
   await wait(nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address));
   const n1: EarthfastCreateNodeDataStruct = {
-    topology: true,
     disabled: false,
     host: "h1",
     region: "r1",
     price: price0,
   };
   const n2: EarthfastCreateNodeDataStruct = {
-    topology: false,
     disabled: false,
     host: "h2",
     region: "r1",
