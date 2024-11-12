@@ -26,10 +26,9 @@ async function main() {
     if (project?.escrow !== undefined) project.escrow = parseUSDC(project.escrow).toString();
     if (project?.reserve !== undefined) project.reserve = parseUSDC(project.reserve).toString();
   }
-  const creators = data?.EarthfastProjects?.projectCreators ?? [];
 
   // Confirm the import
-  if (confirm(hre, `Execute EarthfastProjects.unsafeImportData ${stringify([projectsData, creators])}`)) {
+  if (confirm(hre, `Execute EarthfastProjects.unsafeImportData ${stringify([projectsData])}`)) {
     // Split the projects array into smaller chunks
     for (let i = 0; i < projectsData.length; i += BATCH_SIZE) {
       const batch = projectsData.slice(i, i + BATCH_SIZE);
@@ -40,7 +39,6 @@ async function main() {
       await wait(
         projects.unsafeImportData(
           batch,
-          creators,
           i + BATCH_SIZE >= projectsData.length // Only revoke on last batch
         )
       );

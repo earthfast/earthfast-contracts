@@ -90,7 +90,6 @@ describe("EarthfastBilling", function () {
     [{ nodeId: nodeId1 }, { nodeId: nodeId2 }] = createNodes12Result;
 
     // Create project
-    expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const p1: EarthfastCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");

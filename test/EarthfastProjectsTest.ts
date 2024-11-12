@@ -76,7 +76,6 @@ describe("EarthfastProjects", function () {
   });
 
   it("Should check create projects parameters", async function () {
-    expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     await expect(projects.connect(project).createProject({ owner: ZeroAddress, name: "", email: "@", content: "", checksum: ZeroHash, metadata: "" })).to.be.revertedWith("zero owner");
     await expect(projects.connect(project).createProject({ owner: project.address, name: "", email: "@", content: "", checksum: ZeroHash, metadata: "" })).to.be.revertedWith("empty name");
     await expect(projects.connect(project).createProject({ owner: project.address, name: "x".repeat(257), email: "@", content: "", checksum: ZeroHash, metadata: "" })).to.be.revertedWith(
@@ -96,8 +95,6 @@ describe("EarthfastProjects", function () {
   it("Should create/delete projects", async function () {
     // Create project
     const p1: EarthfastCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
-    await expect(projects.connect(project).createProject(p1)).to.be.revertedWith("not project creator");
-    expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
     expect(projectId1 !== ZeroHash);
@@ -140,7 +137,6 @@ describe("EarthfastProjects", function () {
   it("Should update content, email/name, owner, metadata on project", async function () {
     // Create project
     const p1: EarthfastCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
-    expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
     expect(projectId1).to.not.eq(ZeroHash);
@@ -191,7 +187,6 @@ describe("EarthfastProjects", function () {
   it("Should allow importer role to use unsafeImportData ", async function () {
     // Create project
     const p1: EarthfastCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
-    expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
     expect(projectId1).to.not.eq(ZeroHash);
@@ -201,27 +196,22 @@ describe("EarthfastProjects", function () {
     expect(existingProjects.length).to.equal(1);
     const projectsToImport = existingProjects.map((p) => ({ ...p.toObject(true), id: newId() }));
 
-    const newCreatorAddr = operator.address;
-    expect(await projects.connect(deployer).unsafeImportData(projectsToImport, [newCreatorAddr], false)).to.be.ok;
+    expect(await projects.connect(deployer).unsafeImportData(projectsToImport, false)).to.be.ok;
 
     // Check projects
     expect(await projects.getProjectCount()).to.eq(2);
 
-    // Verify role
-    expect(await projects.hasRole(projects.PROJECT_CREATOR_ROLE(), newCreatorAddr)).to.be.true;
-
     // Import duplicates
-    await expect(projects.connect(deployer).unsafeImportData(projectsToImport, [newCreatorAddr], false)).to.be.revertedWith("duplicate id");
+    await expect(projects.connect(deployer).unsafeImportData(projectsToImport, false)).to.be.revertedWith("duplicate id");
     // Verify importer role is revoked
     expect(await projects.hasRole(projects.IMPORTER_ROLE(), deployer.address)).to.be.true;
-    expect(await projects.connect(deployer).unsafeImportData([], [], true)).to.be.ok;
+    expect(await projects.connect(deployer).unsafeImportData([], true)).to.be.ok;
     expect(await projects.hasRole(projects.IMPORTER_ROLE(), deployer.address)).to.be.false;
   });
 
   it("Should allow admin to adjust escrows", async function () {
     // Create project
     const p1: EarthfastCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
-    expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
     expect(projectId1).to.not.eq(ZeroHash);
@@ -262,7 +252,6 @@ describe("EarthfastProjects", function () {
 
     // Create project
     const p1: EarthfastCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
-    expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
     expect(projectId1 !== ZeroHash);
@@ -321,7 +310,6 @@ describe("EarthfastProjects", function () {
   it("Should deposit escrow with token allowance", async function () {
     // Create project
     const p1: EarthfastCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
-    expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
     expect(projectId1 !== ZeroHash);
