@@ -169,18 +169,14 @@ contract EarthfastNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUp
       node.prices[EARTHFAST_LAST_EPOCH] = node.prices[EARTHFAST_NEXT_EPOCH];
   }
 
-  // FIXME: move bytes32 return out of this function
   /// @dev Validates data for creating a new content node
   /// @dev Avoids stack too deep issue
-  /// @return ID of the created node
   function _validateCreateNodeData(EarthfastCreateNodeData memory node)
-  internal virtual returns (bytes32) {
-    // require(node.price == 0, "node price");
+  internal virtual {
     require(bytes(node.host).length > 0, "empty host");
     require(bytes(node.host).length <= EARTHFAST_MAX_HOST_BYTES, "host too long");
     require(bytes(node.region).length > 0, "empty region");
     require(bytes(node.region).length <= EARTHFAST_MAX_REGION_BYTES, "region too long");
-    return keccak256(abi.encodePacked(_registry.newNonceImpl()));
   }
 
   /// @notice Registers new nodes on the network and locks operator stake. Reverts if stake is insufficient.
@@ -201,7 +197,8 @@ contract EarthfastNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUp
     nodeIds = new bytes32[](nodes.length);
     for (uint256 i = 0; i < nodes.length; i++) {
       EarthfastCreateNodeData memory node = nodes[i];
-      bytes32 nodeId = _validateCreateNodeData(node);
+      _validateCreateNodeData(node);
+      bytes32 nodeId = keccak256(abi.encodePacked(_registry.newNonceImpl()));
       _nodes[nodeId] = EarthfastNode({
         id: nodeId, operatorId: operatorId, host: node.host, region: node.region,
         disabled: node.disabled, prices: [node.price, node.price], projectIds: [bytes32(0), bytes32(0)]
