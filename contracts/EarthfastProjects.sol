@@ -20,6 +20,9 @@ contract EarthfastProjects is AccessControlUpgradeable, PausableUpgradeable, Ree
   // Controls who can do data import during contract initialization
   bytes32 public constant IMPORTER_ROLE = keccak256("IMPORTER_ROLE");
 
+  // DEPRACATED: kept to maintain storage layout, remove in next version
+  bytes32 public constant PROJECT_CREATOR_ROLE = keccak256("PROJECT_CREATOR_ROLE");
+
   EarthfastRegistry private _registry;
 
   mapping(bytes32 => EarthfastProject) private _projects;
