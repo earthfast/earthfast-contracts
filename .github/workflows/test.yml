@@ -29,6 +29,20 @@ jobs:
 
       - name: Hardhat node
         run: |
+          # Start hardhat node in background
           npx hardhat node &
+
+          # Store the PID
+          NODE_PID=$!
+
+          # Wait for node to start
           sleep 40
-          kill %1
+
+          # Check if process is still running
+          if ! kill -0 $NODE_PID 2>/dev/null; then
+            echo "Hardhat node failed to start or crashed"
+            exit 1
+          fi
+
+          # Clean shutdown
+          kill $NODE_PID
