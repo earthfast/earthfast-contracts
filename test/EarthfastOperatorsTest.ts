@@ -126,6 +126,9 @@ describe("EarthfastOperators", function () {
     expect(o2.id !== o1.id);
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 2, 0: o1, 1: o2 });
 
+    // doesn't allow non-admin or operator to delete
+    await expect(operators.connect(deployer).deleteOperator(o1.id)).to.be.revertedWith("not admin or operator");
+
     // Delete operator
     expect(await operators.connect(admin).deleteOperator(o1.id)).to.be.ok;
     expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: o2 });
