@@ -35,7 +35,6 @@ export type EarthfastNodeStruct = {
   operatorId: BytesLike;
   host: string;
   region: string;
-  topology: boolean;
   disabled: boolean;
   prices: [BigNumberish, BigNumberish];
   projectIds: [BytesLike, BytesLike];
@@ -46,7 +45,6 @@ export type EarthfastNodeStructOutput = [
   operatorId: string,
   host: string,
   region: string,
-  topology: boolean,
   disabled: boolean,
   prices: [bigint, bigint],
   projectIds: [string, string]
@@ -55,7 +53,6 @@ export type EarthfastNodeStructOutput = [
   operatorId: string;
   host: string;
   region: string;
-  topology: boolean;
   disabled: boolean;
   prices: [bigint, bigint];
   projectIds: [string, string];

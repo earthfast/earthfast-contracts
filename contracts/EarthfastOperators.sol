@@ -68,16 +68,6 @@ contract EarthfastOperators is AccessControlUpgradeable, PausableUpgradeable, Re
     _;
   }
 
-  function requireTopologyNode(bytes32 nodeId, address sender) public virtual {
-    EarthfastNodes nodes = _registry.getNodes();
-    EarthfastNode memory nodeCopy = nodes.getNode(nodeId);
-    require(nodeCopy.topology, "not topology node");
-    EarthfastOperator storage operator = _operators[nodeCopy.operatorId];
-    assert(operator.id != 0); // Impossible because of getNode()
-    require(sender != address(0), "zero sender");
-    require(operator.owner == sender, "not operator");
-  }
-
   /// @dev Called once to set up the contract. Not called during proxy upgrades.
   ///
   /// @param grantImporterRole allows the contract deployer to import initial data into
@@ -176,8 +166,7 @@ contract EarthfastOperators is AccessControlUpgradeable, PausableUpgradeable, Re
     EarthfastOperator memory operatorCopy = _operators[operatorId];
     require(operatorCopy.id != 0, "unknown operator");
     EarthfastNodes nodes = _registry.getNodes();
-    require(nodes.getNodeCount(operatorId, true) == 0, "operator has nodes");
-    require(nodes.getNodeCount(operatorId, false) == 0, "operator has nodes");
+    require(nodes.getNodeCount(operatorId) == 0, "operator has nodes");
     require(operatorCopy.stake == 0, "operator has stake");
     require(operatorCopy.balance == 0, "operator has balance");
     delete _operators[operatorId];
@@ -234,7 +223,7 @@ contract EarthfastOperators is AccessControlUpgradeable, PausableUpgradeable, Re
     EarthfastOperator storage operator = _operators[operatorId];
     assert(operator.id != 0); // Impossible because of onlyOperator
     EarthfastNodes nodes = _registry.getNodes();
-    uint256 lockedStake = nodes.getNodeCount(operatorId, false) * _stakePerNode;
+    uint256 lockedStake = nodes.getNodeCount(operatorId) * _stakePerNode;
     require(operator.stake - amount >= lockedStake, "not enough stake");
     uint256 oldStake = operator.stake;
     operator.stake -= amount;

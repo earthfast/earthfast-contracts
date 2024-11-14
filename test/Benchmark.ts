@@ -4,7 +4,7 @@ import hre from "hardhat";
 import { expectEvent, expectReceipt, fixtures, mine } from "../lib/test";
 import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
 import { EarthfastBilling } from "../typechain-types/contracts/EarthfastBilling";
-import { EarthfastCreateNodeDataStruct, EarthfastNodes } from "../typechain-types/contracts/EarthfastNodes";
+import { EarthfastNodes } from "../typechain-types/contracts/EarthfastNodes";
 import { EarthfastOperators } from "../typechain-types/contracts/EarthfastOperators";
 import { EarthfastCreateProjectDataStruct, EarthfastProjects } from "../typechain-types/contracts/EarthfastProjects";
 import { EarthfastRegistry } from "../typechain-types/contracts/EarthfastRegistry";
@@ -59,15 +59,9 @@ describe("Benchmark", function () {
     const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
 
-    // Create topology node
-    expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
-    const n0: EarthfastCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r0", price: parseUSDC("0") };
-    const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, true, [n0]));
-    await expectEvent(createNodes0, nodes, "NodeCreated");
-
     // Create content nodes
-    const nodesData = new Array(20).fill(0).map(() => ({ topology: false, disabled: false, host: "h", region: "r1", price: 1 }));
-    const createNodes = await expectReceipt(nodes.connect(operator).createNodes(operatorId, false, nodesData));
+    const nodesData = new Array(20).fill(0).map(() => ({ disabled: false, host: "h", region: "r1", price: 1 }));
+    const createNodes = await expectReceipt(nodes.connect(operator).createNodes(operatorId, nodesData));
     const results = await expectEvent(createNodes, nodes, "NodeCreated");
     const nodeIds = results.map(([nodeId]) => nodeId);
 

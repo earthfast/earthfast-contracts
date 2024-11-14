@@ -70,7 +70,6 @@ export interface EarthfastOperatorsInterface extends Interface {
       | "paused"
       | "proxiableUUID"
       | "renounceRole"
-      | "requireTopologyNode"
       | "revokeRole"
       | "setOperatorBalanceImpl"
       | "setOperatorOwner"
@@ -191,10 +190,6 @@ export interface EarthfastOperatorsInterface extends Interface {
     values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "requireTopologyNode",
-    values: [BytesLike, AddressLike]
-  ): string;
-  encodeFunctionData(
     functionFragment: "revokeRole",
     values: [BytesLike, AddressLike]
   ): string;
@@ -307,10 +302,6 @@ export interface EarthfastOperatorsInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "renounceRole",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "requireTopologyNode",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "revokeRole", data: BytesLike): Result;
@@ -777,12 +768,6 @@ export interface EarthfastOperators extends BaseContract {
     "nonpayable"
   >;
 
-  requireTopologyNode: TypedContractMethod<
-    [nodeId: BytesLike, sender: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-
   revokeRole: TypedContractMethod<
     [role: BytesLike, account: AddressLike],
     [void],
@@ -981,13 +966,6 @@ export interface EarthfastOperators extends BaseContract {
     nameOrSignature: "renounceRole"
   ): TypedContractMethod<
     [role: BytesLike, account: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "requireTopologyNode"
-  ): TypedContractMethod<
-    [nodeId: BytesLike, sender: AddressLike],
     [void],
     "nonpayable"
   >;
