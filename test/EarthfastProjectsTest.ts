@@ -113,7 +113,7 @@ describe("EarthfastProjects", function () {
     expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 2, 0: p1, 1: p2 });
 
     // Delete missing as non-owner
-    await expect(projects.connect(operator).deleteProject(projectId1)).to.be.revertedWith("not project owner");
+    await expect(projects.connect(operator).deleteProject(projectId1)).to.be.revertedWith("not admin or project owner");
 
     // Delete project
     expect(await projects.connect(project).deleteProject(projectId1)).to.be.ok;

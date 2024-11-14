@@ -215,7 +215,7 @@ contract EarthfastNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUp
 
   /// @notice Unregisters nodes from the network and unlocks operator stake. Reverts if nodes are reserved.
   function deleteNodes(bytes32 operatorId, bool topology, bytes32[] memory nodeIds)
-  public virtual onlyOperator(operatorId) whenNotReconciling whenNotPaused {
+  public virtual onlyAdminOrOperator(operatorId) whenNotReconciling whenNotPaused {
     require(!topology || hasRole(TOPOLOGY_CREATOR_ROLE, msg.sender), "not topology creator");
     for (uint256 i = 0; i < nodeIds.length; i++) {
       bytes32 nodeId = nodeIds[i];

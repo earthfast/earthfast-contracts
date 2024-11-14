@@ -173,7 +173,7 @@ contract EarthfastProjects is AccessControlUpgradeable, PausableUpgradeable, Ree
 
   /// @notice Unregisters a project. Reverts if project has escrow or reservations.
   function deleteProject(bytes32 projectId)
-  public virtual onlyProjectOwner(projectId) whenNotReconciling whenNotPaused {
+  public virtual onlyAdminOrProjectOwner(projectId) whenNotReconciling whenNotPaused {
     EarthfastProject memory projectCopy = _projects[projectId];
     assert(projectCopy.id != 0); // Impossible because of onlyProjectOwner
     EarthfastReservations reservations = _registry.getReservations();
