@@ -476,7 +476,7 @@ describe("EarthfastOperators", function () {
     const n2: EarthfastCreateNodeDataStruct = { topology: false, disabled: false, host: "h2", region: "r1", price: parseUSDC("1") };
     const createNodes12 = await expectReceipt(nodes.connect(operator).createNodes(o1.id, false, [n1, n2]));
     const createNodes12Result = await expectEvent(createNodes12, nodes, "NodeCreated");
-    const { length: createNodes12Length, 0: { nodeId: nodeId1 }, 1: { nodeId: nodeId2 } } = createNodes12Result; // prettier-ignore
+    const { 0: { nodeId: nodeId1 }, 1: { nodeId: nodeId2 } } = createNodes12Result; // prettier-ignore
 
     // verify can't delete operator with nodes
     await expect(operators.connect(admin).deleteOperator(o1.id)).to.be.revertedWith("operator has nodes");
