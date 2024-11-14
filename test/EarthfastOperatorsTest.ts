@@ -425,17 +425,17 @@ describe("EarthfastOperators", function () {
     expect((await operators.getOperator(o1.id)).stake).to.equal(parseTokens("100"));
 
     // create nodes
-    const n1: EarthfastCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseUSDC("1") };
-    const n2: EarthfastCreateNodeDataStruct = { topology: false, disabled: false, host: "h2", region: "r1", price: parseUSDC("1") };
-    const createNodes12 = await expectReceipt(nodes.connect(operator).createNodes(o1.id, false, [n1, n2]));
+    const n1: EarthfastCreateNodeDataStruct = { disabled: false, host: "h1", region: "r1", price: parseUSDC("1") };
+    const n2: EarthfastCreateNodeDataStruct = { disabled: false, host: "h2", region: "r1", price: parseUSDC("1") };
+    const createNodes12 = await expectReceipt(nodes.connect(operator).createNodes(o1.id, [n1, n2]));
     const createNodes12Result = await expectEvent(createNodes12, nodes, "NodeCreated");
     const { 0: { nodeId: nodeId1 }, 1: { nodeId: nodeId2 } } = createNodes12Result; // prettier-ignore
 
     // verify can't delete operator with nodes
     await expect(operators.connect(admin).deleteOperator(o1.id)).to.be.revertedWith("operator has nodes");
 
-    // verify can't delete operator with nodes
-    expect(await nodes.connect(admin).deleteNodes(o1.id, false, [nodeId1, nodeId2])).to.be.ok;
+    // delete operator's nodes
+    expect(await nodes.connect(admin).deleteNodes(o1.id, [nodeId1, nodeId2])).to.be.ok;
 
     // verify can't delete operator with stake
     await expect(operators.connect(admin).deleteOperator(o1.id)).to.be.revertedWith("operator has stake");
