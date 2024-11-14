@@ -83,7 +83,6 @@ describe("EarthfastReservations", function () {
     [{ nodeId: nodeId1 }, { nodeId: nodeId2 }] = createNodes12Result;
 
     // Create project
-    expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const p1: EarthfastCreateProjectDataStruct = { name: "p1", owner: project.address, email: "e1", content: "", checksum: ZeroHash, metadata: "" };
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
@@ -366,5 +365,29 @@ describe("EarthfastReservations", function () {
     // implementation call is disallowed from unauthorized signer
     await expect(reservations.connect(deployer).removeProjectNodeIdImpl(ZeroHash, ZeroHash)).to.be.revertedWith("not impl");
     await expect(reservations.connect(deployer).deleteReservationImpl(ZeroAddress, ZeroAddress, ZeroHash, ZeroHash, { last: false, next: false })).to.be.revertedWith("not impl");
+  });
+
+  it("should allow admin to delete projects with reservations", async function () {
+    // create project reservation in current epoch only
+    expect(await reservations.connect(project).createReservations(projectId1, [nodeId1], [price], { last: true, next: false })).to.be.ok;
+
+    // verify can't delete project with reservations
+    await expect(projects.connect(admin).deleteProject(projectId1)).to.be.revertedWith("project has reservations");
+
+    // delete reservation in current epoch
+    expect(await reservations.connect(admin).deleteReservations(projectId1, [nodeId1], { last: true, next: false })).to.be.ok;
+
+    // verify reservations are fully cleared
+    expect(await reservations.getReservationCount(projectId1)).to.equal(0);
+
+    // verify can't delete project with escrow
+    await expect(projects.connect(admin).deleteProject(projectId1)).to.be.revertedWith("project has escrow");
+
+    // withdraw non reserved escrow
+    const escrowToWithdraw = (await projects.getProject(projectId1)).escrow - (await projects.getProject(projectId1)).reserve;
+    expect(await projects.connect(admin).withdrawProjectEscrow(projectId1, escrowToWithdraw, project.address)).to.be.ok;
+
+    // now delete project should work
+    expect(await projects.connect(admin).deleteProject(projectId1)).to.be.ok;
   });
 });

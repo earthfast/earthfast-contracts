@@ -149,7 +149,7 @@ contract EarthfastOperators is AccessControlUpgradeable, PausableUpgradeable, Re
   /// @notice Registers a new network operator. Only admin can do this.
   /// @dev Does not check name or email for validity or uniqueness
   function createOperator(address owner, string calldata name, string calldata email)
-  public onlyAdmin whenNotReconciling whenNotPaused returns (bytes32 operatorId) {
+  public whenNotReconciling whenNotPaused returns (bytes32 operatorId) {
     require(owner != address(0), "zero owner");
     require(bytes(name).length > 0, "empty name");
     require(bytes(name).length <= EARTHFAST_MAX_NAME_BYTES, "name too long");
@@ -162,7 +162,7 @@ contract EarthfastOperators is AccessControlUpgradeable, PausableUpgradeable, Re
 
   /// @notice Unregisters a network operator. Reverts if operator has stake or nodes.
   function deleteOperator(bytes32 operatorId)
-  public virtual onlyAdmin whenNotReconciling whenNotPaused {
+  public virtual onlyAdminOrOperator(operatorId) whenNotReconciling whenNotPaused {
     EarthfastOperator memory operatorCopy = _operators[operatorId];
     require(operatorCopy.id != 0, "unknown operator");
     EarthfastNodes nodes = _registry.getNodes();
@@ -219,7 +219,7 @@ contract EarthfastOperators is AccessControlUpgradeable, PausableUpgradeable, Re
 
   /// @notice Transfers stake from contract to given recipient. Reverts if stake is locked.
   function withdrawOperatorStake(bytes32 operatorId, uint256 amount, address to)
-  public virtual nonReentrant onlyOperator(operatorId) whenNotReconciling whenNotPaused {
+  public virtual nonReentrant onlyAdminOrOperator(operatorId) whenNotReconciling whenNotPaused {
     EarthfastOperator storage operator = _operators[operatorId];
     assert(operator.id != 0); // Impossible because of onlyOperator
     EarthfastNodes nodes = _registry.getNodes();
@@ -251,7 +251,7 @@ contract EarthfastOperators is AccessControlUpgradeable, PausableUpgradeable, Re
 
   /// @notice Transfers earned USDC from contract to given recipient.
   function withdrawOperatorBalance(bytes32 operatorId, uint256 amount, address to)
-  public virtual nonReentrant onlyOperator(operatorId) whenNotReconciling whenNotPaused {
+  public virtual nonReentrant onlyAdminOrOperator(operatorId) whenNotReconciling whenNotPaused {
     EarthfastOperator storage operator = _operators[operatorId];
     assert(operator.id != 0); // Impossible because of onlyOperator
     require(operator.balance >= amount, "not enough balance");

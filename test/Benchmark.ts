@@ -66,7 +66,6 @@ describe("Benchmark", function () {
     const nodeIds = results.map(([nodeId]) => nodeId);
 
     // Create project
-    expect(await projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address)).to.be.ok;
     const p: EarthfastCreateProjectDataStruct = { name: "p", owner: project.address, email: "e", content: "c", checksum: ZeroHash, metadata: "" };
     const createProject = await expectReceipt(projects.connect(project).createProject(p));
     const [projectId] = await expectEvent(createProject, projects, "ProjectCreated");

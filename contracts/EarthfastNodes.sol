@@ -214,7 +214,7 @@ contract EarthfastNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUp
   /// @param operatorId Unique identifier of the operator running the nodes
   /// @param nodeIds IDs of the nodes to delete
   function deleteNodes(bytes32 operatorId, bytes32[] memory nodeIds)
-  public virtual onlyOperator(operatorId) whenNotReconciling whenNotPaused {
+  public virtual onlyAdminOrOperator(operatorId) whenNotReconciling whenNotPaused {
     for (uint256 i = 0; i < nodeIds.length; i++) {
       bytes32 nodeId = nodeIds[i];
       EarthfastNode memory nodeCopy = _nodes[nodeId];

@@ -87,7 +87,6 @@ export interface EarthfastProjectsInterface extends Interface {
     nameOrSignature:
       | "DEFAULT_ADMIN_ROLE"
       | "IMPORTER_ROLE"
-      | "PROJECT_CREATOR_ROLE"
       | "createProject"
       | "deleteProject"
       | "depositProjectEscrow"
@@ -146,10 +145,6 @@ export interface EarthfastProjectsInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "IMPORTER_ROLE",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "PROJECT_CREATOR_ROLE",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -248,7 +243,7 @@ export interface EarthfastProjectsInterface extends Interface {
   encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "unsafeImportData",
-    values: [EarthfastProjectStruct[], AddressLike[], boolean]
+    values: [EarthfastProjectStruct[], boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "unsafeSetEscrows",
@@ -277,10 +272,6 @@ export interface EarthfastProjectsInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "IMPORTER_ROLE",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "PROJECT_CREATOR_ROLE",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -746,8 +737,6 @@ export interface EarthfastProjects extends BaseContract {
 
   IMPORTER_ROLE: TypedContractMethod<[], [string], "view">;
 
-  PROJECT_CREATOR_ROLE: TypedContractMethod<[], [string], "view">;
-
   createProject: TypedContractMethod<
     [project: EarthfastCreateProjectDataStruct],
     [string],
@@ -872,11 +861,7 @@ export interface EarthfastProjects extends BaseContract {
   unpause: TypedContractMethod<[], [void], "nonpayable">;
 
   unsafeImportData: TypedContractMethod<
-    [
-      projects: EarthfastProjectStruct[],
-      creators: AddressLike[],
-      revokeImporterRole: boolean
-    ],
+    [projects: EarthfastProjectStruct[], revokeImporterRole: boolean],
     [void],
     "nonpayable"
   >;
@@ -925,9 +910,6 @@ export interface EarthfastProjects extends BaseContract {
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "IMPORTER_ROLE"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "PROJECT_CREATOR_ROLE"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "createProject"
@@ -1071,11 +1053,7 @@ export interface EarthfastProjects extends BaseContract {
   getFunction(
     nameOrSignature: "unsafeImportData"
   ): TypedContractMethod<
-    [
-      projects: EarthfastProjectStruct[],
-      creators: AddressLike[],
-      revokeImporterRole: boolean
-    ],
+    [projects: EarthfastProjectStruct[], revokeImporterRole: boolean],
     [void],
     "nonpayable"
   >;

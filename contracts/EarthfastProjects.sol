@@ -20,9 +20,6 @@ contract EarthfastProjects is AccessControlUpgradeable, PausableUpgradeable, Ree
   // Controls who can do data import during contract initialization
   bytes32 public constant IMPORTER_ROLE = keccak256("IMPORTER_ROLE");
 
-  // Project owners must first be allowed by admin before they can register projects
-  bytes32 public constant PROJECT_CREATOR_ROLE = keccak256("PROJECT_CREATOR_ROLE");
-
   EarthfastRegistry private _registry;
 
   mapping(bytes32 => EarthfastProject) private _projects;
@@ -48,12 +45,6 @@ contract EarthfastProjects is AccessControlUpgradeable, PausableUpgradeable, Ree
 
   modifier onlyAdmin {
     require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "not admin");
-    _;
-  }
-
-  modifier onlyProjectCreator {
-    require(hasRole(PROJECT_CREATOR_ROLE, address(0)) ||
-      hasRole(PROJECT_CREATOR_ROLE, msg.sender), "not project creator");
     _;
   }
 
@@ -113,17 +104,13 @@ contract EarthfastProjects is AccessControlUpgradeable, PausableUpgradeable, Ree
   function unsafeSetRegistry(EarthfastRegistry registry) public virtual onlyAdmin { _registry = registry; }
 
   /// @dev Allows to import initial contract data. Used for proxy-less upgrades.
-  /// @param creators Adding the zero address will allow anyone to create projects.
   /// @param revokeImporterRole stops further data import by revoking the role.
   /// CAUTION: Once import is finished, the role should be explicitly revoked.
-  function unsafeImportData(EarthfastProject[] calldata projects, address[] calldata creators, bool revokeImporterRole)
+  function unsafeImportData(EarthfastProject[] calldata projects, bool revokeImporterRole)
   public onlyRole(IMPORTER_ROLE) {
     for (uint256 i = 0; i < projects.length; i++) {
       _projects[projects[i].id] = projects[i];
       require(_projectIds.add(projects[i].id), "duplicate id");
-    }
-    for (uint256 i = 0; i < creators.length; i++) {
-      _grantRole(PROJECT_CREATOR_ROLE, creators[i]);
     }
     if (revokeImporterRole) {
       _revokeRole(IMPORTER_ROLE, msg.sender);
@@ -165,10 +152,10 @@ contract EarthfastProjects is AccessControlUpgradeable, PausableUpgradeable, Ree
     project.reserve += increase;
   }
 
-  /// @notice Registers a new project. Requires project creator role.
+  /// @notice Registers a new project.
   /// @dev Does not check name or email for validity or uniqueness
   function createProject(EarthfastCreateProjectData memory project)
-  public onlyProjectCreator whenNotReconciling whenNotPaused returns (bytes32 projectId) {
+  public whenNotReconciling whenNotPaused returns (bytes32 projectId) {
     require(project.owner != address(0), "zero owner");
     require(bytes(project.name).length > 0, "empty name");
     require(bytes(project.name).length <= EARTHFAST_MAX_NAME_BYTES, "name too long");
@@ -186,7 +173,7 @@ contract EarthfastProjects is AccessControlUpgradeable, PausableUpgradeable, Ree
 
   /// @notice Unregisters a project. Reverts if project has escrow or reservations.
   function deleteProject(bytes32 projectId)
-  public virtual onlyProjectOwner(projectId) whenNotReconciling whenNotPaused {
+  public virtual onlyAdminOrProjectOwner(projectId) whenNotReconciling whenNotPaused {
     EarthfastProject memory projectCopy = _projects[projectId];
     assert(projectCopy.id != 0); // Impossible because of onlyProjectOwner
     EarthfastReservations reservations = _registry.getReservations();
@@ -266,7 +253,7 @@ contract EarthfastProjects is AccessControlUpgradeable, PausableUpgradeable, Ree
 
   /// @notice Transfers escrow from contract to given recipient. Reverts if escrow is reserved.
   function withdrawProjectEscrow(bytes32 projectId, uint256 amount, address to)
-  public virtual nonReentrant onlyProjectOwner(projectId) whenNotReconciling whenNotPaused {
+  public virtual nonReentrant onlyAdminOrProjectOwner(projectId) whenNotReconciling whenNotPaused {
     EarthfastProject storage project = _projects[projectId];
     assert(project.id != 0); // Impossible because of onlyProjectOwner
     require(project.escrow >= project.reserve + amount, "not enough escrow");

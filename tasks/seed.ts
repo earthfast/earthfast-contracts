@@ -54,7 +54,6 @@ task("seed", "Uploads dummy programmatic contract data").setAction(async (_args,
   await wait(operators.connect(admin).depositOperatorStake(operatorId1, parseTokens("100"), ...operatorsPermit));
 
   // Create nodes
-  await wait(nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address));
   const n1: EarthfastCreateNodeDataStruct = {
     disabled: false,
     host: "h1",
@@ -67,12 +66,11 @@ task("seed", "Uploads dummy programmatic contract data").setAction(async (_args,
     region: "r1",
     price: price1,
   };
-  await wait(nodes.connect(operator).createNodes(operatorId1, true, [n1]));
-  const createNodes2 = await wait(nodes.connect(operator).createNodes(operatorId1, false, [n2]));
+  await wait(nodes.connect(operator).createNodes(operatorId1, [n1]));
+  const createNodes2 = await wait(nodes.connect(operator).createNodes(operatorId1, [n2]));
   const [nodeId2] = await decodeEvent(createNodes2, nodes, "NodeCreated");
 
   // Create project
-  await wait(projects.connect(admin).grantRole(projects.PROJECT_CREATOR_ROLE(), project.address));
   const p1: EarthfastCreateProjectDataStruct = { owner: project.address, name: "p1", email: "", content: "", checksum: ZeroHash, metadata: "" }; // prettier-ignore
   const createProject1 = await wait(projects.connect(project).createProject(p1));
   const [projectId1] = await decodeEvent(createProject1, projects, "ProjectCreated");
