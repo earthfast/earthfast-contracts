@@ -453,7 +453,7 @@ describe("EarthfastOperators", function () {
     await expect(operators.setOperatorBalanceImpl(ZeroHash, 0, 0)).to.be.revertedWith("not impl");
   });
 
-  it("should allow admin to force delete operators with nodes", async function () {
+  it("should allow admin to delete operators with nodes", async function () {
     // create operator
     const o1: EarthfastOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
     const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
@@ -489,7 +489,7 @@ describe("EarthfastOperators", function () {
     // withdraw operator stake
     expect(await operators.connect(admin).withdrawOperatorStake(o1.id, parseTokens("100"), operator.address)).to.be.ok;
 
-    // verify can delete operator with balance
+    // verify can't delete operator with balance
     await expect(operators.connect(admin).deleteOperator(o1.id)).to.be.revertedWith("operator has balance");
     // withdraw operator balance
     expect(await operators.connect(admin).withdrawOperatorBalance(o1.id, parseUSDC("2"), operator.address)).to.be.ok;

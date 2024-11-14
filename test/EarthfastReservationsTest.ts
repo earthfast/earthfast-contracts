@@ -373,7 +373,7 @@ describe("EarthfastReservations", function () {
     await expect(reservations.connect(deployer).deleteReservationImpl(ZeroAddress, ZeroAddress, ZeroHash, ZeroHash, { last: false, next: false })).to.be.revertedWith("not impl");
   });
 
-  it("should allow admin to force delete projects with reservations", async function () {
+  it("should allow admin to delete projects with reservations", async function () {
     // create project reservation in current epoch only
     expect(await reservations.connect(project).createReservations(projectId1, [nodeId1], [price], { last: true, next: false })).to.be.ok;
 
