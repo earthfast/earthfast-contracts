@@ -253,7 +253,7 @@ contract EarthfastProjects is AccessControlUpgradeable, PausableUpgradeable, Ree
 
   /// @notice Transfers escrow from contract to given recipient. Reverts if escrow is reserved.
   function withdrawProjectEscrow(bytes32 projectId, uint256 amount, address to)
-  public virtual nonReentrant onlyProjectOwner(projectId) whenNotReconciling whenNotPaused {
+  public virtual nonReentrant onlyAdminOrProjectOwner(projectId) whenNotReconciling whenNotPaused {
     EarthfastProject storage project = _projects[projectId];
     assert(project.id != 0); // Impossible because of onlyProjectOwner
     require(project.escrow >= project.reserve + amount, "not enough escrow");
