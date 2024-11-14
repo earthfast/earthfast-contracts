@@ -228,7 +228,7 @@ describe("EarthfastOperators", function () {
     expect(nodeId2).to.not.equal(ZeroHash);
 
     // Withdraw stake with nodes
-    await expect(operators.withdrawOperatorStake(o1.id, parseTokens("100"), operator.address)).to.be.revertedWith("not operator");
+    await expect(operators.withdrawOperatorStake(o1.id, parseTokens("100"), operator.address)).to.be.revertedWith("not admin or operator");
     await expect(operators.connect(operator).withdrawOperatorStake(ZeroHash, parseTokens("100"), operator.address)).to.be.revertedWith("unknown operator");
     await expect(operators.connect(operator).withdrawOperatorStake(o1.id, parseTokens("100"), operator.address)).to.be.revertedWith("not enough stake");
     expect(await operators.connect(operator).withdrawOperatorStake(o1.id, parseTokens("98"), operator.address)).to.be.ok;
@@ -451,5 +451,51 @@ describe("EarthfastOperators", function () {
 
     // implementation call is disallowed from unauthorized address
     await expect(operators.setOperatorBalanceImpl(ZeroHash, 0, 0)).to.be.revertedWith("not impl");
+  });
+
+  it("should allow admin to force delete operators with nodes", async function () {
+    // create operator
+    const o1: EarthfastOperatorStruct = { id: ZeroHash, name: "o1", owner: operator.address, email: "e1", stake: 0, balance: 0 };
+    const createOperator1 = await expectReceipt(operators.connect(admin).createOperator(o1.owner, o1.name, o1.email));
+    [o1.id] = await expectEvent(createOperator1, operators, "OperatorCreated");
+    expect(o1.id !== ZeroHash);
+    expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 1, 0: o1 });
+
+    // Deposit balance
+    let operatorsPermit = await approve(hre, usdc, admin.address, operatorsAddress, parseUSDC("2"));
+    expect(await operators.connect(admin).depositOperatorBalance(o1.id, parseUSDC("2"), ...operatorsPermit)).to.be.ok;
+    expect((await operators.getOperator(o1.id)).balance).to.equal(parseUSDC("2"));
+
+    // Deposit stake
+    operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
+    expect(await operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), ...operatorsPermit)).to.be.ok;
+    expect((await operators.getOperator(o1.id)).stake).to.equal(parseTokens("100"));
+
+    // create nodes
+    const n1: EarthfastCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price: parseUSDC("1") };
+    const n2: EarthfastCreateNodeDataStruct = { topology: false, disabled: false, host: "h2", region: "r1", price: parseUSDC("1") };
+    const createNodes12 = await expectReceipt(nodes.connect(operator).createNodes(o1.id, false, [n1, n2]));
+    const createNodes12Result = await expectEvent(createNodes12, nodes, "NodeCreated");
+    const { length: createNodes12Length, 0: { nodeId: nodeId1 }, 1: { nodeId: nodeId2 } } = createNodes12Result; // prettier-ignore
+
+    // verify can't delete operator with nodes
+    await expect(operators.connect(admin).deleteOperator(o1.id)).to.be.revertedWith("operator has nodes");
+
+    // verify can't delete operator with nodes
+    expect(await nodes.connect(admin).deleteNodes(o1.id, false, [nodeId1, nodeId2])).to.be.ok;
+
+    // verify can't delete operator with stake
+    await expect(operators.connect(admin).deleteOperator(o1.id)).to.be.revertedWith("operator has stake");
+    // withdraw operator stake
+    expect(await operators.connect(admin).withdrawOperatorStake(o1.id, parseTokens("100"), operator.address)).to.be.ok;
+
+    // verify can delete operator with balance
+    await expect(operators.connect(admin).deleteOperator(o1.id)).to.be.revertedWith("operator has balance");
+    // withdraw operator balance
+    expect(await operators.connect(admin).withdrawOperatorBalance(o1.id, parseUSDC("2"), operator.address)).to.be.ok;
+
+    // delete operator
+    expect(await operators.connect(admin).deleteOperator(o1.id)).to.be.ok;
+    expect(await operators.getOperators(0, 10)).to.shallowDeepEqual({ length: 0 });
   });
 });

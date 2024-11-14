@@ -230,7 +230,7 @@ contract EarthfastOperators is AccessControlUpgradeable, PausableUpgradeable, Re
 
   /// @notice Transfers stake from contract to given recipient. Reverts if stake is locked.
   function withdrawOperatorStake(bytes32 operatorId, uint256 amount, address to)
-  public virtual nonReentrant onlyOperator(operatorId) whenNotReconciling whenNotPaused {
+  public virtual nonReentrant onlyAdminOrOperator(operatorId) whenNotReconciling whenNotPaused {
     EarthfastOperator storage operator = _operators[operatorId];
     assert(operator.id != 0); // Impossible because of onlyOperator
     EarthfastNodes nodes = _registry.getNodes();
@@ -262,7 +262,7 @@ contract EarthfastOperators is AccessControlUpgradeable, PausableUpgradeable, Re
 
   /// @notice Transfers earned USDC from contract to given recipient.
   function withdrawOperatorBalance(bytes32 operatorId, uint256 amount, address to)
-  public virtual nonReentrant onlyOperator(operatorId) whenNotReconciling whenNotPaused {
+  public virtual nonReentrant onlyAdminOrOperator(operatorId) whenNotReconciling whenNotPaused {
     EarthfastOperator storage operator = _operators[operatorId];
     assert(operator.id != 0); // Impossible because of onlyOperator
     require(operator.balance >= amount, "not enough balance");
