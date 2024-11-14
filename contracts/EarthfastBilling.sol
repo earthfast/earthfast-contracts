@@ -73,7 +73,7 @@ contract EarthfastBilling is AccessControlUpgradeable, PausableUpgradeable, UUPS
   function setBillingNodeIndexImpl(uint256 index) public virtual onlyImpl { _billingNodeIndex = index; }
   function setRenewalNodeIndexImpl(uint256 index) public virtual onlyImpl { _renewalNodeIndex = index; }
 
-  /// @notice Called by the leader topology node to disburse escrow payments to operators.
+  /// @notice Called to disburse escrow payments to operators.
   /// @dev This must be called sequentially and fully, for all the nodes in the network.
   /// @dev See EarthfastRegistry.advanceEpoch() for more details about reconciliation process.
   /// @param nodeIds Content nodes being reported
@@ -85,10 +85,10 @@ contract EarthfastBilling is AccessControlUpgradeable, PausableUpgradeable, UUPS
     EarthfastProjects projects = _registry.getProjects();
     EarthfastOperators operators = _registry.getOperators();
     require(_renewalNodeIndex == 0, "renewal in progress");
-    require(_billingNodeIndex < allNodes.getNodeCount(0, false), "billing finished");
+    require(_billingNodeIndex < allNodes.getNodeCount(0), "billing finished");
     uint256 lastEpochStart = _registry.getLastEpochStart();
     for (uint256 i = 0; i < nodeIds.length; i++) {
-      EarthfastNode[] memory nodeCopy0 = allNodes.getNodes(0, false, _billingNodeIndex++, 1);
+      EarthfastNode[] memory nodeCopy0 = allNodes.getNodes(0, _billingNodeIndex++, 1);
       EarthfastNode memory nodeCopy = allNodes.getNode(nodeIds[i]);
       require(nodeCopy.id == nodeCopy0[0].id, "order mismatch");
       require(uptimeBips[i] <= 10000, "invalid uptime");
@@ -110,7 +110,7 @@ contract EarthfastBilling is AccessControlUpgradeable, PausableUpgradeable, UUPS
     }
   }
 
-  /// @notice Called by the leader topology node to roll over reservations between epochs.
+  /// @notice Called to roll over reservations between epochs.
   /// @dev This must be called sequentially and fully, for all the nodes in the network.
   /// @dev See EarthfastRegistry.advanceEpoch() for more details about reconciliation process.
   /// @param nodeIds Content nodes being reported
@@ -118,12 +118,12 @@ contract EarthfastBilling is AccessControlUpgradeable, PausableUpgradeable, UUPS
   public virtual whenReconciling whenNotPaused {
     EarthfastNodes allNodes = _registry.getNodes();
     EarthfastProjects projects = _registry.getProjects();
-    require(_billingNodeIndex == allNodes.getNodeCount(0, false), "billing in progress");
-    require(_renewalNodeIndex < allNodes.getNodeCount(0, false), "renewal finished");
+    require(_billingNodeIndex == allNodes.getNodeCount(0), "billing in progress");
+    require(_renewalNodeIndex < allNodes.getNodeCount(0), "renewal finished");
     bool epochLengthChanged = _registry.getNextEpochLength() != _registry.getCuedEpochLength();
     for (uint256 i = 0; i < nodeIds.length; i++) {
       allNodes.advanceNodeEpochImpl(nodeIds[i]);
-      EarthfastNode[] memory nodeCopy0 = allNodes.getNodes(0, false, _renewalNodeIndex++, 1);
+      EarthfastNode[] memory nodeCopy0 = allNodes.getNodes(0, _renewalNodeIndex++, 1);
       EarthfastNode memory nodeCopy = allNodes.getNode(nodeIds[i]);
       require(nodeCopy.id == nodeCopy0[0].id, "order mismatch");
       if (nodeCopy.projectIds[EARTHFAST_NEXT_EPOCH] != 0) {

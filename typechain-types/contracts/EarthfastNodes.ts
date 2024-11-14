@@ -33,7 +33,6 @@ export type EarthfastSlotStructOutput = [last: boolean, next: boolean] & {
 export type EarthfastCreateNodeDataStruct = {
   host: string;
   region: string;
-  topology: boolean;
   disabled: boolean;
   price: BigNumberish;
 };
@@ -41,23 +40,15 @@ export type EarthfastCreateNodeDataStruct = {
 export type EarthfastCreateNodeDataStructOutput = [
   host: string,
   region: string,
-  topology: boolean,
   disabled: boolean,
   price: bigint
-] & {
-  host: string;
-  region: string;
-  topology: boolean;
-  disabled: boolean;
-  price: bigint;
-};
+] & { host: string; region: string; disabled: boolean; price: bigint };
 
 export type EarthfastNodeStruct = {
   id: BytesLike;
   operatorId: BytesLike;
   host: string;
   region: string;
-  topology: boolean;
   disabled: boolean;
   prices: [BigNumberish, BigNumberish];
   projectIds: [BytesLike, BytesLike];
@@ -68,7 +59,6 @@ export type EarthfastNodeStructOutput = [
   operatorId: string,
   host: string,
   region: string,
-  topology: boolean,
   disabled: boolean,
   prices: [bigint, bigint],
   projectIds: [string, string]
@@ -77,7 +67,6 @@ export type EarthfastNodeStructOutput = [
   operatorId: string;
   host: string;
   region: string;
-  topology: boolean;
   disabled: boolean;
   prices: [bigint, bigint];
   projectIds: [string, string];
@@ -88,7 +77,6 @@ export interface EarthfastNodesInterface extends Interface {
     nameOrSignature:
       | "DEFAULT_ADMIN_ROLE"
       | "IMPORTER_ROLE"
-      | "TOPOLOGY_CREATOR_ROLE"
       | "advanceNodeEpochImpl"
       | "createNodes"
       | "deleteNodes"
@@ -146,29 +134,25 @@ export interface EarthfastNodesInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "TOPOLOGY_CREATOR_ROLE",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "advanceNodeEpochImpl",
     values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "createNodes",
-    values: [BytesLike, boolean, EarthfastCreateNodeDataStruct[]]
+    values: [BytesLike, EarthfastCreateNodeDataStruct[]]
   ): string;
   encodeFunctionData(
     functionFragment: "deleteNodes",
-    values: [BytesLike, boolean, BytesLike[]]
+    values: [BytesLike, BytesLike[]]
   ): string;
   encodeFunctionData(functionFragment: "getNode", values: [BytesLike]): string;
   encodeFunctionData(
     functionFragment: "getNodeCount",
-    values: [BytesLike, boolean]
+    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getNodes",
-    values: [BytesLike, boolean, BigNumberish, BigNumberish]
+    values: [BytesLike, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getRegistry",
@@ -231,7 +215,7 @@ export interface EarthfastNodesInterface extends Interface {
   encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "unsafeImportData",
-    values: [EarthfastNodeStruct[], AddressLike[], boolean]
+    values: [EarthfastNodeStruct[], boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "unsafeSetPrices",
@@ -256,10 +240,6 @@ export interface EarthfastNodesInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "IMPORTER_ROLE",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "TOPOLOGY_CREATOR_ROLE",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -389,7 +369,6 @@ export namespace NodeCreatedEvent {
     operatorId: BytesLike,
     host: string,
     region: string,
-    topology: boolean,
     disabled: boolean,
     price: BigNumberish
   ];
@@ -398,7 +377,6 @@ export namespace NodeCreatedEvent {
     operatorId: string,
     host: string,
     region: string,
-    topology: boolean,
     disabled: boolean,
     price: bigint
   ];
@@ -407,7 +385,6 @@ export namespace NodeCreatedEvent {
     operatorId: string;
     host: string;
     region: string;
-    topology: boolean;
     disabled: boolean;
     price: bigint;
   }
@@ -423,7 +400,6 @@ export namespace NodeDeletedEvent {
     operatorId: BytesLike,
     host: string,
     region: string,
-    topology: boolean,
     disabled: boolean,
     price: BigNumberish
   ];
@@ -432,7 +408,6 @@ export namespace NodeDeletedEvent {
     operatorId: string,
     host: string,
     region: string,
-    topology: boolean,
     disabled: boolean,
     price: bigint
   ];
@@ -441,7 +416,6 @@ export namespace NodeDeletedEvent {
     operatorId: string;
     host: string;
     region: string;
-    topology: boolean;
     disabled: boolean;
     price: bigint;
   }
@@ -670,8 +644,6 @@ export interface EarthfastNodes extends BaseContract {
 
   IMPORTER_ROLE: TypedContractMethod<[], [string], "view">;
 
-  TOPOLOGY_CREATOR_ROLE: TypedContractMethod<[], [string], "view">;
-
   advanceNodeEpochImpl: TypedContractMethod<
     [nodeId: BytesLike],
     [void],
@@ -679,17 +651,13 @@ export interface EarthfastNodes extends BaseContract {
   >;
 
   createNodes: TypedContractMethod<
-    [
-      operatorId: BytesLike,
-      topology: boolean,
-      nodes: EarthfastCreateNodeDataStruct[]
-    ],
+    [operatorId: BytesLike, nodes: EarthfastCreateNodeDataStruct[]],
     [string[]],
     "nonpayable"
   >;
 
   deleteNodes: TypedContractMethod<
-    [operatorId: BytesLike, topology: boolean, nodeIds: BytesLike[]],
+    [operatorId: BytesLike, nodeIds: BytesLike[]],
     [void],
     "nonpayable"
   >;
@@ -701,18 +669,13 @@ export interface EarthfastNodes extends BaseContract {
   >;
 
   getNodeCount: TypedContractMethod<
-    [operatorIdOrZero: BytesLike, topology: boolean],
+    [operatorIdOrZero: BytesLike],
     [bigint],
     "view"
   >;
 
   getNodes: TypedContractMethod<
-    [
-      operatorIdOrZero: BytesLike,
-      topology: boolean,
-      skip: BigNumberish,
-      size: BigNumberish
-    ],
+    [operatorIdOrZero: BytesLike, skip: BigNumberish, size: BigNumberish],
     [EarthfastNodeStructOutput[]],
     "view"
   >;
@@ -806,11 +769,7 @@ export interface EarthfastNodes extends BaseContract {
   unpause: TypedContractMethod<[], [void], "nonpayable">;
 
   unsafeImportData: TypedContractMethod<
-    [
-      nodes: EarthfastNodeStruct[],
-      topologyCreators: AddressLike[],
-      revokeImporterRole: boolean
-    ],
+    [nodes: EarthfastNodeStruct[], revokeImporterRole: boolean],
     [void],
     "nonpayable"
   >;
@@ -855,26 +814,19 @@ export interface EarthfastNodes extends BaseContract {
     nameOrSignature: "IMPORTER_ROLE"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "TOPOLOGY_CREATOR_ROLE"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "advanceNodeEpochImpl"
   ): TypedContractMethod<[nodeId: BytesLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "createNodes"
   ): TypedContractMethod<
-    [
-      operatorId: BytesLike,
-      topology: boolean,
-      nodes: EarthfastCreateNodeDataStruct[]
-    ],
+    [operatorId: BytesLike, nodes: EarthfastCreateNodeDataStruct[]],
     [string[]],
     "nonpayable"
   >;
   getFunction(
     nameOrSignature: "deleteNodes"
   ): TypedContractMethod<
-    [operatorId: BytesLike, topology: boolean, nodeIds: BytesLike[]],
+    [operatorId: BytesLike, nodeIds: BytesLike[]],
     [void],
     "nonpayable"
   >;
@@ -887,20 +839,11 @@ export interface EarthfastNodes extends BaseContract {
   >;
   getFunction(
     nameOrSignature: "getNodeCount"
-  ): TypedContractMethod<
-    [operatorIdOrZero: BytesLike, topology: boolean],
-    [bigint],
-    "view"
-  >;
+  ): TypedContractMethod<[operatorIdOrZero: BytesLike], [bigint], "view">;
   getFunction(
     nameOrSignature: "getNodes"
   ): TypedContractMethod<
-    [
-      operatorIdOrZero: BytesLike,
-      topology: boolean,
-      skip: BigNumberish,
-      size: BigNumberish
-    ],
+    [operatorIdOrZero: BytesLike, skip: BigNumberish, size: BigNumberish],
     [EarthfastNodeStructOutput[]],
     "view"
   >;
@@ -1008,11 +951,7 @@ export interface EarthfastNodes extends BaseContract {
   getFunction(
     nameOrSignature: "unsafeImportData"
   ): TypedContractMethod<
-    [
-      nodes: EarthfastNodeStruct[],
-      topologyCreators: AddressLike[],
-      revokeImporterRole: boolean
-    ],
+    [nodes: EarthfastNodeStruct[], revokeImporterRole: boolean],
     [void],
     "nonpayable"
   >;
@@ -1179,7 +1118,7 @@ export interface EarthfastNodes extends BaseContract {
       InitializedEvent.OutputObject
     >;
 
-    "NodeCreated(bytes32,bytes32,string,string,bool,bool,uint256)": TypedContractEvent<
+    "NodeCreated(bytes32,bytes32,string,string,bool,uint256)": TypedContractEvent<
       NodeCreatedEvent.InputTuple,
       NodeCreatedEvent.OutputTuple,
       NodeCreatedEvent.OutputObject
@@ -1190,7 +1129,7 @@ export interface EarthfastNodes extends BaseContract {
       NodeCreatedEvent.OutputObject
     >;
 
-    "NodeDeleted(bytes32,bytes32,string,string,bool,bool,uint256)": TypedContractEvent<
+    "NodeDeleted(bytes32,bytes32,string,string,bool,uint256)": TypedContractEvent<
       NodeDeletedEvent.InputTuple,
       NodeDeletedEvent.OutputTuple,
       NodeDeletedEvent.OutputObject

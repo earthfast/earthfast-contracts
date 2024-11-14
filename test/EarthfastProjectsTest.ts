@@ -249,14 +249,13 @@ describe("EarthfastProjects", function () {
     [o1.id] = await expectEvent(createOperator1, operators, "OperatorCreated");
     const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
     expect(await operators.connect(admin).depositOperatorStake(o1.id, parseTokens("100"), ...operatorsPermit)).to.be.ok;
-    expect(await nodes.connect(admin).grantRole(nodes.TOPOLOGY_CREATOR_ROLE(), operator.address)).to.be.ok;
-    const n0: EarthfastCreateNodeDataStruct = { topology: true, disabled: false, host: "h0", region: "r1", price: parseUSDC("0") };
-    const n1: EarthfastCreateNodeDataStruct = { topology: false, disabled: false, host: "h1", region: "r1", price };
-    const n2: EarthfastCreateNodeDataStruct = { topology: false, disabled: false, host: "h2", region: "r1", price };
-    const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(o1.id, true, [n0]));
+    const n0: EarthfastCreateNodeDataStruct = { disabled: false, host: "h0", region: "r1", price: parseUSDC("0") };
+    const n1: EarthfastCreateNodeDataStruct = { disabled: false, host: "h1", region: "r1", price };
+    const n2: EarthfastCreateNodeDataStruct = { disabled: false, host: "h2", region: "r1", price };
+    const createNodes0 = await expectReceipt(nodes.connect(operator).createNodes(o1.id, [n0]));
     const createNodes0Result = await expectEvent(createNodes0, nodes, "NodeCreated");
     const { nodeId: nodeId0 } = createNodes0Result as Result;
-    const createNodes12 = await expectReceipt(nodes.connect(operator).createNodes(o1.id, false, [n1, n2]));
+    const createNodes12 = await expectReceipt(nodes.connect(operator).createNodes(o1.id, [n1, n2]));
     const createNodes12Result = await expectEvent(createNodes12, nodes, "NodeCreated");
     const { 0: { nodeId: nodeId1 }, 1: { nodeId: nodeId2 } } = createNodes12Result; // prettier-ignore
 
@@ -266,9 +265,6 @@ describe("EarthfastProjects", function () {
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
     expect(projectId1 !== ZeroHash);
-
-    // Reserve topology nodes
-    await expect(reservations.connect(project).createReservations(projectId1, [nodeId0], [price], { last: false, next: true })).to.be.revertedWith("topology node");
 
     // Reserve content nodes without escrow
     await expect(reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.revertedWith("not enough escrow");

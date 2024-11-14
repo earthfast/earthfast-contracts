@@ -22,8 +22,7 @@ async function main() {
     if (node?.prices?.[0] !== undefined) node.prices[0] = parseUSDC(node.prices[0]).toString();
     if (node?.prices?.[1] !== undefined) node.prices[1] = parseUSDC(node.prices[1]).toString();
   }
-  const creators = data?.EarthfastNodes?.topologyCreators ?? [];
-  const importArgs = [nodesData, creators, true] as const;
+  const importArgs = [nodesData, true] as const;
   if (confirm(hre, `Execute EarthfastNodes.unsafeImportData ${stringify(importArgs)}`)) {
     await wait(nodes.unsafeImportData(...importArgs));
   }

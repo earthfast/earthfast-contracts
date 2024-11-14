@@ -66,7 +66,6 @@ struct EarthfastNode {
   bytes32 operatorId; // Who can change node settings, pricing, disable or delete this node
   string host;        // Interpreted by the node software
   string region;      // Interpreted by the node software
-  bool topology;      // Whether this is a topology or content node
   bool disabled;      // Disabled node won't take new reservations, and won't renew when current epoch ends
 
   // Content nodes only. Slots that hold corresponding values for the last and the next epoch.
@@ -77,7 +76,6 @@ struct EarthfastNode {
 struct EarthfastCreateNodeData {
   string host;
   string region;
-  bool topology;
   bool disabled;
 
   // Content nodes only
