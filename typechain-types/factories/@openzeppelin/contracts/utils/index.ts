@@ -4,4 +4,5 @@
 export * as cryptography from "./cryptography";
 export * as introspection from "./introspection";
 export * as structs from "./structs";
+export { Multicall__factory } from "./Multicall__factory";
 export { ShortStrings__factory } from "./ShortStrings__factory";

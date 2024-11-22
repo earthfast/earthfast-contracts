@@ -86,12 +86,16 @@ export type { ERC165 } from "./@openzeppelin/contracts/utils/introspection/ERC16
 export { ERC165__factory } from "./factories/@openzeppelin/contracts/utils/introspection/ERC165__factory";
 export type { IERC165 } from "./@openzeppelin/contracts/utils/introspection/IERC165";
 export { IERC165__factory } from "./factories/@openzeppelin/contracts/utils/introspection/IERC165__factory";
+export type { Multicall } from "./@openzeppelin/contracts/utils/Multicall";
+export { Multicall__factory } from "./factories/@openzeppelin/contracts/utils/Multicall__factory";
 export type { ShortStrings } from "./@openzeppelin/contracts/utils/ShortStrings";
 export { ShortStrings__factory } from "./factories/@openzeppelin/contracts/utils/ShortStrings__factory";
 export type { DoubleEndedQueue } from "./@openzeppelin/contracts/utils/structs/DoubleEndedQueue";
 export { DoubleEndedQueue__factory } from "./factories/@openzeppelin/contracts/utils/structs/DoubleEndedQueue__factory";
 export type { EarthfastBilling } from "./contracts/EarthfastBilling";
 export { EarthfastBilling__factory } from "./factories/contracts/EarthfastBilling__factory";
+export type { EarthfastEntrypoint } from "./contracts/EarthfastEntrypoint";
+export { EarthfastEntrypoint__factory } from "./factories/contracts/EarthfastEntrypoint__factory";
 export type { EarthfastGovernor } from "./contracts/EarthfastGovernor";
 export { EarthfastGovernor__factory } from "./factories/contracts/EarthfastGovernor__factory";
 export type { EarthfastNodes } from "./contracts/EarthfastNodes";

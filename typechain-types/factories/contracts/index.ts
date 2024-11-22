@@ -3,6 +3,7 @@
 /* eslint-disable */
 export * as test from "./test";
 export { EarthfastBilling__factory } from "./EarthfastBilling__factory";
+export { EarthfastEntrypoint__factory } from "./EarthfastEntrypoint__factory";
 export { EarthfastGovernor__factory } from "./EarthfastGovernor__factory";
 export { EarthfastNodes__factory } from "./EarthfastNodes__factory";
 export { EarthfastNodesImpl__factory } from "./EarthfastNodesImpl__factory";
