@@ -58,6 +58,26 @@ export async function approve(
   return [deadline, sig.v, sig.r, sig.s];
 }
 
+// signApproval is a convenience function that generates a signature for permit
+export async function signApproval(
+  hre: HardhatRuntimeEnvironment,
+  token: ERC20Permit,
+  owner: string,
+  spender: string,
+  value: BigNumber
+): Promise<string> {
+  const chainId = await hre.getChainId();
+  const deadline = Math.floor(Date.now() / 1000) + 3600;
+  const nonce = await token.nonces(owner);
+  const tokenAddress = await token.getAddress();
+  const domain = { name: await token.name(), version: "1", chainId, verifyingContract: tokenAddress };
+  const values = { owner, spender, value, nonce, deadline };
+  const signer = await hre.ethers.getSigner(owner);
+  const signature = await (signer as unknown as TypedDataSigner).signTypedData(domain, Permit, values);
+  const sig = ethers.Signature.from(signature);
+  return sig;
+}
+
 export async function signers(hre: HardhatRuntimeEnvironment): Promise<{
   deployer: SignerWithAddress;
   guardian: SignerWithAddress;

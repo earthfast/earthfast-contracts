@@ -7,4 +7,5 @@ import type * as introspection from "./introspection";
 export type { introspection };
 import type * as structs from "./structs";
 export type { structs };
+export type { Multicall } from "./Multicall";
 export type { ShortStrings } from "./ShortStrings";
