@@ -13,3 +13,4 @@ export { EarthfastRegistry__factory } from "./EarthfastRegistry__factory";
 export { EarthfastReservations__factory } from "./EarthfastReservations__factory";
 export { EarthfastTimelock__factory } from "./EarthfastTimelock__factory";
 export { EarthfastToken__factory } from "./EarthfastToken__factory";
+export { ProjectMultiplex__factory } from "./ProjectMultiplex__factory";
