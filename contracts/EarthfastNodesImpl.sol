@@ -3,13 +3,18 @@ pragma solidity ^0.8.0;
 
 import "./EarthfastRegistry.sol";
 import "./EarthfastNodes.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 /// @title Internal helper library to reduce deployent size of EarthfastNodes contract
 library EarthfastNodesImpl {
+  using EnumerableSet for EnumerableSet.Bytes32Set;
+
   // NOTE: These events must match the corresponding events in EarthfastNodes contract
   event NodeHostChanged(bytes32 indexed nodeId, string oldHost, string oldRegion, string newHost, string newRegion);
   event NodePriceChanged(bytes32 indexed nodeId, uint256 oldLastPrice, uint256 oldNextPrice, uint256 newPrice, EarthfastSlot slot);
   event NodeDisabledChanged(bytes32 indexed nodeId, bool oldDisabled, bool newDisabled);
+  event SharedNodeReserved(bytes32 indexed nodeId, bytes32 indexed projectId, uint256 sharePrice, EarthfastSlot slot);
+  event SharedNodeReleased(bytes32 indexed nodeId, bytes32 indexed projectId, EarthfastSlot slot);
 
   function setNodeHostsImpl(
     mapping(bytes32 => EarthfastNode) storage _nodes, bool admin,
@@ -92,5 +97,65 @@ library EarthfastNodesImpl {
       }
       emit NodeDisabledChanged(node.id, oldDisabled, disabled[i]);
     }
+  }
+
+  function validateCreateNodeData(EarthfastCreateNodeData memory node) internal pure {
+    require(bytes(node.host).length > 0, "empty host");
+    require(bytes(node.host).length <= EARTHFAST_MAX_HOST_BYTES, "host too long");
+    require(bytes(node.region).length > 0, "empty region");
+    require(bytes(node.region).length <= EARTHFAST_MAX_REGION_BYTES, "region too long");
+    
+    if (node.nodeType == EARTHFAST_NODE_SHARED) {
+      require(node.maxShares > 0, "shared node needs maxShares > 0");
+    } else {
+      require(node.nodeType == EARTHFAST_NODE_DEDICATED, "invalid node type");
+      require(node.maxShares == 0, "dedicated node must have maxShares = 0");
+    }
+  }
+
+  function reserveSharedNode(
+    mapping(bytes32 => EarthfastNode) storage nodes,
+    mapping(bytes32 => EnumerableSet.Bytes32Set) storage nodeShares,
+    bytes32 nodeId,
+    bytes32 projectId,
+    uint256 epochSlot
+  ) internal returns (bool) {
+    EarthfastNode storage node = nodes[nodeId];
+    require(node.nodeType == EARTHFAST_NODE_SHARED, "not a shared node");
+    require(!node.disabled, "node disabled");
+
+    EnumerableSet.Bytes32Set storage shares = nodeShares[nodeId];
+    require(shares.length() < node.maxShares, "node fully shared");
+
+    // Add project to shares
+    if (shares.add(projectId)) {
+      uint256 sharePrice = node.prices[epochSlot];
+      emit SharedNodeReserved(nodeId, projectId, sharePrice, EarthfastSlot({
+        last: epochSlot == EARTHFAST_LAST_EPOCH,
+        next: epochSlot == EARTHFAST_NEXT_EPOCH
+      }));
+      return true;
+    }
+    return false;
+  }
+
+  function releaseSharedNode(
+    mapping(bytes32 => EarthfastNode) storage nodes,
+    mapping(bytes32 => EnumerableSet.Bytes32Set) storage nodeShares,
+    bytes32 nodeId,
+    bytes32 projectId,
+    uint256 epochSlot
+  ) internal returns (bool) {
+    EarthfastNode storage node = nodes[nodeId];
+    require(node.nodeType == EARTHFAST_NODE_SHARED, "not a shared node");
+
+    if (nodeShares[nodeId].remove(projectId)) {
+      emit SharedNodeReleased(nodeId, projectId, EarthfastSlot({
+        last: epochSlot == EARTHFAST_LAST_EPOCH,
+        next: epochSlot == EARTHFAST_NEXT_EPOCH
+      }));
+      return true;
+    }
+    return false;
   }
 }

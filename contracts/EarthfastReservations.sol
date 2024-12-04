@@ -22,11 +22,14 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
   EarthfastRegistry private _registry;
 
   mapping(bytes32 => EnumerableSet.Bytes32Set) private _projectNodeIds; // Union of last and next epoch
+  mapping(bytes32 => mapping(uint256 => uint256)) private _projectNodeSharePrices; // Project -> NodeId -> SharePrice
 
   event ReservationCreated(bytes32 indexed nodeId, bytes32 indexed operatorId, bytes32 indexed projectId,
     uint256 lastPrice, uint256 nextPrice, EarthfastSlot slot);
   event ReservationDeleted(bytes32 indexed nodeId, bytes32 indexed operatorId, bytes32 indexed projectId,
     uint256 lastPrice, uint256 nextPrice, EarthfastSlot slot);
+  event SharedReservationCreated(bytes32 indexed nodeId, bytes32 indexed projectId, uint256 sharePrice, EarthfastSlot slot);
+  event SharedReservationDeleted(bytes32 indexed nodeId, bytes32 indexed projectId, EarthfastSlot slot);
 
   modifier onlyImpl {
     require(
@@ -141,7 +144,11 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
     uint256 epochRemainder = _registry.getEpochRemainder();
     for (uint256 i = 0; i < nodeIds.length; i++) {
       EarthfastNode memory nodeCopy = allNodes.getNode(nodeIds[i]);
-      createReservationImpl(allNodes, projects, projectId, nodeCopy, epochRemainder, maxPrices[i], slot);
+      if (nodeCopy.nodeType == EARTHFAST_NODE_SHARED) {
+        createSharedReservationImpl(allNodes, projects, projectId, nodeCopy, maxPrices[i], slot);
+      } else {
+        createReservationImpl(allNodes, projects, projectId, nodeCopy, epochRemainder, maxPrices[i], slot);
+      }
     }
     EarthfastProject memory projectCopy = projects.getProject(projectId);
     require(projectCopy.escrow >= projectCopy.reserve, "not enough escrow");
@@ -174,6 +181,31 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
     emit ReservationCreated(nodeCopy.id, nodeCopy.operatorId, projectId, lastPrice, nextPrice, slot);
   }
 
+  function createSharedReservationImpl(
+    EarthfastNodes allNodes, EarthfastProjects projects, bytes32 projectId, EarthfastNode memory nodeCopy,
+    uint256 maxPrice, EarthfastSlot calldata slot
+  ) internal virtual {
+    require(!nodeCopy.disabled, "node disabled");
+    uint256 sharePrice = nodeCopy.prices[EARTHFAST_NEXT_EPOCH] / nodeCopy.maxShares;
+    require(sharePrice <= maxPrice, "price mismatch");
+
+    if (slot.last) {
+      require(allNodes.reserveSharedNode(nodeCopy.id, projectId, EARTHFAST_LAST_EPOCH), "reservation failed");
+      _projectNodeSharePrices[projectId][EARTHFAST_LAST_EPOCH] = sharePrice;
+      projects.setProjectReserveImpl(projectId, 0, sharePrice);
+    }
+    if (slot.next) {
+      require(allNodes.reserveSharedNode(nodeCopy.id, projectId, EARTHFAST_NEXT_EPOCH), "reservation failed");
+      _projectNodeSharePrices[projectId][EARTHFAST_NEXT_EPOCH] = sharePrice;
+      projects.setProjectReserveImpl(projectId, 0, sharePrice);
+    }
+    _projectNodeIds[projectId].add(nodeCopy.id);
+    emit SharedReservationCreated(nodeCopy.id, projectId, sharePrice, EarthfastSlot({
+      last: slot.last,
+      next: slot.next
+    }));
+  }
+
   /// @notice Releases content nodes starting from next epoch and unlocks project escrow
   ///
   /// Project owner can use slot.next to schedule reservation to be deleted in the next epoch.
@@ -192,7 +224,11 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
     for (uint256 i = 0; i < nodeIds.length; i++) {
       bytes32 nodeId = nodeIds[i];
       EarthfastNode memory nodeCopy = allNodes.getNode(nodeId);
-      deleteReservationImpl(allNodes, projects, projectId, nodeCopy, slot);
+      if (nodeCopy.nodeType == EARTHFAST_NODE_SHARED) {
+        deleteSharedReservationImpl(allNodes, projects, projectId, nodeCopy, slot);
+      } else {
+        deleteReservationImpl(allNodes, projects, projectId, nodeCopy, slot);
+      }
     }
   }
 
@@ -233,6 +269,31 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
       assert(_projectNodeIds[projectId].remove(nodeCopy.id));
     }
     emit ReservationDeleted(nodeCopy.id, nodeCopy.operatorId, projectId, lastPrice, nextPrice, slot);
+  }
+
+  function deleteSharedReservationImpl(
+    EarthfastNodes allNodes, EarthfastProjects projects, bytes32 projectId, EarthfastNode memory nodeCopy,
+    EarthfastSlot calldata slot
+  ) internal virtual {
+    if (slot.last) {
+      uint256 sharePrice = _projectNodeSharePrices[projectId][EARTHFAST_LAST_EPOCH];
+      require(allNodes.releaseSharedNode(nodeCopy.id, projectId, EARTHFAST_LAST_EPOCH), "release failed");
+      projects.setProjectReserveImpl(projectId, sharePrice, 0);
+      delete _projectNodeSharePrices[projectId][EARTHFAST_LAST_EPOCH];
+    }
+    if (slot.next) {
+      uint256 sharePrice = _projectNodeSharePrices[projectId][EARTHFAST_NEXT_EPOCH];
+      require(allNodes.releaseSharedNode(nodeCopy.id, projectId, EARTHFAST_NEXT_EPOCH), "release failed");
+      projects.setProjectReserveImpl(projectId, sharePrice, 0);
+      delete _projectNodeSharePrices[projectId][EARTHFAST_NEXT_EPOCH];
+    }
+    if (slot.last && slot.next) {
+      _projectNodeIds[projectId].remove(nodeCopy.id);
+    }
+    emit SharedReservationDeleted(nodeCopy.id, projectId, EarthfastSlot({
+      last: slot.last,
+      next: slot.next
+    }));
   }
 
   function getReservationCount(bytes32 projectId)

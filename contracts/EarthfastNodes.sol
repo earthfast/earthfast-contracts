@@ -24,6 +24,9 @@ contract EarthfastNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUp
 
   mapping(bytes32 => EnumerableSet.Bytes32Set) private _operatorContentNodeIds;
 
+  // Mapping to track which projects are sharing each node
+  mapping(bytes32 => EnumerableSet.Bytes32Set) private _nodeShares;
+
   // NOTE: These events must match the corresponding events in EarthfastNodesImpl library
   event NodeCreated(bytes32 indexed nodeId, bytes32 indexed operatorId, string host, string region, bool disabled, uint256 price);
   event NodeDeleted(bytes32 indexed nodeId, bytes32 indexed operatorId, string host, string region, bool disabled, uint256 price);
@@ -197,12 +200,21 @@ contract EarthfastNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUp
     nodeIds = new bytes32[](nodes.length);
     for (uint256 i = 0; i < nodes.length; i++) {
       EarthfastCreateNodeData memory node = nodes[i];
-      _validateCreateNodeData(node);
+      EarthfastNodesImpl.validateCreateNodeData(node);
+      
       bytes32 nodeId = keccak256(abi.encodePacked(_registry.newNonceImpl()));
       _nodes[nodeId] = EarthfastNode({
-        id: nodeId, operatorId: operatorId, host: node.host, region: node.region,
-        disabled: node.disabled, prices: [node.price, node.price], projectIds: [bytes32(0), bytes32(0)]
+        id: nodeId,
+        operatorId: operatorId,
+        host: node.host,
+        region: node.region,
+        disabled: node.disabled,
+        nodeType: node.nodeType,
+        maxShares: node.maxShares,
+        prices: [node.price, node.price],
+        projectIds: [bytes32(0), bytes32(0)]
       });
+      
       assert(getNodeIdsRef().add(nodeId));
       assert(getOperatorNodeIdsRef()[operatorId].add(nodeId));
       emit NodeCreated(nodeId, operatorId, node.host, node.region, node.disabled, node.price);
@@ -288,6 +300,37 @@ contract EarthfastNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUp
     for (uint256 i = 0; i < n; i++) {
       values[i] = _nodes[nodeIds.at(skip + i)];
     }
+  }
+
+  function reserveSharedNode(bytes32 nodeId, bytes32 projectId, uint256 epochSlot) 
+  public virtual whenNotReconciling whenNotPaused returns (bool) {
+    return EarthfastNodesImpl.reserveSharedNode(
+      _nodes,
+      _nodeShares,
+      nodeId,
+      projectId,
+      epochSlot
+    );
+  }
+
+  function releaseSharedNode(bytes32 nodeId, bytes32 projectId, uint256 epochSlot)
+  public virtual whenNotReconciling whenNotPaused returns (bool) {
+    return EarthfastNodesImpl.releaseSharedNode(
+      _nodes,
+      _nodeShares,
+      nodeId,
+      projectId,
+      epochSlot
+    );
+  }
+
+  function getNodeShares(bytes32 nodeId) public view returns (bytes32[] memory) {
+    EnumerableSet.Bytes32Set storage shares = _nodeShares[nodeId];
+    bytes32[] memory result = new bytes32[](shares.length());
+    for (uint256 i = 0; i < shares.length(); i++) {
+      result[i] = shares.at(i);
+    }
+    return result;
   }
 
   // Reserve storage for future upgrades

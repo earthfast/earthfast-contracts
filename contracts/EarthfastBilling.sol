@@ -92,21 +92,72 @@ contract EarthfastBilling is AccessControlUpgradeable, PausableUpgradeable, UUPS
       EarthfastNode memory nodeCopy = allNodes.getNode(nodeIds[i]);
       require(nodeCopy.id == nodeCopy0[0].id, "order mismatch");
       require(uptimeBips[i] <= 10000, "invalid uptime");
-      if (nodeCopy.projectIds[EARTHFAST_LAST_EPOCH] != 0) {
-        bytes32 projectId = nodeCopy.projectIds[EARTHFAST_LAST_EPOCH];
-        // FIXME: update this once we have a way to verify uptimeBips
-        // uint256 uptimeBip = uptimeBips[i];
-        uint256 uptimeBip = 10000;
-        uint256 payout = nodeCopy.prices[EARTHFAST_LAST_EPOCH] * uptimeBip / 10000;
-        projects.setProjectEscrowImpl(projectId, payout, 0);
-        projects.setProjectReserveImpl(projectId, nodeCopy.prices[EARTHFAST_LAST_EPOCH], 0);
-        operators.setOperatorBalanceImpl(nodeCopy.operatorId, 0, payout);
-        emit ReservationResolved(nodeCopy.id, nodeCopy.operatorId, projectId, nodeCopy.prices[EARTHFAST_LAST_EPOCH],
-          uptimeBip, payout, lastEpochStart);
-        if (nodeCopy.projectIds[EARTHFAST_NEXT_EPOCH] != projectId) {
-          assert(_registry.getReservations().removeProjectNodeIdImpl(projectId, nodeCopy.id));
-        }
+
+      if (nodeCopy.nodeType == EARTHFAST_NODE_SHARED) {
+        processSharedNodeBilling(projects, operators, nodeCopy, lastEpochStart);
+      } else if (nodeCopy.projectIds[EARTHFAST_LAST_EPOCH] != 0) {
+        processDedicatedNodeBilling(projects, operators, nodeCopy, lastEpochStart);
       }
+    }
+  }
+
+  function processSharedNodeBilling(
+    EarthfastProjects projects,
+    EarthfastOperators operators,
+    EarthfastNode memory nodeCopy,
+    uint256 lastEpochStart
+  ) internal {
+    bytes32[] memory projectIds = _registry.getNodes().getNodeShares(nodeCopy.id);
+    uint256 sharePrice = nodeCopy.prices[EARTHFAST_LAST_EPOCH];
+    uint256 uptimeBip = 10000;
+    uint256 sharePayout = sharePrice * uptimeBip / 10000;
+
+    for (uint256 j = 0; j < projectIds.length; j++) {
+      bytes32 projectId = projectIds[j];
+      if (projectId != 0) {
+        projects.setProjectEscrowImpl(projectId, sharePayout, 0);
+        projects.setProjectReserveImpl(projectId, sharePrice, 0);
+        operators.setOperatorBalanceImpl(nodeCopy.operatorId, 0, sharePayout);
+        emit ReservationResolved(
+          nodeCopy.id,
+          nodeCopy.operatorId,
+          projectId,
+          sharePrice,
+          uptimeBip,
+          sharePayout,
+          lastEpochStart
+        );
+      }
+    }
+  }
+
+  function processDedicatedNodeBilling(
+    EarthfastProjects projects,
+    EarthfastOperators operators,
+    EarthfastNode memory nodeCopy,
+    uint256 lastEpochStart
+  ) internal {
+    bytes32 projectId = nodeCopy.projectIds[EARTHFAST_LAST_EPOCH];
+    uint256 uptimeBip = 10000;
+    uint256 price = nodeCopy.prices[EARTHFAST_LAST_EPOCH];
+    uint256 payout = price * uptimeBip / 10000;
+
+    projects.setProjectEscrowImpl(projectId, payout, 0);
+    projects.setProjectReserveImpl(projectId, price, 0);
+    operators.setOperatorBalanceImpl(nodeCopy.operatorId, 0, payout);
+    
+    emit ReservationResolved(
+      nodeCopy.id,
+      nodeCopy.operatorId,
+      projectId,
+      price,
+      uptimeBip,
+      payout,
+      lastEpochStart
+    );
+
+    if (nodeCopy.projectIds[EARTHFAST_NEXT_EPOCH] != projectId) {
+      assert(_registry.getReservations().removeProjectNodeIdImpl(projectId, nodeCopy.id));
     }
   }
 

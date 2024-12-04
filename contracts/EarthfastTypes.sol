@@ -60,26 +60,42 @@ struct EarthfastCreateProjectData {
   string metadata;
 }
 
+// Node types
+uint256 constant EARTHFAST_NODE_DEDICATED = 0;  // Traditional 1-1 node
+uint256 constant EARTHFAST_NODE_SHARED = 1;     // New shared node type
+
 // On-chain node entity
 struct EarthfastNode {
-  bytes32 id;         // Hash of nonce
-  bytes32 operatorId; // Who can change node settings, pricing, disable or delete this node
-  string host;        // Interpreted by the node software
-  string region;      // Interpreted by the node software
-  bool disabled;      // Disabled node won't take new reservations, and won't renew when current epoch ends
+    bytes32 id;         // Hash of nonce
+    bytes32 operatorId; // Who can change node settings, pricing, disable or delete this node
+    string host;        // Interpreted by the node software
+    string region;      // Interpreted by the node software
+    bool disabled;      // Disabled node won't take new reservations, and won't renew when current epoch ends
+    uint256 nodeType;   // Type of node (dedicated or shared)
+    uint256 maxShares;  // Maximum number of projects that can share this node (0 for dedicated nodes)
 
-  // Content nodes only. Slots that hold corresponding values for the last and the next epoch.
-  uint256[2] prices;     // Full-epoch price in USDC if node is not reserved, or prorated price if node is reserved
-  bytes32[2] projectIds; // Project that reserved this node for the respective epoch, or zero if not reserved
+    // Content nodes only. Slots that hold corresponding values for the last and the next epoch.
+    uint256[2] prices;     // For dedicated nodes: full price. For shared nodes: price per share
+    bytes32[2] projectIds; // For dedicated nodes: project that reserved this node. For shared nodes: unused
+}
+
+// New struct for tracking shared node reservations
+struct EarthfastNodeShare {
+    bytes32 nodeId;     // The shared node this reservation is for
+    bytes32 projectId;  // Project that has a share of this node
+    uint256 epochSlot;  // Which epoch this share is for (LAST or NEXT)
+    uint256 sharePrice; // Price paid for this share
 }
 
 struct EarthfastCreateNodeData {
-  string host;
-  string region;
-  bool disabled;
+    string host;
+    string region;
+    bool disabled;
+    uint256 nodeType;   // Type of node (dedicated or shared) 
+    uint256 maxShares;  // Maximum number of projects that can share this node
 
-  // Content nodes only
-  uint256 price; // USDC amount to reserve this node for one epoch
+    // Content nodes only
+    uint256 price; // USDC amount to reserve this node for one epoch
 }
 
 struct EarthfastRegistryInitializeData {
