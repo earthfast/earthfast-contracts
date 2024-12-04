@@ -108,13 +108,14 @@ contract EarthfastBilling is AccessControlUpgradeable, PausableUpgradeable, UUPS
     uint256 lastEpochStart
   ) internal {
     bytes32[] memory projectIds = _registry.getNodes().getNodeShares(nodeCopy.id);
-    uint256 sharePrice = nodeCopy.prices[EARTHFAST_LAST_EPOCH];
     uint256 uptimeBip = 10000;
-    uint256 sharePayout = sharePrice * uptimeBip / 10000;
 
     for (uint256 j = 0; j < projectIds.length; j++) {
       bytes32 projectId = projectIds[j];
       if (projectId != 0) {
+        uint256 sharePrice = _registry.getNodes().getNodeSharePrice(nodeCopy.id, projectId, EARTHFAST_LAST_EPOCH);
+        uint256 sharePayout = sharePrice * uptimeBip / 10000;
+
         projects.setProjectEscrowImpl(projectId, sharePayout, 0);
         projects.setProjectReserveImpl(projectId, sharePrice, 0);
         operators.setOperatorBalanceImpl(nodeCopy.operatorId, 0, sharePayout);

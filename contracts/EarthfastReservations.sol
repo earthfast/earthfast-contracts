@@ -22,7 +22,7 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
   EarthfastRegistry private _registry;
 
   mapping(bytes32 => EnumerableSet.Bytes32Set) private _projectNodeIds; // Union of last and next epoch
-  mapping(bytes32 => mapping(uint256 => uint256)) private _projectNodeSharePrices; // Project -> NodeId -> SharePrice
+  mapping(bytes32 => mapping(bytes32 => mapping(uint256 => uint256))) private _projectNodeSharePrices; // Project -> NodeId -> Epoch -> SharePrice
 
   event ReservationCreated(bytes32 indexed nodeId, bytes32 indexed operatorId, bytes32 indexed projectId,
     uint256 lastPrice, uint256 nextPrice, EarthfastSlot slot);
@@ -186,17 +186,17 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
     uint256 maxPrice, EarthfastSlot calldata slot
   ) internal virtual {
     require(!nodeCopy.disabled, "node disabled");
-    uint256 sharePrice = nodeCopy.prices[EARTHFAST_NEXT_EPOCH] / nodeCopy.maxShares;
+    uint256 sharePrice = nodeCopy.prices[EARTHFAST_NEXT_EPOCH];
     require(sharePrice <= maxPrice, "price mismatch");
 
     if (slot.last) {
       require(allNodes.reserveSharedNode(nodeCopy.id, projectId, EARTHFAST_LAST_EPOCH), "reservation failed");
-      _projectNodeSharePrices[projectId][EARTHFAST_LAST_EPOCH] = sharePrice;
+      allNodes.setNodeSharePrice(nodeCopy.id, projectId, EARTHFAST_LAST_EPOCH, sharePrice);
       projects.setProjectReserveImpl(projectId, 0, sharePrice);
     }
     if (slot.next) {
       require(allNodes.reserveSharedNode(nodeCopy.id, projectId, EARTHFAST_NEXT_EPOCH), "reservation failed");
-      _projectNodeSharePrices[projectId][EARTHFAST_NEXT_EPOCH] = sharePrice;
+      allNodes.setNodeSharePrice(nodeCopy.id, projectId, EARTHFAST_NEXT_EPOCH, sharePrice);
       projects.setProjectReserveImpl(projectId, 0, sharePrice);
     }
     _projectNodeIds[projectId].add(nodeCopy.id);
@@ -276,16 +276,16 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
     EarthfastSlot calldata slot
   ) internal virtual {
     if (slot.last) {
-      uint256 sharePrice = _projectNodeSharePrices[projectId][EARTHFAST_LAST_EPOCH];
+      uint256 sharePrice = allNodes.getNodeSharePrice(nodeCopy.id, projectId, EARTHFAST_LAST_EPOCH);
       require(allNodes.releaseSharedNode(nodeCopy.id, projectId, EARTHFAST_LAST_EPOCH), "release failed");
       projects.setProjectReserveImpl(projectId, sharePrice, 0);
-      delete _projectNodeSharePrices[projectId][EARTHFAST_LAST_EPOCH];
+      allNodes.deleteNodeSharePrice(nodeCopy.id, projectId, EARTHFAST_LAST_EPOCH);
     }
     if (slot.next) {
-      uint256 sharePrice = _projectNodeSharePrices[projectId][EARTHFAST_NEXT_EPOCH];
+      uint256 sharePrice = allNodes.getNodeSharePrice(nodeCopy.id, projectId, EARTHFAST_NEXT_EPOCH);
       require(allNodes.releaseSharedNode(nodeCopy.id, projectId, EARTHFAST_NEXT_EPOCH), "release failed");
       projects.setProjectReserveImpl(projectId, sharePrice, 0);
-      delete _projectNodeSharePrices[projectId][EARTHFAST_NEXT_EPOCH];
+      allNodes.deleteNodeSharePrice(nodeCopy.id, projectId, EARTHFAST_NEXT_EPOCH);
     }
     if (slot.last && slot.next) {
       _projectNodeIds[projectId].remove(nodeCopy.id);

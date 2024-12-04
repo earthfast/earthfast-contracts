@@ -27,6 +27,9 @@ contract EarthfastNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUp
   // Mapping to track which projects are sharing each node
   mapping(bytes32 => EnumerableSet.Bytes32Set) private _nodeShares;
 
+  // Node -> Project -> Epoch -> SharePrice
+  mapping(bytes32 => mapping(bytes32 => mapping(uint256 => uint256))) private _nodeSharePrices;
+
   // NOTE: These events must match the corresponding events in EarthfastNodesImpl library
   event NodeCreated(bytes32 indexed nodeId, bytes32 indexed operatorId, string host, string region, bool disabled, uint256 price);
   event NodeDeleted(bytes32 indexed nodeId, bytes32 indexed operatorId, string host, string region, bool disabled, uint256 price);
@@ -331,6 +334,21 @@ contract EarthfastNodes is AccessControlUpgradeable, PausableUpgradeable, UUPSUp
       result[i] = shares.at(i);
     }
     return result;
+  }
+
+  function setNodeSharePrice(bytes32 nodeId, bytes32 projectId, uint256 epochSlot, uint256 price) 
+  public virtual onlyImpl whenNotPaused {
+    _nodeSharePrices[nodeId][projectId][epochSlot] = price;
+  }
+
+  function getNodeSharePrice(bytes32 nodeId, bytes32 projectId, uint256 epochSlot)
+  public virtual view returns (uint256) {
+    return _nodeSharePrices[nodeId][projectId][epochSlot];
+  }
+
+  function deleteNodeSharePrice(bytes32 nodeId, bytes32 projectId, uint256 epochSlot)
+  public virtual onlyImpl whenNotPaused {
+    delete _nodeSharePrices[nodeId][projectId][epochSlot];
   }
 
   // Reserve storage for future upgrades

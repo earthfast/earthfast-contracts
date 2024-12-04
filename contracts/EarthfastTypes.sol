@@ -17,6 +17,7 @@ uint256 constant EARTHFAST_MAX_NAME_BYTES = 256;
 uint256 constant EARTHFAST_MAX_EMAIL_BYTES = 256;
 uint256 constant EARTHFAST_MAX_CONTENT_BYTES = 2048;
 uint256 constant EARTHFAST_MAX_METADATA_BYTES = 2048;
+uint256 constant EARTHFAST_MAX_NODE_SHARES = 25;  // Maximum number of projects that can share a node
 
 // Indexes of epoch slots
 uint256 constant EARTHFAST_LAST_EPOCH = 0;

@@ -107,6 +107,7 @@ library EarthfastNodesImpl {
     
     if (node.nodeType == EARTHFAST_NODE_SHARED) {
       require(node.maxShares > 0, "shared node needs maxShares > 0");
+      require(node.maxShares <= EARTHFAST_MAX_NODE_SHARES, "maxShares too high");
     } else {
       require(node.nodeType == EARTHFAST_NODE_DEDICATED, "invalid node type");
       require(node.maxShares == 0, "dedicated node must have maxShares = 0");
