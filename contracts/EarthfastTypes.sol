@@ -79,14 +79,6 @@ struct EarthfastNode {
     bytes32[2] projectIds; // For dedicated nodes: project that reserved this node. For shared nodes: unused
 }
 
-// New struct for tracking shared node reservations
-struct EarthfastNodeShare {
-    bytes32 nodeId;     // The shared node this reservation is for
-    bytes32 projectId;  // Project that has a share of this node
-    uint256 epochSlot;  // Which epoch this share is for (LAST or NEXT)
-    uint256 sharePrice; // Price paid for this share
-}
-
 struct EarthfastCreateNodeData {
     string host;
     string region;
