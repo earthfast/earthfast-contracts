@@ -1,17 +1,12 @@
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
-import { Result, SignerWithAddress, ZeroAddress, ZeroHash } from "ethers";
+import { SignerWithAddress, ZeroHash } from "ethers";
 import hre from "hardhat";
 
-import { expectEvent, expectReceipt, fixtures, newId } from "../lib/test";
-import { approve, parseTokens, parseUSDC, signers } from "../lib/util";
+import { expectEvent, expectReceipt, fixtures } from "../lib/test";
+import { parseUSDC, signers } from "../lib/util";
 
-import { EarthfastCreateNodeDataStruct, EarthfastNodes } from "../typechain-types/contracts/EarthfastNodes";
-import { EarthfastOperators, EarthfastOperatorStruct } from "../typechain-types/contracts/EarthfastOperators";
-import { EarthfastCreateProjectDataStruct, EarthfastProjects } from "../typechain-types/contracts/EarthfastProjects";
-import { EarthfastRegistry } from "../typechain-types/contracts/EarthfastRegistry";
-import { EarthfastReservations } from "../typechain-types/contracts/EarthfastReservations";
-import { EarthfastToken } from "../typechain-types/contracts/EarthfastToken";
+import { EarthfastProjects } from "../typechain-types/contracts/EarthfastProjects";
 import { ProjectMultiplex } from "../typechain-types/contracts/ProjectMultiplex";
 import { USDC } from "../typechain-types/contracts/test/USDC";
 
@@ -19,23 +14,13 @@ chai.use(shallowDeepEqual);
 
 describe("ProjectMultiplex", function () {
   let admin: SignerWithAddress;
-  let operator: SignerWithAddress;
   let project: SignerWithAddress;
-  let deployer: SignerWithAddress;
 
   let usdc: USDC;
-  let token: EarthfastToken;
-  let registry: EarthfastRegistry;
-  let nodes: EarthfastNodes;
-  let operators: EarthfastOperators;
   let projects: EarthfastProjects;
-  let reservations: EarthfastReservations;
   let multiplex: ProjectMultiplex;
 
   // store contract addresses after awaiting fixture
-  let registryAddress: string;
-  let nodesAddress: string;
-  let operatorsAddress: string;
   let projectsAddress: string;
   let usdcAddress: string;
   let multiplexAddress: string;
@@ -43,13 +28,10 @@ describe("ProjectMultiplex", function () {
   let snapshotId: string;
 
   async function fixture() {
-    ({ admin, operator, project, deployer } = await signers(hre));
-    ({ usdc, token, operators, projects, reservations, nodes, registry } = await fixtures(hre));
+    ({ admin, project } = await signers(hre));
+    ({ usdc, projects } = await fixtures(hre));
 
     // set contract addresses as string
-    registryAddress = await registry.getAddress();
-    nodesAddress = await nodes.getAddress();
-    operatorsAddress = await operators.getAddress();
     projectsAddress = await projects.getAddress();
     usdcAddress = await usdc.getAddress();
 
@@ -83,15 +65,26 @@ describe("ProjectMultiplex", function () {
     // Now project needs to approve multiplex contract to spend its USDC
     await usdc.connect(project).approve(multiplexAddress, parseUSDC("1000"));
 
-    const createProjectReceipt = await expectReceipt(multiplex.connect(project).createProject(usdcAddress, project.address, parseUSDC("1000"), ZeroHash));
+    // Get chainId
+    const network = await hre.ethers.provider.getNetwork();
+    const chainId = hre.ethers.getBigInt(network.chainId);
 
-    const [subProjectId] = await expectEvent(createProjectReceipt, multiplex, "SubProjectCreated");
+    // Test the hash function directly
+    const expectedHash = await multiplex.getSubProjectId(chainId, usdcAddress, project.address);
+
+    // Create the sub project
+    const createProjectReceipt = await expectReceipt(multiplex.connect(project).createProject(chainId, usdcAddress, project.address, ZeroHash));
+
+    // Get the sub project id
+    const results = await expectEvent(createProjectReceipt, multiplex, "SubProjectCreated");
+    const subProjectId = results[1];
     expect(subProjectId !== ZeroHash);
+    expect(subProjectId).to.equal(expectedHash);
 
+    // Use the getter function instead of direct mapping access
     const subProject = await multiplex.subProjects(subProjectId);
-    console.log("subProject", subProject);
+    expect(subProject.chainId).to.equal(chainId);
     expect(subProject.token).to.equal(usdcAddress);
-    expect(subProject.escrow).to.equal(parseUSDC("1000"));
     expect(subProject.castHash).to.equal(ZeroHash);
   });
 });

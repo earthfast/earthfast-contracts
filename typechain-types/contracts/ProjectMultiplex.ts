@@ -27,6 +27,7 @@ export interface ProjectMultiplexInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "createProject"
+      | "getSubProjectId"
       | "projectId"
       | "projects"
       | "subProjects"
@@ -38,7 +39,11 @@ export interface ProjectMultiplexInterface extends Interface {
 
   encodeFunctionData(
     functionFragment: "createProject",
-    values: [AddressLike, AddressLike, BigNumberish, BytesLike]
+    values: [BigNumberish, AddressLike, AddressLike, BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getSubProjectId",
+    values: [BigNumberish, AddressLike, AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "projectId", values?: undefined): string;
   encodeFunctionData(functionFragment: "projects", values?: undefined): string;
@@ -59,6 +64,10 @@ export interface ProjectMultiplexInterface extends Interface {
     functionFragment: "createProject",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "getSubProjectId",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "projectId", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "projects", data: BytesLike): Result;
   decodeFunctionResult(
@@ -77,21 +86,21 @@ export interface ProjectMultiplexInterface extends Interface {
 
 export namespace SubProjectCreatedEvent {
   export type InputTuple = [
+    chainId: BigNumberish,
     subProjectId: BytesLike,
     token: AddressLike,
-    escrow: BigNumberish,
     castHash: BytesLike
   ];
   export type OutputTuple = [
+    chainId: bigint,
     subProjectId: string,
     token: string,
-    escrow: bigint,
     castHash: string
   ];
   export interface OutputObject {
+    chainId: bigint;
     subProjectId: string;
     token: string;
-    escrow: bigint;
     castHash: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -145,13 +154,19 @@ export interface ProjectMultiplex extends BaseContract {
 
   createProject: TypedContractMethod<
     [
+      chainId: BigNumberish,
       tokenAddress: AddressLike,
       caster: AddressLike,
-      escrowAmount: BigNumberish,
       castHash: BytesLike
     ],
     [string],
     "nonpayable"
+  >;
+
+  getSubProjectId: TypedContractMethod<
+    [chainId: BigNumberish, tokenAddress: AddressLike, caster: AddressLike],
+    [string],
+    "view"
   >;
 
   projectId: TypedContractMethod<[], [string], "view">;
@@ -161,9 +176,9 @@ export interface ProjectMultiplex extends BaseContract {
   subProjects: TypedContractMethod<
     [arg0: BytesLike],
     [
-      [string, bigint, string, string] & {
+      [bigint, string, string, string] & {
+        chainId: bigint;
         token: string;
-        escrow: bigint;
         subProjectId: string;
         castHash: string;
       }
@@ -187,13 +202,20 @@ export interface ProjectMultiplex extends BaseContract {
     nameOrSignature: "createProject"
   ): TypedContractMethod<
     [
+      chainId: BigNumberish,
       tokenAddress: AddressLike,
       caster: AddressLike,
-      escrowAmount: BigNumberish,
       castHash: BytesLike
     ],
     [string],
     "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "getSubProjectId"
+  ): TypedContractMethod<
+    [chainId: BigNumberish, tokenAddress: AddressLike, caster: AddressLike],
+    [string],
+    "view"
   >;
   getFunction(
     nameOrSignature: "projectId"
@@ -206,9 +228,9 @@ export interface ProjectMultiplex extends BaseContract {
   ): TypedContractMethod<
     [arg0: BytesLike],
     [
-      [string, bigint, string, string] & {
+      [bigint, string, string, string] & {
+        chainId: bigint;
         token: string;
-        escrow: bigint;
         subProjectId: string;
         castHash: string;
       }
@@ -235,7 +257,7 @@ export interface ProjectMultiplex extends BaseContract {
   >;
 
   filters: {
-    "SubProjectCreated(bytes32,address,uint256,bytes)": TypedContractEvent<
+    "SubProjectCreated(uint32,bytes32,address,bytes)": TypedContractEvent<
       SubProjectCreatedEvent.InputTuple,
       SubProjectCreatedEvent.OutputTuple,
       SubProjectCreatedEvent.OutputObject
