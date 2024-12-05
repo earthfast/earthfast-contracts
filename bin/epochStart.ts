@@ -1,11 +1,31 @@
-// USAGE: npx ts-node bin/makeNewId.ts
-// Round epoch start to Wednesday at 16:00 UTC
-const date = new Date();
-date.setUTCHours(16, 0, 0, 0);
-// Get current day (0 = Sunday, 3 = Wednesday)
-const currentDay = date.getUTCDay();
-// Calculate days to subtract to reach previous Wednesday
-const daysToSubtract = (currentDay - 3 + 7) % 7 || 7; // If result is 0, subtract 7 days
-date.setUTCDate(date.getUTCDate() - daysToSubtract);
-const epochStart = Math.round(date.getTime() / 1000);
-console.log(epochStart);
+// USAGE: npx ts-node bin/epochStart.ts
+// Round epoch start to next Wednesday at 16:00 UTC
+
+const EPOCH_START_HOUR = 16; // 16:00 UTC or 11:00 EST
+const EPOCH_START_DAY = 3; // Wednesday
+
+function getEpochStart() {
+  const now = new Date();
+  const result = new Date();
+
+  const currentDay = now.getUTCDay();
+  const currentHour = now.getUTCHours();
+
+  // Special case if today is EPOCH_START_DAY and hour it's past EPOCH_START_HOUR, epoch start is today
+  let daysToSubtract;
+  if (currentDay === EPOCH_START_DAY && currentHour >= EPOCH_START_HOUR) {
+    daysToSubtract = 0;
+  } else {
+    daysToSubtract = (currentDay - EPOCH_START_DAY + 7) % 7 || 7;
+  }
+
+  result.setUTCDate(now.getUTCDate() - daysToSubtract);
+  result.setUTCHours(EPOCH_START_HOUR, 0, 0, 0);
+
+  return result;
+}
+
+// Example usage:
+const date = getEpochStart();
+console.log(date.toUTCString());
+console.log(date.getTime() / 1000);
