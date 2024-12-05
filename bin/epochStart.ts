@@ -8,25 +8,15 @@ function getEpochStart() {
   const now = new Date();
   const result = new Date();
 
-  // Get current day and hour in UTC
   const currentDay = now.getUTCDay();
   const currentHour = now.getUTCHours();
 
-  // Calculate days to subtract to reach previous Wednesday
-  let daysToSubtract = currentDay - EPOCH_START_DAY;
-  if (daysToSubtract <= 0) {
-    daysToSubtract += 7;
-  }
-
-  // Special case: if it's EPOCH_START_DAY
-  if (currentDay === EPOCH_START_DAY) {
-    if (currentHour < EPOCH_START_HOUR) {
-      // If it's EPOCH_START_DAY before EPOCH_START_HOUR, go back 7 days
-      daysToSubtract = 7;
-    } else {
-      // If it's EPOCH_START_DAY after EPOCH_START_HOUR, stay on current day
-      daysToSubtract = 0;
-    }
+  // Special case if today is EPOCH_START_DAY and hour it's past EPOCH_START_HOUR, epoch start is today
+  let daysToSubtract;
+  if (currentDay === EPOCH_START_DAY && currentHour >= EPOCH_START_HOUR) {
+    daysToSubtract = 0;
+  } else {
+    daysToSubtract = (currentDay - EPOCH_START_DAY + 7) % 7 || 7;
   }
 
   result.setUTCDate(now.getUTCDate() - daysToSubtract);
