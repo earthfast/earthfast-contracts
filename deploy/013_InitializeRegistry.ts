@@ -1,5 +1,6 @@
 import hre from "hardhat";
 import { attach, confirm, loadData, signers, stringify, wait } from "../lib/util";
+import { getEpochStart } from "../lib/date-util";
 
 // @ts-ignore Type created during hardhat compile
 type EarthfastRegistry = import("../typechain-types").EarthfastRegistry;
@@ -8,9 +9,6 @@ type EarthfastRegistry = import("../typechain-types").EarthfastRegistry;
 const USDC_SEPOLIA_ADDRESS = "0x0e9ad5c78b926f3368b1bcfc2dede9042c2d2a18";
 const USDC_SEPOLIA_STAGING_ADDRESS = "0x152C5Ddd523890A49ba5b7E73eda0E6a3Bae7710";
 const USDC_MAINNET_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
-
-const EPOCH_START_HOUR = 16; // 16:00 UTC or 11:00 EST
-const EPOCH_START_DAY = 3; // Wednesday
 
 export default main;
 async function main() {
@@ -87,27 +85,6 @@ async function main() {
   if (confirm(hre, `Execute EarthfastRegistry.initialize args: ${stringify(args)}`)) {
     await wait(registry.initialize(...args));
   }
-}
-
-function getEpochStart() {
-  const now = new Date();
-  const result = new Date();
-
-  const currentDay = now.getUTCDay();
-  const currentHour = now.getUTCHours();
-
-  // Special case if today is EPOCH_START_DAY and hour it's past EPOCH_START_HOUR, epoch start is today
-  let daysToSubtract;
-  if (currentDay === EPOCH_START_DAY && currentHour >= EPOCH_START_HOUR) {
-    daysToSubtract = 0;
-  } else {
-    daysToSubtract = (currentDay - EPOCH_START_DAY + 7) % 7 || 7;
-  }
-
-  result.setUTCDate(now.getUTCDate() - daysToSubtract);
-  result.setUTCHours(EPOCH_START_HOUR, 0, 0, 0);
-
-  return result;
 }
 
 main.tags = ["v1", "InitializeRegistry"];
