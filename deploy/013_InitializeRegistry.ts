@@ -1,6 +1,6 @@
 import hre from "hardhat";
-import { attach, confirm, loadData, signers, stringify, wait } from "../lib/util";
 import { getEpochStart } from "../lib/date-util";
+import { attach, confirm, loadData, signers, stringify, wait } from "../lib/util";
 
 // @ts-ignore Type created during hardhat compile
 type EarthfastRegistry = import("../typechain-types").EarthfastRegistry;
