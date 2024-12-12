@@ -73,7 +73,8 @@ describe("ProjectMultiplex", function () {
     const expectedHash = await multiplex.getSubProjectId(chainId, usdcAddress, project.address);
 
     // Create the sub project
-    const createProjectReceipt = await expectReceipt(multiplex.connect(project).createProject(chainId, usdcAddress, project.address, ZeroHash));
+    const tokenName = "testToken";
+    const createProjectReceipt = await expectReceipt(multiplex.connect(project).createProject(chainId, tokenName, usdcAddress, project.address, ZeroHash));
 
     // Get the sub project id
     const results = await expectEvent(createProjectReceipt, multiplex, "SubProjectCreated");
@@ -84,7 +85,13 @@ describe("ProjectMultiplex", function () {
     // Use the getter function instead of direct mapping access
     const subProject = await multiplex.subProjects(subProjectId);
     expect(subProject.chainId).to.equal(chainId);
+    expect(subProject.tokenName).to.equal(tokenName);
     expect(subProject.token).to.equal(usdcAddress);
     expect(subProject.castHash).to.equal(ZeroHash);
+    expect(subProject.caster).to.equal(project.address);
+
+    // Check the sub project list
+    const subProjectIds = await multiplex.getSubProjectIds();
+    expect(subProjectIds).to.deep.equal([subProjectId]);
   });
 });

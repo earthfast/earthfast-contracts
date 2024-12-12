@@ -12,16 +12,19 @@ contract ProjectMultiplex is ReentrancyGuard {
   // // FIXME: determine if a single creator can create multiple sub projects
   //   // and if a token can have multiple sub projects
   // TODO: determine if payment is needed in the same token as is used for the site
-  // TODO: determine if the project creator should be stored here
 
   /// @notice Mapping of sub-project id to sub-project details
   mapping(bytes32 => SubProject) public subProjects;
 
+  // list of sub projects
+  bytes32[] public subProjectIds;
+
   /// @notice Struct to hold sub-project details
   struct SubProject {
     uint32 chainId; // Chain on which the token exists
+    string tokenName; // name of the token
     address token; // Address of the token to use for the escrow
-    bytes32 subProjectId; // Id of the sub-project
+    address caster; // Address of the original caster
     bytes castHash; // Hash id of the project creation cast
     // uint256 escrow; // Amount of tokens to escrow
   }
@@ -46,6 +49,7 @@ contract ProjectMultiplex is ReentrancyGuard {
   /// @notice Creates a new sub project and escrow
   function createProject(
     uint32 chainId,
+    string memory tokenName,
     address tokenAddress,
     address caster,
     // uint256 escrowAmount,
@@ -58,16 +62,18 @@ contract ProjectMultiplex is ReentrancyGuard {
     subProjectId = getSubProjectId(chainId, tokenAddress, caster);
     SubProject memory subProject = SubProject({
       chainId: chainId,
+      tokenName: tokenName,
       token: tokenAddress,
-      subProjectId: subProjectId,
+      caster: caster,
       castHash: castHash
     });
 
     // transfer the tokens to the escrow
     // IERC20(tokenAddress).transferFrom(caster, address(this), escrowAmount);
 
-    // add the sub project to the mapping
+    // write the sub project to storage
     subProjects[subProjectId] = subProject;
+    subProjectIds.push(subProjectId);
 
     emit SubProjectCreated(chainId, subProjectId, tokenAddress, castHash);
   }
@@ -80,6 +86,10 @@ contract ProjectMultiplex is ReentrancyGuard {
 
   function getSubProjectId(uint32 chainId, address tokenAddress, address caster) public view returns (bytes32) {
     return keccak256(abi.encode(chainId, projectId, tokenAddress, caster));
+  }
+
+  function getSubProjectIds() external view returns (bytes32[] memory) {
+    return subProjectIds;
   }
 
 }
