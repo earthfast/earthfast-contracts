@@ -68,13 +68,14 @@ describe("ProjectMultiplex", function () {
     // Get chainId
     const network = await hre.ethers.provider.getNetwork();
     const chainId = hre.ethers.getBigInt(network.chainId);
+    const caster = "testCaster";
 
     // Test the hash function directly
-    const expectedHash = await multiplex.getSubProjectId(chainId, usdcAddress, project.address);
+    const expectedHash = await multiplex.getSubProjectId(chainId, usdcAddress, caster);
 
     // Create the sub project
     const tokenName = "testToken";
-    const createProjectReceipt = await expectReceipt(multiplex.connect(project).createProject(chainId, tokenName, usdcAddress, project.address, ZeroHash));
+    const createProjectReceipt = await expectReceipt(multiplex.connect(project).createProject(chainId, tokenName, usdcAddress, caster, ZeroHash));
 
     // Get the sub project id
     const results = await expectEvent(createProjectReceipt, multiplex, "SubProjectCreated");
@@ -88,7 +89,7 @@ describe("ProjectMultiplex", function () {
     expect(subProject.tokenName).to.equal(tokenName);
     expect(subProject.token).to.equal(usdcAddress);
     expect(subProject.castHash).to.equal(ZeroHash);
-    expect(subProject.caster).to.equal(project.address);
+    expect(subProject.caster).to.equal(caster);
 
     // Check the sub project list
     const subProjectIds = await multiplex.getSubProjectIds();

@@ -24,7 +24,7 @@ contract ProjectMultiplex is ReentrancyGuard {
     uint32 chainId; // Chain on which the token exists
     string tokenName; // name of the token
     address token; // Address of the token to use for the escrow
-    address caster; // Address of the original caster
+    string caster; // Username of the original caster
     bytes castHash; // Hash id of the project creation cast
     // uint256 escrow; // Amount of tokens to escrow
   }
@@ -47,11 +47,16 @@ contract ProjectMultiplex is ReentrancyGuard {
 
   // TODO: add support for escrow payments and signature permits
   /// @notice Creates a new sub project and escrow
+  /// @param chainId The chain id of the token
+  /// @param tokenName The name of the token
+  /// @param tokenAddress The address of the token
+  /// @param caster The username of the caster
+  /// @param castHash The hash of the project creation cast
   function createProject(
     uint32 chainId,
     string memory tokenName,
     address tokenAddress,
-    address caster,
+    string memory caster,
     // uint256 escrowAmount,
     bytes memory castHash
   ) external nonReentrant returns (bytes32 subProjectId) {
@@ -84,7 +89,7 @@ contract ProjectMultiplex is ReentrancyGuard {
     IERC20(token).transfer(withdrawalAddress, amount);
   }
 
-  function getSubProjectId(uint32 chainId, address tokenAddress, address caster) public view returns (bytes32) {
+  function getSubProjectId(uint32 chainId, address tokenAddress, string memory caster) public view returns (bytes32) {
     return keccak256(abi.encode(chainId, projectId, tokenAddress, caster));
   }
 

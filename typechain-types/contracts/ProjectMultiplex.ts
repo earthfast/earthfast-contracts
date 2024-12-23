@@ -41,11 +41,11 @@ export interface ProjectMultiplexInterface extends Interface {
 
   encodeFunctionData(
     functionFragment: "createProject",
-    values: [BigNumberish, string, AddressLike, AddressLike, BytesLike]
+    values: [BigNumberish, string, AddressLike, string, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getSubProjectId",
-    values: [BigNumberish, AddressLike, AddressLike]
+    values: [BigNumberish, AddressLike, string]
   ): string;
   encodeFunctionData(
     functionFragment: "getSubProjectIds",
@@ -175,7 +175,7 @@ export interface ProjectMultiplex extends BaseContract {
       chainId: BigNumberish,
       tokenName: string,
       tokenAddress: AddressLike,
-      caster: AddressLike,
+      caster: string,
       castHash: BytesLike
     ],
     [string],
@@ -183,7 +183,7 @@ export interface ProjectMultiplex extends BaseContract {
   >;
 
   getSubProjectId: TypedContractMethod<
-    [chainId: BigNumberish, tokenAddress: AddressLike, caster: AddressLike],
+    [chainId: BigNumberish, tokenAddress: AddressLike, caster: string],
     [string],
     "view"
   >;
@@ -229,7 +229,7 @@ export interface ProjectMultiplex extends BaseContract {
       chainId: BigNumberish,
       tokenName: string,
       tokenAddress: AddressLike,
-      caster: AddressLike,
+      caster: string,
       castHash: BytesLike
     ],
     [string],
@@ -238,7 +238,7 @@ export interface ProjectMultiplex extends BaseContract {
   getFunction(
     nameOrSignature: "getSubProjectId"
   ): TypedContractMethod<
-    [chainId: BigNumberish, tokenAddress: AddressLike, caster: AddressLike],
+    [chainId: BigNumberish, tokenAddress: AddressLike, caster: string],
     [string],
     "view"
   >;
