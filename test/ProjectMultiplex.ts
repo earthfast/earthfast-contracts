@@ -1,6 +1,6 @@
 import chai, { expect } from "chai";
 import shallowDeepEqual from "chai-shallow-deep-equal";
-import { SignerWithAddress, ZeroHash } from "ethers";
+import { SignerWithAddress, ZeroAddress, ZeroHash } from "ethers";
 import hre from "hardhat";
 
 import { expectEvent, expectReceipt, fixtures } from "../lib/test";
@@ -94,5 +94,43 @@ describe("ProjectMultiplex", function () {
     // Check the sub project list
     const subProjectIds = await multiplex.getSubProjectIds();
     expect(subProjectIds).to.deep.equal([subProjectId]);
+  });
+
+  it("Should delete sub projects", async function () {
+    // Get project params
+    const network = await hre.ethers.provider.getNetwork();
+    const chainId = hre.ethers.getBigInt(network.chainId);
+    const caster = "testCaster";
+
+    // Create the sub project
+    const tokenName = "testToken";
+    const createProjectReceipt = await expectReceipt(multiplex.connect(project).createProject(chainId, tokenName, usdcAddress, caster, ZeroHash));
+
+    // Get the sub project id
+    const results = await expectEvent(createProjectReceipt, multiplex, "SubProjectCreated");
+    const subProjectId = results[1];
+    expect(subProjectId !== ZeroHash);
+
+    // Check the sub project
+    let subProject = await multiplex.subProjects(subProjectId);
+    expect(subProject.chainId).to.equal(chainId);
+    expect(subProject.tokenName).to.equal(tokenName);
+    expect(subProject.token).to.equal(usdcAddress);
+    expect(subProject.castHash).to.equal(ZeroHash);
+    expect(subProject.caster).to.equal(caster);
+
+    // Delete the sub project
+    await multiplex.connect(project).deleteSubProject(subProjectId);
+
+    // Check the sub project list
+    const subProjectIds = await multiplex.getSubProjectIds();
+    expect(subProjectIds).to.deep.equal([]);
+
+    // Check the sub project is deleted
+    subProject = await multiplex.subProjects(subProjectId);
+    expect(subProject.chainId).to.equal(0n);
+    expect(subProject.tokenName).to.equal("");
+    expect(subProject.token).to.equal(ZeroAddress);
+    expect(subProject.caster).to.equal("");
   });
 });

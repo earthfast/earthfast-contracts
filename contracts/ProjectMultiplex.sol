@@ -26,24 +26,32 @@ contract ProjectMultiplex is ReentrancyGuard {
     address token; // Address of the token to use for the escrow
     string caster; // Username of the original caster
     bytes castHash; // Hash id of the project creation cast
-    // uint256 escrow; // Amount of tokens to escrow
   }
 
   /// @notice Address of the projects contract
   address public projects;
   /// @notice Id of the project to create sub projects for
   bytes32 public projectId;
-  /// @notice Address to withdraw tokens to
-  address public withdrawalAddress;
+  /// @notice Address of the owner
+  address public owner;
 
   /// @notice Emitted when a sub project is created
   event SubProjectCreated(uint32 indexed chainId, bytes32 indexed subProjectId, address indexed token, bytes castHash);
 
-  constructor(address _projects, bytes32 _projectId, address _withdrawalAddress) {
+  constructor(address _projects, bytes32 _projectId, address _owner) {
     projects = _projects;
     projectId = _projectId;
-    withdrawalAddress = _withdrawalAddress;
+    owner = _owner;
   }
+
+  modifier onlyOwner() {
+    require(msg.sender == owner, "Only owner can call this function");
+    _;
+  }
+
+  //////////////////////////
+  /////// PUBLIC ///////////
+  //////////////////////////
 
   // TODO: add support for escrow payments and signature permits
   /// @notice Creates a new sub project and escrow
@@ -57,12 +65,8 @@ contract ProjectMultiplex is ReentrancyGuard {
     string memory tokenName,
     address tokenAddress,
     string memory caster,
-    // uint256 escrowAmount,
     bytes memory castHash
   ) external nonReentrant returns (bytes32 subProjectId) {
-    // TODO: add additional validation checks
-    // require(escrowAmount != 0, "must deposit escrow");
-
     // create the sub project
     subProjectId = getSubProjectId(chainId, tokenAddress, caster);
     SubProject memory subProject = SubProject({
@@ -73,9 +77,6 @@ contract ProjectMultiplex is ReentrancyGuard {
       castHash: castHash
     });
 
-    // transfer the tokens to the escrow
-    // IERC20(tokenAddress).transferFrom(caster, address(this), escrowAmount);
-
     // write the sub project to storage
     subProjects[subProjectId] = subProject;
     subProjectIds.push(subProjectId);
@@ -83,11 +84,16 @@ contract ProjectMultiplex is ReentrancyGuard {
     emit SubProjectCreated(chainId, subProjectId, tokenAddress, castHash);
   }
 
-  // TODO: add support for checking escrow
-  function withdrawTokens(address token, uint256 amount) external {
-    // transfer tokens to the whitelisted address
-    IERC20(token).transfer(withdrawalAddress, amount);
+  /// @notice Deletes a sub project
+  /// @param subProjectId The id of the sub project to delete
+  function deleteSubProject(bytes32 subProjectId) external onlyOwner {
+    delete subProjects[subProjectId];
+    _removeFromArray(subProjectIds, subProjectId);
   }
+
+  //////////////////////////
+  /////// VIEW /////////////
+  //////////////////////////
 
   function getSubProjectId(uint32 chainId, address tokenAddress, string memory caster) public view returns (bytes32) {
     return keccak256(abi.encode(chainId, projectId, tokenAddress, caster));
@@ -96,5 +102,21 @@ contract ProjectMultiplex is ReentrancyGuard {
   function getSubProjectIds() external view returns (bytes32[] memory) {
     return subProjectIds;
   }
+
+  //////////////////////////
+  /////// INTERNAL /////////
+  //////////////////////////
+
+  function _removeFromArray(bytes32[] storage arr, bytes32 element) internal {
+    for (uint i = 0; i < arr.length; i++) {
+        if (arr[i] == element) {
+            arr[i] = arr[arr.length - 1];
+            arr.pop();
+            break;
+        }
+    }
+  }
+
+
 
 }

@@ -27,14 +27,14 @@ export interface ProjectMultiplexInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "createProject"
+      | "deleteSubProject"
       | "getSubProjectId"
       | "getSubProjectIds"
+      | "owner"
       | "projectId"
       | "projects"
       | "subProjectIds"
       | "subProjects"
-      | "withdrawTokens"
-      | "withdrawalAddress"
   ): FunctionFragment;
 
   getEvent(nameOrSignatureOrTopic: "SubProjectCreated"): EventFragment;
@@ -44,6 +44,10 @@ export interface ProjectMultiplexInterface extends Interface {
     values: [BigNumberish, string, AddressLike, string, BytesLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "deleteSubProject",
+    values: [BytesLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getSubProjectId",
     values: [BigNumberish, AddressLike, string]
   ): string;
@@ -51,6 +55,7 @@ export interface ProjectMultiplexInterface extends Interface {
     functionFragment: "getSubProjectIds",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(functionFragment: "projectId", values?: undefined): string;
   encodeFunctionData(functionFragment: "projects", values?: undefined): string;
   encodeFunctionData(
@@ -61,17 +66,13 @@ export interface ProjectMultiplexInterface extends Interface {
     functionFragment: "subProjects",
     values: [BytesLike]
   ): string;
-  encodeFunctionData(
-    functionFragment: "withdrawTokens",
-    values: [AddressLike, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "withdrawalAddress",
-    values?: undefined
-  ): string;
 
   decodeFunctionResult(
     functionFragment: "createProject",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "deleteSubProject",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -82,6 +83,7 @@ export interface ProjectMultiplexInterface extends Interface {
     functionFragment: "getSubProjectIds",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "projectId", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "projects", data: BytesLike): Result;
   decodeFunctionResult(
@@ -90,14 +92,6 @@ export interface ProjectMultiplexInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "subProjects",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "withdrawTokens",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "withdrawalAddress",
     data: BytesLike
   ): Result;
 }
@@ -182,6 +176,12 @@ export interface ProjectMultiplex extends BaseContract {
     "nonpayable"
   >;
 
+  deleteSubProject: TypedContractMethod<
+    [subProjectId: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+
   getSubProjectId: TypedContractMethod<
     [chainId: BigNumberish, tokenAddress: AddressLike, caster: string],
     [string],
@@ -189,6 +189,8 @@ export interface ProjectMultiplex extends BaseContract {
   >;
 
   getSubProjectIds: TypedContractMethod<[], [string[]], "view">;
+
+  owner: TypedContractMethod<[], [string], "view">;
 
   projectId: TypedContractMethod<[], [string], "view">;
 
@@ -210,14 +212,6 @@ export interface ProjectMultiplex extends BaseContract {
     "view"
   >;
 
-  withdrawTokens: TypedContractMethod<
-    [token: AddressLike, amount: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-
-  withdrawalAddress: TypedContractMethod<[], [string], "view">;
-
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
@@ -236,6 +230,9 @@ export interface ProjectMultiplex extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "deleteSubProject"
+  ): TypedContractMethod<[subProjectId: BytesLike], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "getSubProjectId"
   ): TypedContractMethod<
     [chainId: BigNumberish, tokenAddress: AddressLike, caster: string],
@@ -245,6 +242,9 @@ export interface ProjectMultiplex extends BaseContract {
   getFunction(
     nameOrSignature: "getSubProjectIds"
   ): TypedContractMethod<[], [string[]], "view">;
+  getFunction(
+    nameOrSignature: "owner"
+  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "projectId"
   ): TypedContractMethod<[], [string], "view">;
@@ -269,16 +269,6 @@ export interface ProjectMultiplex extends BaseContract {
     ],
     "view"
   >;
-  getFunction(
-    nameOrSignature: "withdrawTokens"
-  ): TypedContractMethod<
-    [token: AddressLike, amount: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "withdrawalAddress"
-  ): TypedContractMethod<[], [string], "view">;
 
   getEvent(
     key: "SubProjectCreated"
