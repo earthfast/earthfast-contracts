@@ -102,7 +102,7 @@ describe("ProjectMultiplex", function () {
     const chainId = hre.ethers.getBigInt(network.chainId);
     const caster = "testCaster";
 
-    // Create the sub project
+    // Create a sub project
     const tokenName = "testToken";
     const createProjectReceipt = await expectReceipt(multiplex.connect(project).createProject(chainId, tokenName, usdcAddress, caster, ZeroHash));
 
@@ -111,26 +111,52 @@ describe("ProjectMultiplex", function () {
     const subProjectId = results[1];
     expect(subProjectId !== ZeroHash);
 
-    // Check the sub project
-    let subProject = await multiplex.subProjects(subProjectId);
-    expect(subProject.chainId).to.equal(chainId);
-    expect(subProject.tokenName).to.equal(tokenName);
-    expect(subProject.token).to.equal(usdcAddress);
-    expect(subProject.castHash).to.equal(ZeroHash);
-    expect(subProject.caster).to.equal(caster);
+    // Check the first sub project
+    let subProjectOne = await multiplex.subProjects(subProjectId);
+    expect(subProjectOne.chainId).to.equal(chainId);
+    expect(subProjectOne.tokenName).to.equal(tokenName);
+    expect(subProjectOne.token).to.equal(usdcAddress);
+    expect(subProjectOne.castHash).to.equal(ZeroHash);
+    expect(subProjectOne.caster).to.equal(caster);
 
-    // Delete the sub project
+    // create a second sub project
+    const tokenNameTwo = "testTokenTwo";
+    const tokenTwoAddress = "0x1234567890123456789012345678901234567890";
+    const createProjectReceiptTwo = await expectReceipt(multiplex.connect(project).createProject(chainId, tokenNameTwo, tokenTwoAddress, caster, ZeroHash));
+
+    // Get the second sub project id
+    const resultsTwo = await expectEvent(createProjectReceiptTwo, multiplex, "SubProjectCreated");
+    const subProjectIdTwo = resultsTwo[1];
+    expect(subProjectIdTwo !== ZeroHash);
+
+    // Check the second sub project
+    let subProjectTwo = await multiplex.subProjects(subProjectIdTwo);
+    expect(subProjectTwo.chainId).to.equal(chainId);
+    expect(subProjectTwo.tokenName).to.equal(tokenNameTwo);
+    expect(subProjectTwo.token).to.equal(tokenTwoAddress);
+    expect(subProjectTwo.castHash).to.equal(ZeroHash);
+    expect(subProjectTwo.caster).to.equal(caster);
+
+    // Delete the first sub project
     await multiplex.connect(project).deleteSubProject(subProjectId);
 
     // Check the sub project list
     const subProjectIds = await multiplex.getSubProjectIds();
-    expect(subProjectIds).to.deep.equal([]);
+    expect(subProjectIds).to.deep.equal([subProjectIdTwo]);
 
-    // Check the sub project is deleted
-    subProject = await multiplex.subProjects(subProjectId);
-    expect(subProject.chainId).to.equal(0n);
-    expect(subProject.tokenName).to.equal("");
-    expect(subProject.token).to.equal(ZeroAddress);
-    expect(subProject.caster).to.equal("");
+    // Check the first sub project is deleted
+    subProjectOne = await multiplex.subProjects(subProjectId);
+    expect(subProjectOne.chainId).to.equal(0n);
+    expect(subProjectOne.tokenName).to.equal("");
+    expect(subProjectOne.token).to.equal(ZeroAddress);
+    expect(subProjectOne.caster).to.equal("");
+
+    // Check the second sub project is still there
+    subProjectTwo = await multiplex.subProjects(subProjectIdTwo);
+    expect(subProjectTwo.chainId).to.equal(chainId);
+    expect(subProjectTwo.tokenName).to.equal(tokenNameTwo);
+    expect(subProjectTwo.token).to.equal(tokenTwoAddress);
+    expect(subProjectTwo.castHash).to.equal(ZeroHash);
+    expect(subProjectTwo.caster).to.equal(caster);
   });
 });
