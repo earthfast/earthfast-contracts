@@ -20,10 +20,11 @@ contract ProjectMultiplex is ReentrancyGuard {
   bytes32[] public subProjectIds;
 
   /// @notice Struct to hold sub-project details
+  /// @dev chainId and token are strings to allow for different network formats
   struct SubProject {
-    uint32 chainId; // Chain on which the token exists
+    string chainId; // Chain on which the token exists
     string tokenName; // name of the token
-    address token; // Address of the token to use for the escrow
+    string tokenAddress; // Address of the token to use for the escrow
     string caster; // Username of the original caster
     bytes castHash; // Hash id of the project creation cast
   }
@@ -36,7 +37,7 @@ contract ProjectMultiplex is ReentrancyGuard {
   address public owner;
 
   /// @notice Emitted when a sub project is created
-  event SubProjectCreated(uint32 indexed chainId, bytes32 indexed subProjectId, address indexed token, bytes castHash);
+  event SubProjectCreated(string indexed chainId, bytes32 indexed subProjectId, string indexed tokenAddress, bytes castHash);
 
   constructor(address _projects, bytes32 _projectId, address _owner) {
     projects = _projects;
@@ -61,9 +62,9 @@ contract ProjectMultiplex is ReentrancyGuard {
   /// @param caster The username of the caster
   /// @param castHash The hash of the project creation cast
   function createProject(
-    uint32 chainId,
+    string memory chainId,
     string memory tokenName,
-    address tokenAddress,
+    string memory tokenAddress,
     string memory caster,
     bytes memory castHash
   ) external nonReentrant returns (bytes32 subProjectId) {
@@ -72,7 +73,7 @@ contract ProjectMultiplex is ReentrancyGuard {
     SubProject memory subProject = SubProject({
       chainId: chainId,
       tokenName: tokenName,
-      token: tokenAddress,
+      tokenAddress: tokenAddress,
       caster: caster,
       castHash: castHash
     });
@@ -95,7 +96,7 @@ contract ProjectMultiplex is ReentrancyGuard {
   /////// VIEW /////////////
   //////////////////////////
 
-  function getSubProjectId(uint32 chainId, address tokenAddress, string memory caster) public view returns (bytes32) {
+  function getSubProjectId(string memory chainId, string memory tokenAddress, string memory caster) public view returns (bytes32) {
     return keccak256(abi.encode(chainId, projectId, tokenAddress, caster));
   }
 

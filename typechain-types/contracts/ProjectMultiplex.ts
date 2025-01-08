@@ -9,7 +9,6 @@ import type {
   Result,
   Interface,
   EventFragment,
-  AddressLike,
   ContractRunner,
   ContractMethod,
   Listener,
@@ -41,7 +40,7 @@ export interface ProjectMultiplexInterface extends Interface {
 
   encodeFunctionData(
     functionFragment: "createProject",
-    values: [BigNumberish, string, AddressLike, string, BytesLike]
+    values: [string, string, string, string, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "deleteSubProject",
@@ -49,7 +48,7 @@ export interface ProjectMultiplexInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getSubProjectId",
-    values: [BigNumberish, AddressLike, string]
+    values: [string, string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "getSubProjectIds",
@@ -98,21 +97,21 @@ export interface ProjectMultiplexInterface extends Interface {
 
 export namespace SubProjectCreatedEvent {
   export type InputTuple = [
-    chainId: BigNumberish,
+    chainId: string,
     subProjectId: BytesLike,
-    token: AddressLike,
+    tokenAddress: string,
     castHash: BytesLike
   ];
   export type OutputTuple = [
-    chainId: bigint,
+    chainId: string,
     subProjectId: string,
-    token: string,
+    tokenAddress: string,
     castHash: string
   ];
   export interface OutputObject {
-    chainId: bigint;
+    chainId: string;
     subProjectId: string;
-    token: string;
+    tokenAddress: string;
     castHash: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -166,9 +165,9 @@ export interface ProjectMultiplex extends BaseContract {
 
   createProject: TypedContractMethod<
     [
-      chainId: BigNumberish,
+      chainId: string,
       tokenName: string,
-      tokenAddress: AddressLike,
+      tokenAddress: string,
       caster: string,
       castHash: BytesLike
     ],
@@ -183,7 +182,7 @@ export interface ProjectMultiplex extends BaseContract {
   >;
 
   getSubProjectId: TypedContractMethod<
-    [chainId: BigNumberish, tokenAddress: AddressLike, caster: string],
+    [chainId: string, tokenAddress: string, caster: string],
     [string],
     "view"
   >;
@@ -201,10 +200,10 @@ export interface ProjectMultiplex extends BaseContract {
   subProjects: TypedContractMethod<
     [arg0: BytesLike],
     [
-      [bigint, string, string, string, string] & {
-        chainId: bigint;
+      [string, string, string, string, string] & {
+        chainId: string;
         tokenName: string;
-        token: string;
+        tokenAddress: string;
         caster: string;
         castHash: string;
       }
@@ -220,9 +219,9 @@ export interface ProjectMultiplex extends BaseContract {
     nameOrSignature: "createProject"
   ): TypedContractMethod<
     [
-      chainId: BigNumberish,
+      chainId: string,
       tokenName: string,
-      tokenAddress: AddressLike,
+      tokenAddress: string,
       caster: string,
       castHash: BytesLike
     ],
@@ -235,7 +234,7 @@ export interface ProjectMultiplex extends BaseContract {
   getFunction(
     nameOrSignature: "getSubProjectId"
   ): TypedContractMethod<
-    [chainId: BigNumberish, tokenAddress: AddressLike, caster: string],
+    [chainId: string, tokenAddress: string, caster: string],
     [string],
     "view"
   >;
@@ -259,10 +258,10 @@ export interface ProjectMultiplex extends BaseContract {
   ): TypedContractMethod<
     [arg0: BytesLike],
     [
-      [bigint, string, string, string, string] & {
-        chainId: bigint;
+      [string, string, string, string, string] & {
+        chainId: string;
         tokenName: string;
-        token: string;
+        tokenAddress: string;
         caster: string;
         castHash: string;
       }
@@ -279,7 +278,7 @@ export interface ProjectMultiplex extends BaseContract {
   >;
 
   filters: {
-    "SubProjectCreated(uint32,bytes32,address,bytes)": TypedContractEvent<
+    "SubProjectCreated(string,bytes32,string,bytes)": TypedContractEvent<
       SubProjectCreatedEvent.InputTuple,
       SubProjectCreatedEvent.OutputTuple,
       SubProjectCreatedEvent.OutputObject
