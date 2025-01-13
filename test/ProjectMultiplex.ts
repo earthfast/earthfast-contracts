@@ -137,11 +137,15 @@ describe("ProjectMultiplex", function () {
     expect(subProjectTwo.castHash).to.equal(ZeroHash);
     expect(subProjectTwo.caster).to.equal(caster);
 
+    // Check the sub project list
+    let subProjectIds = await multiplex.getSubProjectIds();
+    expect(subProjectIds).to.deep.equal([subProjectId, subProjectIdTwo]);
+
     // Delete the first sub project
     await multiplex.connect(project).deleteSubProject(subProjectId);
 
     // Check the sub project list
-    const subProjectIds = await multiplex.getSubProjectIds();
+    subProjectIds = await multiplex.getSubProjectIds();
     expect(subProjectIds).to.deep.equal([subProjectIdTwo]);
 
     // Check the first sub project is deleted
