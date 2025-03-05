@@ -1,29 +1,60 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "./EarthfastNodes.sol";
 import "./EarthfastProjects.sol";
-import "./EarthfastRegistry.sol";
 import "./EarthfastReservations.sol";
 import "./EarthfastTypes.sol";
 
 // TODO: add signature generation support
 /// @title Entrypoint for interacting with Earthfast
-contract EarthfastEntrypoint is Multicall {
+contract EarthfastEntrypoint is AccessControlUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeable {
 
   EarthfastNodes private _nodes;
   EarthfastProjects private _projects;
-  EarthfastRegistry private _registry;
   EarthfastReservations private _reservations;
 
-  constructor(address nodes, address projects, address registry, address reservations) {
+  /// @dev Called once to set up the contract. Not called during proxy upgrades.
+  function initialize(
+    address[] calldata admins,
+    address nodes,
+    address projects,
+    address reservations
+  ) public initializer {
+    __Context_init();
+    __ERC165_init();
+    __ERC1967Upgrade_init();
+    __AccessControl_init();
+    __Pausable_init();
+    __ReentrancyGuard_init();
+    __UUPSUpgradeable_init();
+
     _nodes = EarthfastNodes(nodes);
     _projects = EarthfastProjects(projects);
-    _registry = EarthfastRegistry(registry);
     _reservations = EarthfastReservations(reservations);
+
+    require(admins.length > 0, "no admins");
+    for (uint256 i = 0; i < admins.length; ++i) {
+      require(admins[i] != address(0), "zero admin");
+      _grantRole(DEFAULT_ADMIN_ROLE, admins[i]);
+    }
   }
+
+  /// @dev Reverts if proxy upgrade of this contract by msg.sender is not allowed
+  function _authorizeUpgrade(address) internal virtual override onlyAdmin {}
+
+  modifier onlyAdmin {
+    require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "not admin");
+    _;
+  }
+
+  function pause() public virtual onlyAdmin { _pause(); }
+  function unpause() public virtual onlyAdmin { _unpause(); }
 
   /// @notice Creates a new project and reserves content nodes for it
   /// @dev This function used delegatecall to call the projects and reservations contracts to preserve msg.sender.
@@ -40,7 +71,7 @@ contract EarthfastEntrypoint is Multicall {
     EarthfastSlot calldata slot,
     uint256 deadline,
     bytes memory signature
-  ) public returns (bytes32 projectId) {
+  ) public whenNotPaused nonReentrant returns (bytes32 projectId) {
     // Create project
     projectId = _projects.createProject(project);
 
