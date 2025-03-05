@@ -112,5 +112,7 @@ export type { EarthfastTimelock } from "./contracts/EarthfastTimelock";
 export { EarthfastTimelock__factory } from "./factories/contracts/EarthfastTimelock__factory";
 export type { EarthfastToken } from "./contracts/EarthfastToken";
 export { EarthfastToken__factory } from "./factories/contracts/EarthfastToken__factory";
+export type { ProjectMultiplex } from "./contracts/ProjectMultiplex";
+export { ProjectMultiplex__factory } from "./factories/contracts/ProjectMultiplex__factory";
 export type { USDC } from "./contracts/test/USDC";
 export { USDC__factory } from "./factories/contracts/test/USDC__factory";

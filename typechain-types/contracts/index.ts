@@ -14,3 +14,4 @@ export type { EarthfastRegistry } from "./EarthfastRegistry";
 export type { EarthfastReservations } from "./EarthfastReservations";
 export type { EarthfastTimelock } from "./EarthfastTimelock";
 export type { EarthfastToken } from "./EarthfastToken";
+export type { ProjectMultiplex } from "./ProjectMultiplex";
