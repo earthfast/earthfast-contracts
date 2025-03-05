@@ -23,10 +23,23 @@ async function main() {
     signer
   ) as ProjectMultiplex;
 
+  // get the subproject details 
+  const subProject = await multiplex.subProjects(subProjectId);
+  console.log(`Sub project details: ${subProject}`);
+
   // Delete the sub project
   console.log(`Deleting sub project ${subProjectId}...`);
   const tx = await multiplex.deleteSubProject(subProjectId);
   await tx.wait();
+
+  // delete the s3 image endpoint by calling out to /api/images/delete
+  const s3ImageEndpoint = `https://earthfast-testnet-sepolia.s3.us-east-2.amazonaws.com/${subProject.tokenAddress}`;
+  const key = `${subProject.tokenName}-${subProject.tokenAddress}-${subProject.chainId}/cover.png`;
+  const response = await fetch(`${s3ImageEndpoint}${key}`, {
+    method: 'DELETE',
+  });
+  const data = await response.json();
+  console.log(`S3 image deleted: ${data}`);
   
   console.log("Sub project deleted successfully!");
 }
