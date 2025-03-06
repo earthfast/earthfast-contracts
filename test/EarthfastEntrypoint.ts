@@ -142,7 +142,7 @@ describe("EarthfastEntrypoint", function () {
     for (let i = 0; i < nodeIdsLast.length; i++) {
       const nodeId = nodeIdsLast[i];
       const price = nodePricesLast[i];
-      
+
       if (nodeId === nodeId1) {
         expect(price).to.equal(price1);
       } else if (nodeId === nodeId2) {
@@ -155,7 +155,7 @@ describe("EarthfastEntrypoint", function () {
     // Test getting available nodes for next epoch
     const slotNext: EarthfastSlot = { last: false, next: true };
     const [nodeIdsNext, nodePricesNext] = await entrypoint.getAvailableNodes(3, slotNext);
-    
+
     // Verify we got all 3 nodes
     expect(nodeIdsNext.length).to.equal(3);
     expect(nodePricesNext.length).to.equal(3);
@@ -169,7 +169,7 @@ describe("EarthfastEntrypoint", function () {
     for (let i = 0; i < nodeIdsNext.length; i++) {
       const nodeId = nodeIdsNext[i];
       const price = nodePricesNext[i];
-  
+
       if (nodeId === nodeId1) {
         expect(price).to.equal(price1);
       } else if (nodeId === nodeId2) {

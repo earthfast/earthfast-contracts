@@ -8,8 +8,18 @@ import "./EarthfastProjects.sol";
 import "./EarthfastReservations.sol";
 import "./EarthfastTypes.sol";
 
-/// @title Entrypoint for interacting with Earthfast
+/// @title Entrypoint for interacting with Earthfast and atomically creating projects and reservations
 contract EarthfastEntrypoint is ReentrancyGuard {
+
+/**
+ * @dev Reserved storage gap to prevent storage collisions when using delegatecall.
+ * EarthfastProjects and EarthfastReservations use up to 20 storage slots in their
+ * delegatecalled functions. This gap ensures those writes don't overwrite our
+ * actual state variables.
+ * DO NOT REMOVE OR REDUCE THE SIZE OF THIS GAP without careful analysis of
+ * storage layouts in all delegatecalled contracts.
+ */
+  uint256[30] private __gap;
 
   EarthfastNodes private _nodes;
   EarthfastProjects private _projects;
@@ -65,6 +75,7 @@ contract EarthfastEntrypoint is ReentrancyGuard {
   /// @param slot When to start the reservation. If slot.last is true, the reservation will start immediately.
   /// If slot.next is true, the reservation will start at the beginning of the next epoch.
   /// @return nodeIds IDs of the available nodes
+  /// @return nodePrices Prices of the available nodes
   function getAvailableNodes(
     uint256 nodesToReserve,
     EarthfastSlot calldata slot
@@ -93,6 +104,11 @@ contract EarthfastEntrypoint is ReentrancyGuard {
     require(nodeIndex == nodesToReserve, "Not enough available nodes");
   }
 
+  /// @notice Splits a signature into v, r, s components
+  /// @param sig The signature to split
+  /// @return v The v component of the signature
+  /// @return r The r component of the signature
+  /// @return s The s component of the signature
   function splitSignature(bytes memory sig) internal pure returns (uint8 v, bytes32 r, bytes32 s) {
     require(sig.length == 65, "Invalid signature length");
 
