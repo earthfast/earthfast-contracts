@@ -8,7 +8,6 @@ import "./EarthfastProjects.sol";
 import "./EarthfastReservations.sol";
 import "./EarthfastTypes.sol";
 
-// TODO: add signature generation support
 /// @title Entrypoint for interacting with Earthfast
 contract EarthfastEntrypoint is ReentrancyGuard {
 
