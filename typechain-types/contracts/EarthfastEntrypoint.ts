@@ -55,7 +55,10 @@ export type EarthfastSlotStructOutput = [last: boolean, next: boolean] & {
 
 export interface EarthfastEntrypointInterface extends Interface {
   getFunction(
-    nameOrSignature: "deploySite" | "getAvailableNodes"
+    nameOrSignature:
+      | "deploySite"
+      | "deploySiteWithNodeIds"
+      | "getAvailableNodes"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -70,11 +73,27 @@ export interface EarthfastEntrypointInterface extends Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "deploySiteWithNodeIds",
+    values: [
+      EarthfastCreateProjectDataStruct,
+      BytesLike[],
+      BigNumberish[],
+      BigNumberish,
+      EarthfastSlotStruct,
+      BigNumberish,
+      BytesLike
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getAvailableNodes",
     values: [BigNumberish, EarthfastSlotStruct]
   ): string;
 
   decodeFunctionResult(functionFragment: "deploySite", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "deploySiteWithNodeIds",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getAvailableNodes",
     data: BytesLike
@@ -137,6 +156,20 @@ export interface EarthfastEntrypoint extends BaseContract {
     "nonpayable"
   >;
 
+  deploySiteWithNodeIds: TypedContractMethod<
+    [
+      project: EarthfastCreateProjectDataStruct,
+      nodeIds: BytesLike[],
+      nodePrices: BigNumberish[],
+      escrowAmount: BigNumberish,
+      slot: EarthfastSlotStruct,
+      deadline: BigNumberish,
+      signature: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+
   getAvailableNodes: TypedContractMethod<
     [nodesToReserve: BigNumberish, slot: EarthfastSlotStruct],
     [[string[], bigint[]] & { nodeIds: string[]; nodePrices: bigint[] }],
@@ -159,6 +192,21 @@ export interface EarthfastEntrypoint extends BaseContract {
       signature: BytesLike
     ],
     [string],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "deploySiteWithNodeIds"
+  ): TypedContractMethod<
+    [
+      project: EarthfastCreateProjectDataStruct,
+      nodeIds: BytesLike[],
+      nodePrices: BigNumberish[],
+      escrowAmount: BigNumberish,
+      slot: EarthfastSlotStruct,
+      deadline: BigNumberish,
+      signature: BytesLike
+    ],
+    [void],
     "nonpayable"
   >;
   getFunction(

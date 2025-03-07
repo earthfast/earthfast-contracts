@@ -68,6 +68,31 @@ contract EarthfastEntrypoint is ReentrancyGuard {
     require(createReservationsSuccess, "Reservation failed");
   }
 
+  function deploySiteWithNodeIds(
+    EarthfastCreateProjectData memory project,
+    bytes32[] memory nodeIds,
+    uint256[] memory nodePrices,
+    uint256 escrowAmount,
+    EarthfastSlot calldata slot,
+    uint256 deadline,
+    bytes memory signature
+  ) public nonReentrant {
+    // Create project
+    bytes32 projectId = _projects.createProject(project);
+
+    // split signature into v, r, s
+    (uint8 v, bytes32 r, bytes32 s) = splitSignature(signature);
+
+    // Deposit escrow
+    require(escrowAmount > 0, "Escrow amount must be greater than 0");
+
+    // Call depositProjectEscrow directly instead of using delegatecall
+    _projects.depositProjectEscrow(projectId, escrowAmount, deadline, v, r, s);
+
+    // Call createReservations directly instead of using delegatecall
+    _reservations.createReservations(projectId, nodeIds, nodePrices, slot);
+  }
+
   // TODO: potentially optimize by returning the cheapest set of nodes
   // TODO: Potentially optimize by returning a list of available nodes if full number not available
   /// @notice Returns a list of available nodes for reservation

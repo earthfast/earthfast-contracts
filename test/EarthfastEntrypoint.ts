@@ -182,4 +182,91 @@ describe("EarthfastEntrypoint", function () {
     // Test requesting more nodes than available
     await expect(entrypoint.getAvailableNodes(4, slotNext)).to.be.revertedWith("Not enough available nodes");
   });
+
+  it("Should create a project via deploySiteWithNodeIds", async function () {
+    // Create operator
+    const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o3", "e3"));
+    const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
+    expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
+
+    // Create multiple nodes with different prices
+    const price1 = parseUSDC("1");
+    const price2 = parseUSDC("2");
+
+    const node1: EarthfastCreateNodeDataStruct = { disabled: false, host: "h1", region: "r1", price: price1 };
+    const node2: EarthfastCreateNodeDataStruct = { disabled: false, host: "h2", region: "r2", price: price2 };
+
+    // Create nodes one by one to get their IDs
+    const createNode1 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, [node1]));
+    const [nodeId1] = await expectEvent(createNode1, nodes, "NodeCreated");
+
+    const createNode2 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, [node2]));
+    const [nodeId2] = await expectEvent(createNode2, nodes, "NodeCreated");
+
+    // Create project data
+    const projectData: EarthfastCreateProjectDataStruct = {
+      owner: project.address,
+      name: "Test Project with Specific Nodes",
+      email: "test@example.com",
+      content: "Test Content for Specific Nodes",
+      checksum: ZeroHash,
+      metadata: "Test Metadata for Specific Nodes",
+    };
+
+    // Prepare node IDs and prices arrays
+    const nodeIds = [nodeId1, nodeId2];
+    const nodePrices = [price1, price2];
+    const escrowAmount = parseUSDC("100");
+    const slot: EarthfastSlot = { last: true, next: false };
+
+    // Get permit values
+    const deadline = Math.floor(Date.now() / 1000) + 3600;
+    const signature = await signApproval(hre, usdc, project.address, projectsAddress, escrowAmount);
+
+    // Call deploySiteWithNodeIds
+    const tx = await expectReceipt(
+      entrypoint.connect(project).deploySiteWithNodeIds(
+        projectData,
+        nodeIds,
+        nodePrices,
+        escrowAmount,
+        slot,
+        deadline,
+        signature.serialized
+      )
+    );
+
+    // Verify project was created
+    const [projectId] = await expectEvent(tx, projects, "ProjectCreated");
+    expect(projectId).to.not.eq(ZeroHash);
+
+    // check that the escrow was deposited
+    const deployedProject = await projects.getProject(projectId);
+    console.log(deployedProject);
+    expect(deployedProject.escrow).to.equal(escrowAmount);
+
+    // Get the nodes and verify they are assigned to the project
+    const node1Data = await nodes.getNode(nodeId1);
+    const node2Data = await nodes.getNode(nodeId2);
+
+    console.log(projectId);
+    console.log(node1Data);
+    console.log(node2Data);
+
+    // check if the nodes are assigned to the project
+    expect(node1Data.projectIds[0]).to.equal(projectId);
+    expect(node2Data.projectIds[0]).to.equal(projectId);
+    
+    // // Check if the nodes are assigned to the project in the specified slot
+    // // if (slot.last) {
+    //   expect(node1Data.projectIds[0]).to.equal(projectId);
+    //   expect(node2Data.projectIds[0]).to.equal(projectId);
+    // // }
+    
+    // // if (slot.next) {
+    //   expect(node1Data.projectIds[1]).to.equal(projectId);
+    //   expect(node2Data.projectIds[1]).to.equal(projectId);
+    // }
+  });
 });
