@@ -7,7 +7,7 @@ type USDC = import("../typechain-types").USDC;
 
 export default main;
 async function main() {
-  if (!hre.network.tags.local) {
+  if (!hre.network.tags.local && !hre.network.tags.base) {
     console.log("Skipping DeployUSDC for production");
     return;
   }

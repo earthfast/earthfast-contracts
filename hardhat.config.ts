@@ -54,6 +54,11 @@ const config: HardhatUserConfig = {
       url: `https://eth-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
+    base: {
+      tags: ["base"],
+      url: `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+    },
   },
   // prettier-ignore
   namedAccounts: {
@@ -65,6 +70,7 @@ const config: HardhatUserConfig = {
       // Production
       "testnet-sepolia": getAddress(process.env.DEPLOYER_PRIVATE_KEY)!, // Developer (private key)
       "testnet-sepolia-staging": getAddress(process.env.DEPLOYER_PRIVATE_KEY)!, // Developer (private key)
+      base: getAddress(process.env.DEPLOYER_PRIVATE_KEY)!, // Developer (private key)
     },
     guardian: {
       // Testing
@@ -74,6 +80,7 @@ const config: HardhatUserConfig = {
       // Production
       "testnet-sepolia":   "0x76824F74dE8C1E4985D73A9ea475B7E01432CdF5", // Gnosis Safe (public key)
       "testnet-sepolia-staging": "0x8459DDE54CB9dA738A9e52c937d086A8FC665A23", // MetaMask wallet
+      base: getAddress(process.env.DEPLOYER_PRIVATE_KEY)!, // TODO: deploy base Safe and update this value
     },
     operator: {
       // Testing
@@ -82,6 +89,7 @@ const config: HardhatUserConfig = {
       ganache:   "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", // Hardhat #2
       "testnet-sepolia":   "0x8E0d75dEF5212698F6A2DA4546536acDBfF134b9", // Earthfast operator
       "testnet-sepolia-staging":   "0x3f9BBfadFC2Fd358Bd6EF43abE2E82D21E2D9B5D", // Earthfast operator
+      base:   "0x8E0d75dEF5212698F6A2DA4546536acDBfF134b9", // Earthfast operator
     },
     project: {
       // Testing
@@ -90,6 +98,7 @@ const config: HardhatUserConfig = {
       ganache:   "0x90F79bf6EB2c4f870365E785982E1f101E93b906", // Hardhat #3
       "testnet-sepolia":   "0x7a0604B7B60A306F0360ff3CccE7e1bE52A5AabE", // Earthfast dashboard owner
       "testnet-sepolia-staging":   "0xe4a2F521293a12D2824b9D144E99BADf49c56cB9", // Earthfast dashboard owner
+      base:   "0x7a0604B7B60A306F0360ff3CccE7e1bE52A5AabE", // Earthfast dashboard owner
     },
   },
   gasReporter: {
