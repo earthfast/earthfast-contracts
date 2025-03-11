@@ -9,6 +9,7 @@ type EarthfastRegistry = import("../typechain-types").EarthfastRegistry;
 const USDC_SEPOLIA_ADDRESS = "0x0e9ad5c78b926f3368b1bcfc2dede9042c2d2a18";
 const USDC_SEPOLIA_STAGING_ADDRESS = "0x152C5Ddd523890A49ba5b7E73eda0E6a3Bae7710";
 const USDC_MAINNET_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+const USDC_BASE_ADDRESS = "0xa1342A167b63D884E03F05e9f23FcAE0C566E0E4"; // TODO: update this to actual address
 
 export default main;
 async function main() {
@@ -58,6 +59,8 @@ async function main() {
     usdc = await hre.ethers.getContractAt([], USDC_SEPOLIA_STAGING_ADDRESS);
   } else if (hre.network.name === "mainnet") {
     usdc = await hre.ethers.getContractAt([], USDC_MAINNET_ADDRESS);
+  } else if (hre.network.name === "base") {
+    usdc = await hre.ethers.getContractAt([], USDC_BASE_ADDRESS);
   } else {
     throw Error("Unexpected network");
   }
