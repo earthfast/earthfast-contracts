@@ -56,16 +56,14 @@ contract EarthfastEntrypoint is ReentrancyGuard {
     // Deposit escrow
     require(escrowAmount > 0, "Escrow amount must be greater than 0");
 
-    // call depositProjectEscrow on projects contract via delegatecall
-    (bool success, ) = address(_projects).delegatecall(abi.encodeWithSelector(EarthfastProjects.depositProjectEscrow.selector, projectId, escrowAmount, deadline, v, r, s));
-    require(success, "Deposit failed");
+    // Call depositProjectEscrow directly instead of using delegatecall
+    _projects.depositProjectEscrow(project.owner, projectId, escrowAmount, deadline, v, r, s);
 
     // Get available nodes for reservation
     (bytes32[] memory nodeIds, uint256[] memory nodePrices) = getAvailableNodes(nodesToReserve, slot);
 
-    // Create reservations for the available nodes via delegatecall
-    (bool createReservationsSuccess, ) = address(_reservations).delegatecall(abi.encodeWithSelector(EarthfastReservations.createReservations.selector, projectId, nodeIds, nodePrices, slot));
-    require(createReservationsSuccess, "Reservation failed");
+    // Call createReservations directly instead of using delegatecall
+    _reservations.createReservations(project.owner, projectId, nodeIds, nodePrices, slot);
   }
 
   function deploySiteWithNodeIds(
@@ -87,10 +85,10 @@ contract EarthfastEntrypoint is ReentrancyGuard {
     require(escrowAmount > 0, "Escrow amount must be greater than 0");
 
     // Call depositProjectEscrow directly instead of using delegatecall
-    _projects.depositProjectEscrow(projectId, escrowAmount, deadline, v, r, s);
+    _projects.depositProjectEscrow(project.owner, projectId, escrowAmount, deadline, v, r, s);
 
     // Call createReservations directly instead of using delegatecall
-    _reservations.createReservations(projectId, nodeIds, nodePrices, slot);
+    _reservations.createReservations(project.owner, projectId, nodeIds, nodePrices, slot);
   }
 
   // TODO: potentially optimize by returning the cheapest set of nodes
