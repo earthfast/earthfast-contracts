@@ -55,6 +55,11 @@ describe("EarthfastEntrypoint", function () {
 
   before(async function () {
     await fixture();
+
+    // Authorize the entrypoint in the Reservations contract
+    const entrypointAddress = await entrypoint.getAddress();
+    await reservations.connect(admin).authorizeEntrypoint(entrypointAddress);
+
     snapshotId = await hre.ethers.provider.send("evm_snapshot", []);
   });
 
@@ -89,6 +94,17 @@ describe("EarthfastEntrypoint", function () {
     const nodesToReserve = 1;
     const escrowAmount = parseUSDC("100");
     const slot: EarthfastSlot = { last: true, next: false };
+
+    // Mint USDC to the project account
+    await usdc.connect(admin).transfer(project.address, escrowAmount);
+
+    // Get the entrypoint address
+    const entrypointAddress = await entrypoint.getAddress();
+    const projectsAddress = await projects.getAddress();
+
+    // FIXME: this is redundant with the signature move into a separate test
+    // Approve the entrypoint contract to spend USDC
+    await usdc.connect(project).approve(entrypointAddress, escrowAmount);
 
     // Get permit values
     const deadline = Math.floor(Date.now() / 1000) + 3600;
@@ -207,11 +223,11 @@ describe("EarthfastEntrypoint", function () {
     // Create project data
     const projectData: EarthfastCreateProjectDataStruct = {
       owner: project.address,
-      name: "Test Project with Specific Nodes",
-      email: "test@example.com",
-      content: "Test Content for Specific Nodes",
+      name: "Test Project",
+      email: "test@test.com",
+      content: "Test Content",
       checksum: ZeroHash,
-      metadata: "Test Metadata for Specific Nodes",
+      metadata: "Test Metadata",
     };
 
     // Prepare node IDs and prices arrays
@@ -219,6 +235,13 @@ describe("EarthfastEntrypoint", function () {
     const nodePrices = [price1, price2];
     const escrowAmount = parseUSDC("100");
     const slot: EarthfastSlot = { last: true, next: false };
+
+    // Get the entrypoint address
+    const entrypointAddress = await entrypoint.getAddress();
+    const projectsAddress = await projects.getAddress();
+
+    // Mint USDC to the project account
+    await usdc.connect(admin).transfer(project.address, escrowAmount);
 
     // Get permit values
     const deadline = Math.floor(Date.now() / 1000) + 3600;
