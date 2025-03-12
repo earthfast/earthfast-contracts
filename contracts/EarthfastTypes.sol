@@ -98,3 +98,13 @@ struct EarthfastRegistryInitializeData {
   EarthfastProjects projects;
   EarthfastReservations reservations;
 }
+
+struct EarthfastCreateReservationData {
+  EarthfastNodes nodes;
+  EarthfastProjects projects;
+  bytes32 projectId;
+  EarthfastNode node;
+  uint256 epochRemainder;
+  uint256 maxPrice;
+  EarthfastSlot slot;
+}

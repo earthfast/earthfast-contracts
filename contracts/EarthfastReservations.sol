@@ -157,39 +157,47 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
     EarthfastNodes allNodes = _registry.getNodes();
     EarthfastProjects projects = _registry.getProjects();
     uint256 epochRemainder = _registry.getEpochRemainder();
+    
+    EarthfastCreateReservationData memory params;
+    params.nodes = allNodes;
+    params.projects = projects;
+    params.projectId = projectId;
+    params.epochRemainder = epochRemainder;
+    params.slot = slot;
+    
     for (uint256 i = 0; i < nodeIds.length; i++) {
-      EarthfastNode memory nodeCopy = allNodes.getNode(nodeIds[i]);
-      createReservationImpl(allNodes, projects, projectId, nodeCopy, epochRemainder, maxPrices[i], slot);
+      params.node = allNodes.getNode(nodeIds[i]);
+      params.maxPrice = maxPrices[i];
+      createReservationImpl(params);
     }
+    
     EarthfastProject memory projectCopy = projects.getProject(projectId);
     require(projectCopy.escrow >= projectCopy.reserve, "not enough escrow");
   }
 
-  function createReservationImpl(
-    EarthfastNodes allNodes, EarthfastProjects projects, bytes32 projectId, EarthfastNode memory nodeCopy,
-    uint256 epochRemainder, uint256 maxPrice, EarthfastSlot calldata slot)
+  function createReservationImpl(EarthfastCreateReservationData memory params)
   internal virtual {
-    require(!nodeCopy.disabled, "node disabled");
+    require(!params.node.disabled, "node disabled");
     uint256 lastPrice = 0;
     uint256 nextPrice = 0;
-    if (slot.last) {
-      require(nodeCopy.projectIds[EARTHFAST_LAST_EPOCH] == 0, "node reserved");
-      lastPrice = nodeCopy.prices[EARTHFAST_LAST_EPOCH];
-      require(lastPrice <= maxPrice, "price mismatch");
-      uint256 proratedPrice = lastPrice * epochRemainder / _registry.getLastEpochLength(); 
-      allNodes.setNodeProjectImpl(nodeCopy.id, EARTHFAST_LAST_EPOCH, projectId);
-      allNodes.setNodePriceImpl(nodeCopy.id, EARTHFAST_LAST_EPOCH, proratedPrice);
-      projects.setProjectReserveImpl(projectId, 0, proratedPrice);
+    if (params.slot.last) {
+      require(params.node.projectIds[EARTHFAST_LAST_EPOCH] == 0, "node reserved");
+      lastPrice = params.node.prices[EARTHFAST_LAST_EPOCH];
+      require(lastPrice <= params.maxPrice, "price mismatch");
+      uint256 proratedPrice = lastPrice * params.epochRemainder / _registry.getLastEpochLength(); 
+      params.nodes.setNodeProjectImpl(params.node.id, EARTHFAST_LAST_EPOCH, params.projectId);
+      params.nodes.setNodePriceImpl(params.node.id, EARTHFAST_LAST_EPOCH, proratedPrice);
+      params.projects.setProjectReserveImpl(params.projectId, 0, proratedPrice);
     }
-    if (slot.next) {
-      require(nodeCopy.projectIds[EARTHFAST_NEXT_EPOCH] == 0, "node reserved");
-      nextPrice = nodeCopy.prices[EARTHFAST_NEXT_EPOCH];
-      require(nextPrice <= maxPrice, "price mismatch");
-      allNodes.setNodeProjectImpl(nodeCopy.id, EARTHFAST_NEXT_EPOCH, projectId);
-      projects.setProjectReserveImpl(projectId, 0, nextPrice);
+    if (params.slot.next) {
+      require(params.node.projectIds[EARTHFAST_NEXT_EPOCH] == 0, "node reserved");
+      nextPrice = params.node.prices[EARTHFAST_NEXT_EPOCH];
+      require(nextPrice <= params.maxPrice, "price mismatch");
+      params.nodes.setNodeProjectImpl(params.node.id, EARTHFAST_NEXT_EPOCH, params.projectId);
+      params.projects.setProjectReserveImpl(params.projectId, 0, nextPrice);
     }
-    _projectNodeIds[projectId].add(nodeCopy.id);
-    emit ReservationCreated(nodeCopy.id, nodeCopy.operatorId, projectId, lastPrice, nextPrice, slot);
+    _projectNodeIds[params.projectId].add(params.node.id);
+    emit ReservationCreated(params.node.id, params.node.operatorId, params.projectId, lastPrice, nextPrice, params.slot);
   }
 
   /// @notice Releases content nodes starting from next epoch and unlocks project escrow
