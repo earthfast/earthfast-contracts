@@ -20,6 +20,7 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
   bytes32 public constant IMPORTER_ROLE = keccak256("IMPORTER_ROLE");
 
   EarthfastRegistry private _registry;
+  mapping(address => bool) private _authorizedEntrypoints;
 
   mapping(bytes32 => EnumerableSet.Bytes32Set) private _projectNodeIds; // Union of last and next epoch
 
@@ -48,7 +49,7 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
     EarthfastProjects projects = _registry.getProjects();
     EarthfastProject memory project = projects.getProject(projectId);
     require(msg.sender == project.owner || 
-           (msg.sender == _registry.getEntrypoint() && projectOwner == project.owner), 
+           (_authorizedEntrypoints[msg.sender] && projectOwner == project.owner), 
            "not project owner");
     _;
   }
@@ -99,6 +100,21 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
 
   /// @dev CAUTION: This can break data consistency. Used for proxy-less upgrades.
   function unsafeSetRegistry(EarthfastRegistry registry) public virtual onlyAdmin { _registry = registry; }
+
+  /// @dev Authorizes an entrypoint to call functions on behalf of users
+  function authorizeEntrypoint(address entrypoint) public virtual onlyAdmin { 
+    _authorizedEntrypoints[entrypoint] = true; 
+  }
+
+  /// @dev Revokes authorization for an entrypoint
+  function revokeEntrypoint(address entrypoint) public virtual onlyAdmin { 
+    _authorizedEntrypoints[entrypoint] = false; 
+  }
+
+  /// @dev Checks if an address is an authorized entrypoint
+  function isAuthorizedEntrypoint(address entrypoint) public virtual view returns (bool) { 
+    return _authorizedEntrypoints[entrypoint]; 
+  }
 
   /// @dev Allows to import initial contract data. Used for proxy-less upgrades.
   /// @param revokeImporterRole stops further data import by revoking the role.

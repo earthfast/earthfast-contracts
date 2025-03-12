@@ -33,7 +33,6 @@ contract EarthfastRegistry is AccessControlUpgradeable, PausableUpgradeable, Ree
   EarthfastOperators private _operators;
   EarthfastProjects private _projects;
   EarthfastReservations private _reservations;
-  address private _entrypoint;
 
   event EpochAdvanced(uint256 epochStart);
 
@@ -159,8 +158,6 @@ contract EarthfastRegistry is AccessControlUpgradeable, PausableUpgradeable, Ree
   function unsafeSetBilling(EarthfastBilling billing) public virtual onlyAdmin { _billing = billing; }
   function unsafeSetNodes(EarthfastNodes nodes) public virtual onlyAdmin { _nodes = nodes; }
   function unsafeSetReservations(EarthfastReservations reservations) public virtual onlyAdmin { _reservations = reservations; }
-  function unsafeSetEntrypoint(address entrypoint) public virtual onlyAdmin { _entrypoint = entrypoint; }
-
   /// @dev CAUTION: This can break data consistency. Used for proxy-less upgrades.
   /// @dev One can unsafe-deposit funds to this contract directly by token.transfer().
   function unsafeWithdrawUSDC(address to, uint256 amount) public onlyAdmin { _usdc.transfer(to, amount); }
@@ -182,8 +179,6 @@ contract EarthfastRegistry is AccessControlUpgradeable, PausableUpgradeable, Ree
   function getOperators() public virtual view returns (EarthfastOperators) { return _operators; }
   function getProjects() public virtual view returns (EarthfastProjects) { return _projects; }
   function getReservations() public virtual view returns (EarthfastReservations) { return _reservations; }
-  function getEntrypoint() public virtual view returns (address) { return _entrypoint; }
-
   function getLastEpochStart() public virtual view returns (uint256) { return _lastEpochStart; }
   function unsafeSetLastEpochStart(uint256 start) public virtual onlyAdmin { _lastEpochStart = start; } // Used by tests
   function getLastEpochLength() public virtual view returns (uint256) { return _lastEpochLength; }

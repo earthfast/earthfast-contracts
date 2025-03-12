@@ -4,6 +4,7 @@ import { attach, confirm, loadData, parseUSDC, signers, stringify, wait } from "
 
 // @ts-ignore Type created during hardhat compile
 type EarthfastReservations = import("../typechain-types").EarthfastReservations;
+type EarthfastEntrypoint = import("../typechain-types").EarthfastEntrypoint;
 
 export default main;
 async function main() {
@@ -25,6 +26,11 @@ async function main() {
   const importArgs = [nodesData, true] as const;
   if (confirm(hre, `Execute EarthfastReservations.unsafeImportData ${stringify(importArgs)}`)) {
     await wait(reservations.unsafeImportData(...importArgs));
+  }
+  // Authorize EarthfastEntrypoint as an entrypoint for atomically creating reservations
+  const entrypoint = <EarthfastEntrypoint>await registry.getEntrypoint();
+  if (confirm(hre, `Execute EarthfastReservations.authorizeEntrypoint ${stringify([entrypoint])}`)) {
+    await wait(reservations.authorizeEntrypoint(entrypoint));
   }
 }
 
