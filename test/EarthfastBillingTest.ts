@@ -140,7 +140,10 @@ describe("EarthfastBilling", function () {
   it("Should auto-release non-renew nodes", async function () {
     const proratedPrice = pricePerSec * (await epochRemainder());
     expect(Number.parseFloat(formatUSDC(proratedPrice))).to.be.equal(1);
-    await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
+    await mineWith(
+      hre,
+      async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok
+    );
     expect(await reservations.getReservationCount(projectId1)).to.equal(BigInt(2));
     expect((await operators.getOperator(operatorId1)).stake).to.equal(parseTokens("100"));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(100));
@@ -159,14 +162,20 @@ describe("EarthfastBilling", function () {
   });
 
   it("Should allow reconciler to reconcile", async function () {
-    await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
+    await mineWith(
+      hre,
+      async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok
+    );
     await mine(hre, epochLength);
     expect(await billing.connect(admin).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
     expect(await billing.connect(admin).processRenewal([nodeId1, nodeId2])).to.be.ok;
   });
 
   it("Should check node reconcilication order", async function () {
-    await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
+    await mineWith(
+      hre,
+      async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok
+    );
     await mine(hre, epochLength);
     await expect(billing.connect(admin).processBilling([nodeId2, nodeId1], [10000, 10000])).to.be.revertedWith("order mismatch");
     expect(await billing.connect(admin).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
@@ -174,7 +183,10 @@ describe("EarthfastBilling", function () {
   });
 
   it("Should check node uptime bounds", async function () {
-    await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
+    await mineWith(
+      hre,
+      async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok
+    );
     await mine(hre, epochLength);
     await expect(billing.connect(admin).processBilling([nodeId1, nodeId2], [10001, 10001])).to.be.revertedWith("invalid uptime");
     expect(await billing.connect(admin).processBilling([nodeId1, nodeId2], [10000, 10000])).to.be.ok;
@@ -199,7 +211,10 @@ describe("EarthfastBilling", function () {
   it("Should auto-release nodes that were disabled by operator", async function () {
     const proratedPrice = pricePerSec * (await epochRemainder());
     expect(Number.parseFloat(formatUSDC(proratedPrice))).to.be.equal(1);
-    await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok);
+    await mineWith(
+      hre,
+      async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok
+    );
     expect(await reservations.getReservationCount(projectId1)).to.equal(BigInt(2));
     expect((await projects.getProject(projectId1)).reserve).to.equal((proratedPrice + price) * BigInt(2));
     expect(await registry.connect(admin).setGracePeriod(epochLength)).to.be.ok;
@@ -224,7 +239,10 @@ describe("EarthfastBilling", function () {
   it("Should auto-release nodes that were repriced by operator", async function () {
     const proratedPrice = pricePerSec * (await epochRemainder());
     expect(Number.parseFloat(formatUSDC(proratedPrice))).to.be.equal(1);
-    await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok);
+    await mineWith(
+      hre,
+      async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok
+    );
     expect(await reservations.getReservationCount(projectId1)).to.equal(BigInt(2));
     expect((await projects.getProject(projectId1)).reserve).to.equal((proratedPrice + price) * BigInt(2));
     expect(await registry.connect(admin).setGracePeriod(epochLength)).to.be.ok;
@@ -251,7 +269,10 @@ describe("EarthfastBilling", function () {
 
     const proratedPrice = pricePerSec * (await epochRemainder());
     expect(Number.parseFloat(formatUSDC(proratedPrice))).to.be.equal(0.99);
-    await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok);
+    await mineWith(
+      hre,
+      async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok
+    );
     expect(await reservations.getReservationCount(projectId1)).to.equal(BigInt(2));
     expect((await projects.getProject(projectId1)).escrow).to.equal(price * BigInt(6));
     expect((await projects.getProject(projectId1)).reserve).to.equal((proratedPrice + price) * BigInt(2));
@@ -286,7 +307,10 @@ describe("EarthfastBilling", function () {
 
     const proratedPrice = pricePerSec * (await epochRemainder());
     expect(Number.parseFloat(formatUSDC(proratedPrice))).to.be.equal(0.99);
-    await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok);
+    await mineWith(
+      hre,
+      async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok
+    );
     expect(await registry.getLastEpochLength()).to.equal(BigInt(100));
     expect(await registry.getNextEpochLength()).to.equal(BigInt(100));
     expect(await registry.getCuedEpochLength()).to.equal(BigInt(200));
@@ -376,7 +400,10 @@ describe("EarthfastBilling", function () {
 
     const proratedPrice = pricePerSec * (await epochRemainder());
     expect(Number.parseFloat(formatUSDC(proratedPrice))).to.be.equal(0.98);
-    await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok);
+    await mineWith(
+      hre,
+      async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok
+    );
     expect(await registry.getLastEpochLength()).to.equal(BigInt(100));
     expect(await registry.getNextEpochLength()).to.equal(BigInt(100));
     expect(await registry.getCuedEpochLength()).to.equal(BigInt(50));

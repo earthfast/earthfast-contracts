@@ -1,15 +1,11 @@
 import hre from "hardhat";
-import { attach, confirm, signers, stringify, wait } from "../lib/util";
-
-type EarthfastEntrypoint = import("../typechain-types").EarthfastEntrypoint;
+import { attach, confirm, stringify, wait } from "../lib/util";
 
 export default main;
 async function main() {
-  const { deployer, guardian } = await signers(hre);
-
   const reservations = await attach(hre, "EarthfastReservations");
+  const entrypoint = await attach(hre, "EarthfastEntrypoint");
 
-  const entrypoint = <EarthfastEntrypoint>await registry.getEntrypoint();
   if (confirm(hre, `Execute EarthfastReservations.authorizeEntrypoint ${stringify([entrypoint])}`)) {
     await wait(reservations.authorizeEntrypoint(entrypoint));
   }

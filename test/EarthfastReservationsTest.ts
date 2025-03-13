@@ -150,7 +150,7 @@ describe("EarthfastReservations", function () {
   it("Should reserve/release nodes", async function () {
     await expect(reservations.connect(admin).deleteReservations(projectId1, [nodeId1], { last: true, next: false })).to.be.revertedWith("node not reserved");
     await expect(reservations.connect(project).deleteReservations(projectId1, [nodeId1], { last: false, next: true })).to.be.revertedWith("node not reserved");
-    await expect(reservations.connect(operator).createReservations(project.address,projectId1, [nodeId1], [price], { last: false, next: true })).to.be.revertedWith("not project owner");
+    await expect(reservations.connect(operator).createReservations(project.address, projectId1, [nodeId1], [price], { last: false, next: true })).to.be.revertedWith("not project owner");
     await expect(reservations.connect(project).createReservations(project.address, projectId1, [nodeId1], [price], { last: false, next: false })).to.be.revertedWith("no slot");
     await expect(reservations.connect(project).createReservations(project.address, projectId1, [nodeId1], [price, price], { last: false, next: true })).to.be.revertedWith("length mismatch");
     await expect(reservations.connect(project).createReservations(project.address, projectId1, [nodeId1], [price / BigInt(2)], { last: true, next: false })).to.be.revertedWith("price mismatch");
@@ -220,7 +220,7 @@ describe("EarthfastReservations", function () {
     expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
     if (hre.network.tags.ganache) await mine(hre, 0);
     const proratedPrice = pricePerSec * (await epochRemainder());
-    expect(await reservations.connect(project).createReservations(project.address,projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok;
+    expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok;
     if (hre.network.tags.ganache) await mine(hre, 0);
     if (!hre.network.tags.ganache) await mine(hre, 1);
 
@@ -243,7 +243,10 @@ describe("EarthfastReservations", function () {
 
   it("Should not reserve nodes while reconciling", async function () {
     let proratedPrice = pricePerSec * (await epochRemainder());
-    await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
+    await mineWith(
+      hre,
+      async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok
+    );
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice * BigInt(2));
 
@@ -259,7 +262,10 @@ describe("EarthfastReservations", function () {
     expect((await projects.getProject(projectId1)).reserve).to.equal(0);
 
     proratedPrice = pricePerSec * (await epochRemainder());
-    await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
+    await mineWith(
+      hre,
+      async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok
+    );
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice * BigInt(2));
   });

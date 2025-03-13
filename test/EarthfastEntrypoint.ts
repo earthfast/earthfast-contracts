@@ -237,7 +237,6 @@ describe("EarthfastEntrypoint", function () {
     const slot: EarthfastSlot = { last: true, next: false };
 
     // Get the entrypoint address
-    const entrypointAddress = await entrypoint.getAddress();
     const projectsAddress = await projects.getAddress();
 
     // Mint USDC to the project account
@@ -248,17 +247,7 @@ describe("EarthfastEntrypoint", function () {
     const signature = await signApproval(hre, usdc, project.address, projectsAddress, escrowAmount, deadline);
 
     // Call deploySiteWithNodeIds
-    const tx = await expectReceipt(
-      entrypoint.connect(project).deploySiteWithNodeIds(
-        projectData,
-        nodeIds,
-        nodePrices,
-        escrowAmount,
-        slot,
-        deadline,
-        signature.serialized
-      )
-    );
+    const tx = await expectReceipt(entrypoint.connect(project).deploySiteWithNodeIds(projectData, nodeIds, nodePrices, escrowAmount, slot, deadline, signature.serialized));
 
     // Verify project was created
     const [projectId] = await expectEvent(tx, projects, "ProjectCreated");
@@ -280,13 +269,13 @@ describe("EarthfastEntrypoint", function () {
     // check if the nodes are assigned to the project
     expect(node1Data.projectIds[0]).to.equal(projectId);
     expect(node2Data.projectIds[0]).to.equal(projectId);
-    
+
     // // Check if the nodes are assigned to the project in the specified slot
     // // if (slot.last) {
     //   expect(node1Data.projectIds[0]).to.equal(projectId);
     //   expect(node2Data.projectIds[0]).to.equal(projectId);
     // // }
-    
+
     // // if (slot.next) {
     //   expect(node1Data.projectIds[1]).to.equal(projectId);
     //   expect(node2Data.projectIds[1]).to.equal(projectId);
