@@ -1,13 +1,15 @@
 import hre from "hardhat";
-import { attach, confirm, stringify, wait } from "../lib/util";
+import { attach, confirm, signers, stringify, wait } from "../lib/util";
 
 export default main;
 async function main() {
+  const { guardian } = await signers(hre);
+
   const reservations = await attach(hre, "EarthfastReservations");
   const entrypoint = await attach(hre, "EarthfastEntrypoint");
 
   if (confirm(hre, `Execute EarthfastReservations.authorizeEntrypoint ${stringify([entrypoint])}`)) {
-    await wait(reservations.authorizeEntrypoint(entrypoint));
+    await wait(reservations.connect(guardian).authorizeEntrypoint(entrypoint));
   }
 }
 

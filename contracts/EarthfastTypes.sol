@@ -99,12 +99,13 @@ struct EarthfastRegistryInitializeData {
   EarthfastReservations reservations;
 }
 
+// Create a reservation for a node
 struct EarthfastCreateReservationData {
-  EarthfastNodes nodes;
-  EarthfastProjects projects;
-  bytes32 projectId;
-  EarthfastNode node;
-  uint256 epochRemainder;
-  uint256 maxPrice;
-  EarthfastSlot slot;
+  EarthfastNodes nodes; // The nodes contract
+  EarthfastProjects projects; // The projects contract
+  bytes32 projectId; // The project to reserve the node for
+  EarthfastNode node; // The node to reserve
+  uint256 epochRemainder; // The remaining epoch length
+  uint256 maxPrice; // The maximum price for the reservation
+  EarthfastSlot slot; // The slot to reserve the node for
 }

@@ -58,7 +58,6 @@ export async function approve(
   return [deadline, sig.v, sig.r, sig.s];
 }
 
-// TODO: pass deadline as a parameter
 // signApproval is a convenience function that generates a signature for permit
 export async function signApproval(
   hre: HardhatRuntimeEnvironment,
