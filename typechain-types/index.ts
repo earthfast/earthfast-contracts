@@ -94,6 +94,8 @@ export type { EarthfastBilling } from "./contracts/EarthfastBilling";
 export { EarthfastBilling__factory } from "./factories/contracts/EarthfastBilling__factory";
 export type { EarthfastEntrypoint } from "./contracts/EarthfastEntrypoint";
 export { EarthfastEntrypoint__factory } from "./factories/contracts/EarthfastEntrypoint__factory";
+export type { EarthfastEntrypointV2 } from "./contracts/EarthfastEntrypointV2";
+export { EarthfastEntrypointV2__factory } from "./factories/contracts/EarthfastEntrypointV2__factory";
 export type { EarthfastGovernor } from "./contracts/EarthfastGovernor";
 export { EarthfastGovernor__factory } from "./factories/contracts/EarthfastGovernor__factory";
 export type { EarthfastNodes } from "./contracts/EarthfastNodes";

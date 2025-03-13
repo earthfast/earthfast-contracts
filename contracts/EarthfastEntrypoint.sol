@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./EarthfastNodes.sol";
 import "./EarthfastProjects.sol";
@@ -9,30 +12,74 @@ import "./EarthfastReservations.sol";
 import "./EarthfastTypes.sol";
 
 /// @title Entrypoint for interacting with Earthfast and atomically creating projects and reservations
-contract EarthfastEntrypoint is ReentrancyGuard {
-
-/**
- * @dev Reserved storage gap to prevent storage collisions when using delegatecall.
- * EarthfastProjects and EarthfastReservations use up to 20 storage slots in their
- * delegatecalled functions. This gap ensures those writes don't overwrite our
- * actual state variables.
- * DO NOT REMOVE OR REDUCE THE SIZE OF THIS GAP without careful analysis of
- * storage layouts in all delegatecalled contracts.
- */
-  uint256[30] private __gap;
+contract EarthfastEntrypoint is
+    Initializable,
+    AccessControlUpgradeable,
+    ReentrancyGuardUpgradeable,
+    UUPSUpgradeable
+{
+  // Role for admin functions
+  bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
   EarthfastNodes private _nodes;
   EarthfastProjects private _projects;
   EarthfastReservations private _reservations;
 
-  constructor(address nodes, address projects, address reservations) {
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
+  /// @notice Initializes the contract
+  /// @param admins Array of admin addresses
+  /// @param nodes Address of the EarthfastNodes contract
+  /// @param projects Address of the EarthfastProjects contract
+  /// @param reservations Address of the EarthfastReservations contract
+  function initialize(
+    address[] calldata admins,
+    address nodes,
+    address projects,
+    address reservations
+  ) public initializer {
+    __AccessControl_init();
+    __ReentrancyGuard_init();
+    __UUPSUpgradeable_init();
+
     _nodes = EarthfastNodes(nodes);
     _projects = EarthfastProjects(projects);
     _reservations = EarthfastReservations(reservations);
+
+    // Set up admin roles
+    for (uint256 i = 0; i < admins.length; i++) {
+      _grantRole(ADMIN_ROLE, admins[i]);
+      _grantRole(DEFAULT_ADMIN_ROLE, admins[i]);
+    }
+  }
+
+  /// @dev Function that authorizes upgrades, only callable by admins
+  function _authorizeUpgrade(address) internal override onlyRole(ADMIN_ROLE) {}
+
+  /// @notice Updates the contract references
+  /// @param nodes New address of the EarthfastNodes contract
+  /// @param projects New address of the EarthfastProjects contract
+  /// @param reservations New address of the EarthfastReservations contract
+  function updateContracts(
+    address nodes,
+    address projects,
+    address reservations
+  ) external onlyRole(ADMIN_ROLE) {
+    if (nodes != address(0)) {
+      _nodes = EarthfastNodes(nodes);
+    }
+    if (projects != address(0)) {
+      _projects = EarthfastProjects(projects);
+    }
+    if (reservations != address(0)) {
+      _reservations = EarthfastReservations(reservations);
+    }
   }
 
   /// @notice Creates a new project and reserves content nodes for it
-  /// @dev This function used delegatecall to call the projects and reservations contracts to preserve msg.sender.
   /// @param project Data for the new project
   /// @param nodesToReserve Number of nodes to reserve
   /// @param escrowAmount Amount of escrow to deposit
@@ -56,16 +103,24 @@ contract EarthfastEntrypoint is ReentrancyGuard {
     // Deposit escrow
     require(escrowAmount > 0, "Escrow amount must be greater than 0");
 
-    // Call depositProjectEscrow directly instead of using delegatecall
+    // Call depositProjectEscrow directly
     _projects.depositProjectEscrow(project.owner, projectId, escrowAmount, deadline, v, r, s);
 
     // Get available nodes for reservation
     (bytes32[] memory nodeIds, uint256[] memory nodePrices) = getAvailableNodes(nodesToReserve, slot);
 
-    // Call createReservations directly instead of using delegatecall
+    // Call createReservations directly
     _reservations.createReservations(project.owner, projectId, nodeIds, nodePrices, slot);
   }
 
+  /// @notice Creates a new project and reserves specific nodes
+  /// @param project Data for the new project
+  /// @param nodeIds IDs of the nodes to reserve
+  /// @param nodePrices Prices of the nodes to reserve
+  /// @param escrowAmount Amount of escrow to deposit
+  /// @param slot When to start the reservation
+  /// @param deadline The deadline for the permit
+  /// @param signature The signature for the permit
   function deploySiteWithNodeIds(
     EarthfastCreateProjectData memory project,
     bytes32[] memory nodeIds,
@@ -74,9 +129,9 @@ contract EarthfastEntrypoint is ReentrancyGuard {
     EarthfastSlot calldata slot,
     uint256 deadline,
     bytes memory signature
-  ) public nonReentrant {
+  ) public nonReentrant returns (bytes32 projectId) {
     // Create project
-    bytes32 projectId = _projects.createProject(project);
+    projectId = _projects.createProject(project);
 
     // split signature into v, r, s
     (uint8 v, bytes32 r, bytes32 s) = splitSignature(signature);
@@ -84,10 +139,10 @@ contract EarthfastEntrypoint is ReentrancyGuard {
     // Deposit escrow
     require(escrowAmount > 0, "Escrow amount must be greater than 0");
 
-    // Call depositProjectEscrow directly instead of using delegatecall
+    // Call depositProjectEscrow directly
     _projects.depositProjectEscrow(project.owner, projectId, escrowAmount, deadline, v, r, s);
 
-    // Call createReservations directly instead of using delegatecall
+    // Call createReservations directly
     _reservations.createReservations(project.owner, projectId, nodeIds, nodePrices, slot);
   }
 
@@ -142,4 +197,14 @@ contract EarthfastEntrypoint is ReentrancyGuard {
     }
   }
 
+  /// @notice Get the addresses of the contracts used by the entrypoint
+  /// @return nodes Address of the EarthfastNodes contract
+  /// @return projects Address of the EarthfastProjects contract
+  /// @return reservations Address of the EarthfastReservations contract
+  function getContracts() external view returns (address nodes, address projects, address reservations) {
+    return (address(_nodes), address(_projects), address(_reservations));
+  }
+
+  // Reserve storage slots for future upgrades
+  uint256[10] private __gap;
 }

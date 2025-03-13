@@ -55,16 +55,18 @@ export type EarthfastSlotStructOutput = [last: boolean, next: boolean] & {
   next: boolean;
 };
 
-export interface EarthfastEntrypointInterface extends Interface {
+export interface EarthfastEntrypointV2Interface extends Interface {
   getFunction(
     nameOrSignature:
       | "ADMIN_ROLE"
       | "DEFAULT_ADMIN_ROLE"
+      | "VERSION"
       | "deploySite"
       | "deploySiteWithNodeIds"
       | "getAvailableNodes"
       | "getContracts"
       | "getRoleAdmin"
+      | "getVersion"
       | "grantRole"
       | "hasRole"
       | "initialize"
@@ -96,6 +98,7 @@ export interface EarthfastEntrypointInterface extends Interface {
     functionFragment: "DEFAULT_ADMIN_ROLE",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "VERSION", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "deploySite",
     values: [
@@ -130,6 +133,10 @@ export interface EarthfastEntrypointInterface extends Interface {
   encodeFunctionData(
     functionFragment: "getRoleAdmin",
     values: [BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getVersion",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "grantRole",
@@ -177,6 +184,7 @@ export interface EarthfastEntrypointInterface extends Interface {
     functionFragment: "DEFAULT_ADMIN_ROLE",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "VERSION", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "deploySite", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "deploySiteWithNodeIds",
@@ -194,6 +202,7 @@ export interface EarthfastEntrypointInterface extends Interface {
     functionFragment: "getRoleAdmin",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "getVersion", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "grantRole", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
@@ -328,11 +337,11 @@ export namespace UpgradedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface EarthfastEntrypoint extends BaseContract {
-  connect(runner?: ContractRunner | null): EarthfastEntrypoint;
+export interface EarthfastEntrypointV2 extends BaseContract {
+  connect(runner?: ContractRunner | null): EarthfastEntrypointV2;
   waitForDeployment(): Promise<this>;
 
-  interface: EarthfastEntrypointInterface;
+  interface: EarthfastEntrypointV2Interface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -374,6 +383,8 @@ export interface EarthfastEntrypoint extends BaseContract {
   ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
 
   DEFAULT_ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
+
+  VERSION: TypedContractMethod<[], [string], "view">;
 
   deploySite: TypedContractMethod<
     [
@@ -421,6 +432,8 @@ export interface EarthfastEntrypoint extends BaseContract {
   >;
 
   getRoleAdmin: TypedContractMethod<[role: BytesLike], [string], "view">;
+
+  getVersion: TypedContractMethod<[], [string], "view">;
 
   grantRole: TypedContractMethod<
     [role: BytesLike, account: AddressLike],
@@ -494,6 +507,9 @@ export interface EarthfastEntrypoint extends BaseContract {
     nameOrSignature: "DEFAULT_ADMIN_ROLE"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "VERSION"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "deploySite"
   ): TypedContractMethod<
     [
@@ -545,6 +561,9 @@ export interface EarthfastEntrypoint extends BaseContract {
   getFunction(
     nameOrSignature: "getRoleAdmin"
   ): TypedContractMethod<[role: BytesLike], [string], "view">;
+  getFunction(
+    nameOrSignature: "getVersion"
+  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "grantRole"
   ): TypedContractMethod<

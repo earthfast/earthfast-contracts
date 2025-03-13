@@ -34,7 +34,7 @@ describe("EarthfastEntrypoint", function () {
   let operatorsAddress: string;
   let projectsAddress: string;
   let reservationsAddress: string;
-
+  let entrypointAddress: string;
   let snapshotId: string;
 
   async function fixture() {
@@ -49,16 +49,16 @@ describe("EarthfastEntrypoint", function () {
 
     // deploy entrypoint
     const entrypointFactory = await hre.ethers.getContractFactory("EarthfastEntrypoint");
-    const deployment = await entrypointFactory.deploy(nodesAddress, projectsAddress, reservationsAddress);
-    entrypoint = (await deployment.waitForDeployment()) as EarthfastEntrypoint;
+    const entrypointArgs = [[admin.address], nodesAddress, projectsAddress, reservationsAddress];
+    entrypoint = <EarthfastEntrypoint>await hre.upgrades.deployProxy(entrypointFactory, entrypointArgs, { kind: "uups" });
+
+    // Authorize the entrypoint in the Reservations contract
+    entrypointAddress = await entrypoint.getAddress();
+    await reservations.connect(admin).authorizeEntrypoint(entrypointAddress);
   }
 
   before(async function () {
     await fixture();
-
-    // Authorize the entrypoint in the Reservations contract
-    const entrypointAddress = await entrypoint.getAddress();
-    await reservations.connect(admin).authorizeEntrypoint(entrypointAddress);
 
     snapshotId = await hre.ethers.provider.send("evm_snapshot", []);
   });
@@ -97,10 +97,6 @@ describe("EarthfastEntrypoint", function () {
 
     // Mint USDC to the project account
     await usdc.connect(admin).transfer(project.address, escrowAmount);
-
-    // Get the entrypoint address
-    const entrypointAddress = await entrypoint.getAddress();
-    const projectsAddress = await projects.getAddress();
 
     // FIXME: this is redundant with the signature move into a separate test
     // Approve the entrypoint contract to spend USDC
@@ -236,9 +232,6 @@ describe("EarthfastEntrypoint", function () {
     const escrowAmount = parseUSDC("100");
     const slot: EarthfastSlot = { last: true, next: false };
 
-    // Get the entrypoint address
-    const projectsAddress = await projects.getAddress();
-
     // Mint USDC to the project account
     await usdc.connect(admin).transfer(project.address, escrowAmount);
 
@@ -280,5 +273,54 @@ describe("EarthfastEntrypoint", function () {
     //   expect(node1Data.projectIds[1]).to.equal(projectId);
     //   expect(node2Data.projectIds[1]).to.equal(projectId);
     // }
+  });
+
+  it("Should be upgradeable", async function () {
+    // Deploy a new implementation
+    const entrypointFactory = await hre.ethers.getContractFactory("EarthfastEntrypoint");
+    const newImplementation = await entrypointFactory.deploy();
+    await newImplementation.waitForDeployment();
+
+    // Get the current implementation address
+    const proxyAddress = await entrypoint.getAddress();
+    const ERC1967_IMPLEMENTATION_SLOT = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
+    const currentImplementationData = await hre.ethers.provider.getStorage(proxyAddress, ERC1967_IMPLEMENTATION_SLOT);
+    const currentImplementation = "0x" + currentImplementationData.substring(26); // Remove padding
+
+    // Upgrade to the new implementation
+    await entrypoint.connect(admin).upgradeToAndCall(await newImplementation.getAddress(), "0x");
+
+    // Verify the implementation was upgraded
+    const newImplementationData = await hre.ethers.provider.getStorage(proxyAddress, ERC1967_IMPLEMENTATION_SLOT);
+    const upgradedImplementation = "0x" + newImplementationData.substring(26); // Remove padding
+    
+    expect(upgradedImplementation.toLowerCase()).to.not.equal(currentImplementation.toLowerCase());
+    expect(upgradedImplementation.toLowerCase()).to.equal((await newImplementation.getAddress()).toLowerCase());
+
+    // Verify the contract still works after upgrade
+    const projectData: EarthfastCreateProjectDataStruct = {
+      owner: project.address,
+      name: "Test Project After Upgrade",
+      email: "test@test.com",
+      content: "Test Content",
+      checksum: ZeroHash,
+      metadata: "Test Metadata",
+    };
+
+    const nodesToReserve = 1;
+    const escrowAmount = parseUSDC("100");
+    const slot: EarthfastSlot = { last: true, next: false };
+
+    // Mint USDC to the project account
+    await usdc.connect(admin).transfer(project.address, escrowAmount);
+
+    // Get permit values
+    const deadline = Math.floor(Date.now() / 1000) + 3600;
+    const signature = await signApproval(hre, usdc, project.address, projectsAddress, escrowAmount, deadline);
+
+    const tx = await expectReceipt(entrypoint.connect(project).deploySite(projectData, nodesToReserve, escrowAmount, slot, deadline, signature.serialized));
+
+    const [projectId] = await expectEvent(tx, projects, "ProjectCreated");
+    expect(projectId).to.not.eq(ZeroHash);
   });
 });
