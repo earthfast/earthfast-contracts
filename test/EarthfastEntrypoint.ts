@@ -276,10 +276,8 @@ describe("EarthfastEntrypoint", function () {
   });
 
   it("Should be upgradeable", async function () {
-    // Deploy a new implementation
-    const entrypointFactory = await hre.ethers.getContractFactory("EarthfastEntrypoint");
-    const newImplementation = await entrypointFactory.deploy();
-    await newImplementation.waitForDeployment();
+    // Deploy a modified implementation to ensure it's different
+    const entrypointV2Factory = await hre.ethers.getContractFactory("EarthfastEntrypointV2", admin);
 
     // Get the current implementation address
     const proxyAddress = await entrypoint.getAddress();
@@ -287,15 +285,35 @@ describe("EarthfastEntrypoint", function () {
     const currentImplementationData = await hre.ethers.provider.getStorage(proxyAddress, ERC1967_IMPLEMENTATION_SLOT);
     const currentImplementation = "0x" + currentImplementationData.substring(26); // Remove padding
 
-    // Upgrade to the new implementation
-    await entrypoint.connect(admin).upgradeToAndCall(await newImplementation.getAddress(), "0x");
+    console.log("Current implementation:", currentImplementation);
+
+    // Upgrade to the V2 implementation using the admin account
+    const upgraded = await hre.upgrades.upgradeProxy(proxyAddress, entrypointV2Factory);
+    await upgraded.waitForDeployment();
 
     // Verify the implementation was upgraded
     const newImplementationData = await hre.ethers.provider.getStorage(proxyAddress, ERC1967_IMPLEMENTATION_SLOT);
     const upgradedImplementation = "0x" + newImplementationData.substring(26); // Remove padding
-    
+
+    console.log("New implementation:", upgradedImplementation);
+
+    // The implementation address should be different after the upgrade
     expect(upgradedImplementation.toLowerCase()).to.not.equal(currentImplementation.toLowerCase());
-    expect(upgradedImplementation.toLowerCase()).to.equal((await newImplementation.getAddress()).toLowerCase());
+
+    // Check that the new function exists
+    const version = await upgraded.getVersion();
+    expect(version).to.equal("2.0.0");
+
+    // Create operator
+    const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o3", "e3"));
+    const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
+    expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
+
+    // deploy a node
+    const node3: EarthfastCreateNodeDataStruct = { disabled: false, host: "h3", region: "r3", price: parseUSDC("3") };
+    const createNode3 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, [node3]));
+    await expectEvent(createNode3, nodes, "NodeCreated");
 
     // Verify the contract still works after upgrade
     const projectData: EarthfastCreateProjectDataStruct = {
@@ -318,7 +336,7 @@ describe("EarthfastEntrypoint", function () {
     const deadline = Math.floor(Date.now() / 1000) + 3600;
     const signature = await signApproval(hre, usdc, project.address, projectsAddress, escrowAmount, deadline);
 
-    const tx = await expectReceipt(entrypoint.connect(project).deploySite(projectData, nodesToReserve, escrowAmount, slot, deadline, signature.serialized));
+    const tx = await expectReceipt(upgraded.connect(project).deploySite(projectData, nodesToReserve, escrowAmount, slot, deadline, signature.serialized));
 
     const [projectId] = await expectEvent(tx, projects, "ProjectCreated");
     expect(projectId).to.not.eq(ZeroHash);

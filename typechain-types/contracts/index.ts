@@ -5,7 +5,6 @@ import type * as test from "./test";
 export type { test };
 export type { EarthfastBilling } from "./EarthfastBilling";
 export type { EarthfastEntrypoint } from "./EarthfastEntrypoint";
-export type { EarthfastEntrypointV2 } from "./EarthfastEntrypointV2";
 export type { EarthfastGovernor } from "./EarthfastGovernor";
 export type { EarthfastNodes } from "./EarthfastNodes";
 export type { EarthfastNodesImpl } from "./EarthfastNodesImpl";
