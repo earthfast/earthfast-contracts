@@ -157,7 +157,19 @@ export async function fixtures(hre: HardhatRuntimeEnvironment): Promise<{
   });
   const nodesV2 = <EarthfastNodesV2>await hre.upgrades.upgradeProxy(nodesAddress, nodesV2Factory);
 
-  return { usdc, token, registry, nodes: nodesV2, operators, projects, reservations, timelock, governor, billing };
+  return {
+    usdc,
+    token,
+    registry,
+    nodes: nodesV2,
+    operators,
+    projects,
+    reservations,
+    timelock,
+    governor,
+    billing,
+    nodesImpl,
+  };
 }
 
 export async function expectReceipt(txPromise: Promise<TransactionResponse>): Promise<TransactionReceipt> {
