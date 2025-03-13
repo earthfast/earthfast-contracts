@@ -108,7 +108,7 @@ describe("EarthfastEntrypoint", function () {
 
     // Get permit values
     const deadline = Math.floor(Date.now() / 1000) + 3600;
-    const signature = await signApproval(hre, usdc, project.address, projectsAddress, escrowAmount);
+    const signature = await signApproval(hre, usdc, project.address, projectsAddress, escrowAmount, deadline);
 
     const tx = await expectReceipt(entrypoint.connect(project).deploySite(projectData, nodesToReserve, escrowAmount, slot, deadline, signature.serialized));
 
@@ -245,7 +245,7 @@ describe("EarthfastEntrypoint", function () {
 
     // Get permit values
     const deadline = Math.floor(Date.now() / 1000) + 3600;
-    const signature = await signApproval(hre, usdc, project.address, projectsAddress, escrowAmount);
+    const signature = await signApproval(hre, usdc, project.address, projectsAddress, escrowAmount, deadline);
 
     // Call deploySiteWithNodeIds
     const tx = await expectReceipt(

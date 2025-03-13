@@ -752,7 +752,7 @@ export interface EarthfastProjects extends BaseContract {
 
   depositProjectEscrow: TypedContractMethod<
     [
-      projectOwner: AddressLike,
+      projectFunder: AddressLike,
       projectId: BytesLike,
       amount: BigNumberish,
       deadline: BigNumberish,
@@ -927,7 +927,7 @@ export interface EarthfastProjects extends BaseContract {
     nameOrSignature: "depositProjectEscrow"
   ): TypedContractMethod<
     [
-      projectOwner: AddressLike,
+      projectFunder: AddressLike,
       projectId: BytesLike,
       amount: BigNumberish,
       deadline: BigNumberish,

@@ -218,7 +218,7 @@ describe("EarthfastProjects", function () {
 
     // Deposit escrow
     const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
+    expect(await projects.connect(admin).depositProjectEscrow(admin.address, projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
     expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("100"));
     expect((await projects.getProject(projectId1)).reserve).to.equal(parseUSDC("0"));
 
@@ -256,12 +256,12 @@ describe("EarthfastProjects", function () {
     expect(projectId1 !== ZeroHash);
 
     // Reserve content nodes without escrow
-    await expect(reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.revertedWith("not enough escrow");
+    await expect(reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.revertedWith("not enough escrow");
 
     // Deposit escrow
     const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
-    await expect(projects.connect(admin).depositProjectEscrow(ZeroHash, parseUSDC("100"), ...projectsPermit)).to.be.revertedWith("unknown project");
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
+    await expect(projects.connect(admin).depositProjectEscrow(admin.address, ZeroHash, parseUSDC("100"), ...projectsPermit)).to.be.revertedWith("unknown project");
+    expect(await projects.connect(admin).depositProjectEscrow(admin.address, projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
     expect(await usdc.connect(admin).balanceOf(project.address)).to.equal(parseUSDC("0"));
     expect(await token.connect(admin).balanceOf(project.address)).to.equal(parseTokens("0"));
     expect(await usdc.connect(admin).balanceOf(registryAddress)).to.equal(parseUSDC("100"));
@@ -269,7 +269,7 @@ describe("EarthfastProjects", function () {
     expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("100"));
 
     // Reserve content nodes
-    expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: false, next: true })).to.be.ok;
+    expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: false, next: true })).to.be.ok;
 
     // Delete project with reservations
     await expect(projects.connect(project).deleteProject(projectId1)).to.be.revertedWith("project has reservations");
@@ -311,15 +311,15 @@ describe("EarthfastProjects", function () {
     expect(projectId1 !== ZeroHash);
 
     // Check invalid permits
-    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 1, 0, ZeroHash, ZeroHash)).to.be.revertedWith("invalid permit");
-    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 1, ZeroHash, ZeroHash)).to.be.revertedWith("invalid permit");
-    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 0, projectId1, ZeroHash)).to.be.revertedWith("invalid permit");
+    await expect(projects.connect(admin).depositProjectEscrow(project.address, projectId1, parseTokens("100"), 1, 0, ZeroHash, ZeroHash)).to.be.revertedWith("invalid permit");
+    await expect(projects.connect(admin).depositProjectEscrow(project.address, projectId1, parseTokens("100"), 0, 1, ZeroHash, ZeroHash)).to.be.revertedWith("invalid permit");
+    await expect(projects.connect(admin).depositProjectEscrow(project.address, projectId1, parseTokens("100"), 0, 0, projectId1, ZeroHash)).to.be.revertedWith("invalid permit");
 
     // Deposit with allowance
-    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 0, ZeroHash, ZeroHash)).to.be.revertedWith("ERC20: insufficient allowance");
+    await expect(projects.connect(admin).depositProjectEscrow(admin.address, projectId1, parseTokens("100"), 0, 0, ZeroHash, ZeroHash)).to.be.revertedWith("ERC20: insufficient allowance");
     expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 1, 0: p1 });
     expect(await usdc.connect(admin).approve(projectsAddress, parseTokens("100"))).to.be.ok;
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 0, ZeroHash, ZeroHash)).to.be.ok;
+    expect(await projects.connect(admin).depositProjectEscrow(admin.address, projectId1, parseTokens("100"), 0, 0, ZeroHash, ZeroHash)).to.be.ok;
     expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 1, 0: { ...p1, escrow: parseTokens("100") } });
   });
 

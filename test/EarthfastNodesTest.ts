@@ -195,7 +195,7 @@ describe("EarthfastNodes", function () {
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
     const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
+    expect(await projects.connect(admin).depositProjectEscrow(admin.address, projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
 
     // Set last or next project of node to have a project to simulate "node is reserved" state
     await nodes.connect(operatorsSigner).setNodeProjectImpl(nodeId1, 0, projectId1, { gasPrice: 0 });
@@ -424,7 +424,7 @@ describe("EarthfastNodes", function () {
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
     const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
+    expect(await projects.connect(admin).depositProjectEscrow(admin.address, projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
 
     // check inputs
     await expect(nodes.connect(operator).setNodePrices(operatorId, [nodeId], [], { last: true, next: true })).to.be.revertedWith("length mismatch");
@@ -467,7 +467,7 @@ describe("EarthfastNodes", function () {
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
     const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
+    expect(await projects.connect(admin).depositProjectEscrow(admin.address, projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
 
     await nodes.connect(operatorsSigner).setNodeProjectImpl(nodeId, 1, projectId1, { gasPrice: 0 });
     await nodes.connect(operator).setNodePrices(operatorId, [nodeId], [parseUSDC("1")], { last: false, next: true });
@@ -562,7 +562,7 @@ describe("EarthfastNodes", function () {
     const createProject1 = await expectReceipt(projects.connect(project).createProject(p1));
     const [projectId1] = await expectEvent(createProject1, projects, "ProjectCreated");
     const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
+    expect(await projects.connect(admin).depositProjectEscrow(admin.address, projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
 
     // ensure the node id is valid
     await expect(nodes.connect(operatorsSigner).setNodePriceImpl(newId(), 0, 0, { gasPrice: 0 })).to.be.revertedWith("unknown node");
