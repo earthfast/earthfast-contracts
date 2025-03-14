@@ -393,98 +393,63 @@ describe("EarthfastReservations", function () {
 
   it("Should enforce access control for createReservations", async function () {
     // Create a new project owned by the project signer
-    const newProjectData: EarthfastCreateProjectDataStruct = { 
-      name: "access-test", 
-      owner: project.address, 
-      email: "access@test.com", 
-      content: "", 
-      checksum: ZeroHash, 
-      metadata: "" 
+    const newProjectData: EarthfastCreateProjectDataStruct = {
+      name: "access-test",
+      owner: project.address,
+      email: "access@test.com",
+      content: "",
+      checksum: ZeroHash,
+      metadata: "",
     };
     const createProjectTx = await expectReceipt(projects.connect(project).createProject(newProjectData));
     const [newProjectId] = await expectEvent(createProjectTx, projects, "ProjectCreated");
-    
+
     // Fund the project with escrow
     const projectsPermit1 = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
     await projects.connect(admin).depositProjectEscrow(admin.address, newProjectId, parseUSDC("100"), ...projectsPermit1);
-    
+
     // Create a mock entrypoint (using admin for simplicity)
     const mockEntrypoint = admin;
     const mockEntrypointAddress = await mockEntrypoint.getAddress();
-    
+
     // Try to create a reservation as a non-owner (operator) - should fail
     const slot = { last: true, next: false };
-    await expect(
-      reservations.connect(operator).createReservations(
-        newProjectId, 
-        [nodeId1], 
-        [price], 
-        slot
-      )
-    ).to.be.revertedWith("not project owner");
-    
+    await expect(reservations.connect(operator).createReservations(newProjectId, [nodeId1], [price], slot)).to.be.revertedWith("not project owner");
+
     // Create a reservation as the project owner - should succeed
-    const ownerReservationTx = await expectReceipt(
-      reservations.connect(project).createReservations(
-        newProjectId, 
-        [nodeId1], 
-        [price], 
-        slot
-      )
-    );
+    const ownerReservationTx = await expectReceipt(reservations.connect(project).createReservations(newProjectId, [nodeId1], [price], slot));
     await expectEvent(ownerReservationTx, reservations, "ReservationCreated");
-    
+
     // Create a new project for testing entrypoint access
-    const entrypointProjectData: EarthfastCreateProjectDataStruct = { 
-      name: "entrypoint-test", 
-      owner: project.address, 
-      email: "entrypoint@test.com", 
-      content: "", 
-      checksum: ZeroHash, 
-      metadata: "" 
+    const entrypointProjectData: EarthfastCreateProjectDataStruct = {
+      name: "entrypoint-test",
+      owner: project.address,
+      email: "entrypoint@test.com",
+      content: "",
+      checksum: ZeroHash,
+      metadata: "",
     };
     const createEntrypointProjectTx = await expectReceipt(projects.connect(project).createProject(entrypointProjectData));
     const [entrypointProjectId] = await expectEvent(createEntrypointProjectTx, projects, "ProjectCreated");
-    
+
     // Fund the project with escrow - generate a new permit
     const projectsPermit2 = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
     await projects.connect(admin).depositProjectEscrow(admin.address, entrypointProjectId, parseUSDC("100"), ...projectsPermit2);
-    
+
     // Try to create a reservation via unauthorized entrypoint - should fail
-    await expect(
-      reservations.connect(mockEntrypoint).createReservations(
-        entrypointProjectId, 
-        [nodeId2], 
-        [price], 
-        slot
-      )
-    ).to.be.revertedWith("not project owner");
-    
+    await expect(reservations.connect(mockEntrypoint).createReservations(entrypointProjectId, [nodeId2], [price], slot)).to.be.revertedWith("not project owner");
+
     // Authorize the mock entrypoint
     await reservations.connect(admin).authorizeEntrypoint(mockEntrypointAddress);
-    
+
     // Create a reservation via authorized entrypoint - should succeed
-    const entrypointReservationTx = await expectReceipt(
-      reservations.connect(mockEntrypoint).createReservations(
-        entrypointProjectId, 
-        [nodeId2], 
-        [price], 
-        slot
-      )
-    );
+    const entrypointReservationTx = await expectReceipt(reservations.connect(mockEntrypoint).createReservations(entrypointProjectId, [nodeId2], [price], slot));
     await expectEvent(entrypointReservationTx, reservations, "ReservationCreated");
-    
+
     // Revoke the entrypoint authorization
     await reservations.connect(admin).revokeEntrypoint(mockEntrypointAddress);
-    
+
     // Try to create another reservation via now-unauthorized entrypoint - should fail
-    await expect(
-      reservations.connect(mockEntrypoint).createReservations(
-        entrypointProjectId, 
-        [nodeId1], 
-        [price], 
-        slot
-      )
-    ).to.be.revertedWith("not project owner");
+    await expect(reservations.connect(mockEntrypoint).createReservations(entrypointProjectId, [nodeId1], [price], slot)).to.be.revertedWith("not project owner");
   });
 });
