@@ -74,7 +74,7 @@ describe("Benchmark", function () {
 
     // Create reservations
     const prices = (nodeIds as []).map(() => 1);
-    const createReservations = await expectReceipt(reservations.connect(project).createReservations(project.address, projectId, nodeIds, prices, { last: true, next: true }));
+    const createReservations = await expectReceipt(reservations.connect(project).createReservations(projectId, nodeIds, prices, { last: true, next: true }));
     await expectEvent(createReservations, reservations, "ReservationCreated");
 
     await mine(hre, epochLength);

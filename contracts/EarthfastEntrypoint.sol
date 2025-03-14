@@ -81,6 +81,7 @@ contract EarthfastEntrypoint is
 
   /// @notice Creates a new project and reserves content nodes for it
   /// @param project Data for the new project
+  /// @param fundingWallet Address of the wallet depositing escrow for the new project
   /// @param nodesToReserve Number of nodes to reserve
   /// @param escrowAmount Amount of escrow to deposit
   /// @param slot When to start the reservation. If slot.last is true, the reservation will start immediately.
@@ -88,6 +89,7 @@ contract EarthfastEntrypoint is
   /// @return projectId ID of the newly created project
   function deploySite(
     EarthfastCreateProjectData memory project,
+    address fundingWallet,
     uint256 nodesToReserve,
     uint256 escrowAmount,
     EarthfastSlot calldata slot,
@@ -104,17 +106,18 @@ contract EarthfastEntrypoint is
     require(escrowAmount > 0, "Escrow amount must be greater than 0");
 
     // Call depositProjectEscrow directly
-    _projects.depositProjectEscrow(project.owner, projectId, escrowAmount, deadline, v, r, s);
+    _projects.depositProjectEscrow(fundingWallet, projectId, escrowAmount, deadline, v, r, s);
 
     // Get available nodes for reservation
     (bytes32[] memory nodeIds, uint256[] memory nodePrices) = getAvailableNodes(nodesToReserve, slot);
 
     // Call createReservations directly
-    _reservations.createReservations(project.owner, projectId, nodeIds, nodePrices, slot);
+    _reservations.createReservations(projectId, nodeIds, nodePrices, slot);
   }
 
   /// @notice Creates a new project and reserves specific nodes
   /// @param project Data for the new project
+  /// @param fundingWallet Address of the wallet depositing escrow for the new project
   /// @param nodeIds IDs of the nodes to reserve
   /// @param nodePrices Prices of the nodes to reserve
   /// @param escrowAmount Amount of escrow to deposit
@@ -123,6 +126,7 @@ contract EarthfastEntrypoint is
   /// @param signature The signature for the permit
   function deploySiteWithNodeIds(
     EarthfastCreateProjectData memory project,
+    address fundingWallet,
     bytes32[] memory nodeIds,
     uint256[] memory nodePrices,
     uint256 escrowAmount,
@@ -140,10 +144,10 @@ contract EarthfastEntrypoint is
     require(escrowAmount > 0, "Escrow amount must be greater than 0");
 
     // Call depositProjectEscrow directly
-    _projects.depositProjectEscrow(project.owner, projectId, escrowAmount, deadline, v, r, s);
+    _projects.depositProjectEscrow(fundingWallet, projectId, escrowAmount, deadline, v, r, s);
 
     // Call createReservations directly
-    _reservations.createReservations(project.owner, projectId, nodeIds, nodePrices, slot);
+    _reservations.createReservations(projectId, nodeIds, nodePrices, slot);
   }
 
   // TODO: potentially optimize by returning the cheapest set of nodes

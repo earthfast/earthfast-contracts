@@ -144,37 +144,37 @@ describe("EarthfastReservations", function () {
 
   it("Should not reserve a disabled node", async function () {
     expect(await nodes.connect(operator).setNodeDisabled(operatorId1, [nodeId1], [true])).to.be.ok;
-    await expect(reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.revertedWith("node disabled");
+    await expect(reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.revertedWith("node disabled");
   });
 
   it("Should reserve/release nodes", async function () {
     await expect(reservations.connect(admin).deleteReservations(projectId1, [nodeId1], { last: true, next: false })).to.be.revertedWith("node not reserved");
     await expect(reservations.connect(project).deleteReservations(projectId1, [nodeId1], { last: false, next: true })).to.be.revertedWith("node not reserved");
-    await expect(reservations.connect(operator).createReservations(project.address, projectId1, [nodeId1], [price], { last: false, next: true })).to.be.revertedWith("not project owner");
-    await expect(reservations.connect(project).createReservations(project.address, projectId1, [nodeId1], [price], { last: false, next: false })).to.be.revertedWith("no slot");
-    await expect(reservations.connect(project).createReservations(project.address, projectId1, [nodeId1], [price, price], { last: false, next: true })).to.be.revertedWith("length mismatch");
-    await expect(reservations.connect(project).createReservations(project.address, projectId1, [nodeId1], [price / BigInt(2)], { last: true, next: false })).to.be.revertedWith("price mismatch");
-    await expect(reservations.connect(project).createReservations(project.address, projectId1, [nodeId1], [price / BigInt(2)], { last: false, next: true })).to.be.revertedWith("price mismatch");
-    expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1], [price], { last: false, next: true })).to.be.ok;
-    expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId2], [price], { last: true, next: false })).to.be.ok;
-    await expect(reservations.connect(project).createReservations(project.address, projectId1, [nodeId1], [price], { last: false, next: true })).to.be.revertedWith("node reserved");
-    await expect(reservations.connect(project).createReservations(project.address, projectId1, [nodeId2], [price], { last: true, next: false })).to.be.revertedWith("node reserved");
-    await expect(reservations.connect(project).createReservations(project.address, projectId1, [newId()], [price], { last: false, next: true })).to.be.revertedWith("unknown node");
-    await expect(reservations.connect(project).createReservations(project.address, projectId1, [ZeroHash], [price], { last: false, next: true })).to.be.revertedWith("unknown node");
+    await expect(reservations.connect(operator).createReservations(projectId1, [nodeId1], [price], { last: false, next: true })).to.be.revertedWith("not project owner");
+    await expect(reservations.connect(project).createReservations(projectId1, [nodeId1], [price], { last: false, next: false })).to.be.revertedWith("no slot");
+    await expect(reservations.connect(project).createReservations(projectId1, [nodeId1], [price, price], { last: false, next: true })).to.be.revertedWith("length mismatch");
+    await expect(reservations.connect(project).createReservations(projectId1, [nodeId1], [price / BigInt(2)], { last: true, next: false })).to.be.revertedWith("price mismatch");
+    await expect(reservations.connect(project).createReservations(projectId1, [nodeId1], [price / BigInt(2)], { last: false, next: true })).to.be.revertedWith("price mismatch");
+    expect(await reservations.connect(project).createReservations(projectId1, [nodeId1], [price], { last: false, next: true })).to.be.ok;
+    expect(await reservations.connect(project).createReservations(projectId1, [nodeId2], [price], { last: true, next: false })).to.be.ok;
+    await expect(reservations.connect(project).createReservations(projectId1, [nodeId1], [price], { last: false, next: true })).to.be.revertedWith("node reserved");
+    await expect(reservations.connect(project).createReservations(projectId1, [nodeId2], [price], { last: true, next: false })).to.be.revertedWith("node reserved");
+    await expect(reservations.connect(project).createReservations(projectId1, [newId()], [price], { last: false, next: true })).to.be.revertedWith("unknown node");
+    await expect(reservations.connect(project).createReservations(projectId1, [ZeroHash], [price], { last: false, next: true })).to.be.revertedWith("unknown node");
     await expect(reservations.connect(project).deleteReservations(projectId1, [nodeId1], { last: false, next: false })).to.be.revertedWith("no slot");
     await expect(reservations.connect(operator).deleteReservations(projectId1, [nodeId1], { last: false, next: true })).to.be.revertedWith("not admin or project owner");
     expect(await reservations.connect(project).deleteReservations(projectId1, [nodeId1], { last: false, next: true })).to.be.ok;
   });
 
   it("Should reserve non-spot nodes and immediately manually release them", async function () {
-    expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: false, next: true })).to.be.ok;
+    expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: false, next: true })).to.be.ok;
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(2));
     expect(await reservations.connect(project).deleteReservations(projectId1, [nodeId1, nodeId2], { last: false, next: true })).to.be.ok;
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(0));
   });
 
   it("Should reserve spot nodes and immediately manually release them if admin", async function () {
-    expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok;
+    expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok;
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(2));
     await expect(reservations.connect(project).deleteReservations(projectId1, [nodeId1, nodeId2], { last: true, next: false })).to.be.revertedWith("not admin");
     expect((await projects.getProject(projectId1)).reserve).to.equal(price * BigInt(2));
@@ -188,7 +188,7 @@ describe("EarthfastReservations", function () {
 
     const proratedPrice1 = pricePerSec * (await epochRemainder());
     expect(proratedPrice1 < price);
-    expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1], [price], { last: true, next: false })).to.be.ok;
+    expect(await reservations.connect(project).createReservations(projectId1, [nodeId1], [price], { last: true, next: false })).to.be.ok;
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice1);
     expect(await reservations.connect(admin).deleteReservations(projectId1, [nodeId1], { last: true, next: false })).to.be.ok;
     expect((await projects.getProject(projectId1)).reserve).to.equal(0);
@@ -200,13 +200,13 @@ describe("EarthfastReservations", function () {
 
     const proratedPrice2 = pricePerSec * BigInt(2) * (await epochRemainder());
     expect(proratedPrice2 > price);
-    expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1], [price * BigInt(2)], { last: true, next: false })).to.be.ok;
+    expect(await reservations.connect(project).createReservations(projectId1, [nodeId1], [price * BigInt(2)], { last: true, next: false })).to.be.ok;
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice2);
   });
 
   it("Should delete reservation in current epoch only if admin", async function () {
     await expect(reservations.connect(project).deleteReservations(projectId1, [nodeId1, nodeId2], { last: true, next: true })).to.be.revertedWith("not admin");
-    expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok;
+    expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.ok;
     expect(await reservations.connect(admin).deleteReservations(projectId1, [nodeId1, nodeId2], { last: true, next: true })).to.be.ok;
   });
 
@@ -220,7 +220,7 @@ describe("EarthfastReservations", function () {
     expect(await registry.connect(operator).advanceEpoch()).to.be.ok;
     if (hre.network.tags.ganache) await mine(hre, 0);
     const proratedPrice = pricePerSec * (await epochRemainder());
-    expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok;
+    expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok;
     if (hre.network.tags.ganache) await mine(hre, 0);
     if (!hre.network.tags.ganache) await mine(hre, 1);
 
@@ -243,15 +243,12 @@ describe("EarthfastReservations", function () {
 
   it("Should not reserve nodes while reconciling", async function () {
     let proratedPrice = pricePerSec * (await epochRemainder());
-    await mineWith(
-      hre,
-      async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok
-    );
+    await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice * BigInt(2));
 
     await mine(hre, epochLength);
-    await expect(reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.revertedWith("reconciling");
+    await expect(reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.revertedWith("reconciling");
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice * BigInt(2));
 
@@ -262,17 +259,14 @@ describe("EarthfastReservations", function () {
     expect((await projects.getProject(projectId1)).reserve).to.equal(0);
 
     proratedPrice = pricePerSec * (await epochRemainder());
-    await mineWith(
-      hre,
-      async () => expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok
-    );
+    await mineWith(hre, async () => expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: false })).to.be.ok);
     expect(await reservations.getReservationCount(projectId1)).to.equal(2);
     expect((await projects.getProject(projectId1)).reserve).to.equal(proratedPrice * BigInt(2));
   });
 
   it("Should get reseverations", async function () {
     // create a reservation
-    expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: false, next: true })).to.be.ok;
+    expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: false, next: true })).to.be.ok;
 
     const reservationsRes = await reservations.getReservations(projectId1, 0, 10);
     expect(reservationsRes.length).to.equal(2);
@@ -283,8 +277,8 @@ describe("EarthfastReservations", function () {
   });
 
   it("Should allow reservations importer to unsafeImportData", async function () {
-    expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1], [price], { last: false, next: true })).to.be.ok;
-    expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId2], [price], { last: true, next: false })).to.be.ok;
+    expect(await reservations.connect(project).createReservations(projectId1, [nodeId1], [price], { last: false, next: true })).to.be.ok;
+    expect(await reservations.connect(project).createReservations(projectId1, [nodeId2], [price], { last: true, next: false })).to.be.ok;
 
     const newReservations = await reservations.getReservations(projectId1, 0, 10);
     expect(newReservations.length).to.equal(2);
@@ -375,7 +369,7 @@ describe("EarthfastReservations", function () {
 
   it("should allow admin to delete projects with reservations", async function () {
     // create project reservation in current epoch only
-    expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1], [price], { last: true, next: false })).to.be.ok;
+    expect(await reservations.connect(project).createReservations(projectId1, [nodeId1], [price], { last: true, next: false })).to.be.ok;
 
     // verify can't delete project with reservations
     await expect(projects.connect(admin).deleteProject(projectId1)).to.be.revertedWith("project has reservations");

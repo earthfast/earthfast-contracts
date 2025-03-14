@@ -256,7 +256,7 @@ describe("EarthfastProjects", function () {
     expect(projectId1 !== ZeroHash);
 
     // Reserve content nodes without escrow
-    await expect(reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.revertedWith("not enough escrow");
+    await expect(reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: true, next: true })).to.be.revertedWith("not enough escrow");
 
     // Deposit escrow
     const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
@@ -269,7 +269,7 @@ describe("EarthfastProjects", function () {
     expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("100"));
 
     // Reserve content nodes
-    expect(await reservations.connect(project).createReservations(project.address, projectId1, [nodeId1, nodeId2], [price, price], { last: false, next: true })).to.be.ok;
+    expect(await reservations.connect(project).createReservations(projectId1, [nodeId1, nodeId2], [price, price], { last: false, next: true })).to.be.ok;
 
     // Delete project with reservations
     await expect(projects.connect(project).deleteProject(projectId1)).to.be.revertedWith("project has reservations");

@@ -119,13 +119,7 @@ export interface EarthfastReservationsInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "createReservations",
-    values: [
-      AddressLike,
-      BytesLike,
-      BytesLike[],
-      BigNumberish[],
-      EarthfastSlotStruct
-    ]
+    values: [BytesLike, BytesLike[], BigNumberish[], EarthfastSlotStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "deleteReservationImpl",
@@ -551,7 +545,6 @@ export interface EarthfastReservations extends BaseContract {
 
   createReservations: TypedContractMethod<
     [
-      projectOwner: AddressLike,
       projectId: BytesLike,
       nodeIds: BytesLike[],
       maxPrices: BigNumberish[],
@@ -698,7 +691,6 @@ export interface EarthfastReservations extends BaseContract {
     nameOrSignature: "createReservations"
   ): TypedContractMethod<
     [
-      projectOwner: AddressLike,
       projectId: BytesLike,
       nodeIds: BytesLike[],
       maxPrices: BigNumberish[],

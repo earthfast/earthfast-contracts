@@ -45,11 +45,11 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
     _;
   }
 
-  modifier onlyProjectOwner(bytes32 projectId, address projectOwner) {
+  modifier onlyProjectOwner(bytes32 projectId) {
     EarthfastProjects projects = _registry.getProjects();
     EarthfastProject memory project = projects.getProject(projectId);
     require(msg.sender == project.owner || 
-           (_authorizedEntrypoints[msg.sender] && projectOwner == project.owner), 
+           (_authorizedEntrypoints[msg.sender]), 
            "not project owner");
     _;
   }
@@ -150,8 +150,8 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
   /// In this case, the node prices will be prorated, but the project won't be able to immediately release these
   /// nodes until next epoch. Use slot.next to auto-renew reservation in the next epoch (required if !slot.last).
   function createReservations(
-    address projectOwner, bytes32 projectId, bytes32[] memory nodeIds, uint256[] memory maxPrices, EarthfastSlot calldata slot)
-  public virtual onlyProjectOwner(projectId, projectOwner) whenNotReconciling whenNotPaused {
+    bytes32 projectId, bytes32[] memory nodeIds, uint256[] memory maxPrices, EarthfastSlot calldata slot)
+  public virtual onlyProjectOwner(projectId) whenNotReconciling whenNotPaused {
     require(slot.last || slot.next, "no slot");
     require(nodeIds.length == maxPrices.length, "length mismatch");
     EarthfastNodes allNodes = _registry.getNodes();

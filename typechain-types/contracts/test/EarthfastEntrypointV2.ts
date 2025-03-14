@@ -103,6 +103,7 @@ export interface EarthfastEntrypointV2Interface extends Interface {
     functionFragment: "deploySite",
     values: [
       EarthfastCreateProjectDataStruct,
+      AddressLike,
       BigNumberish,
       BigNumberish,
       EarthfastSlotStruct,
@@ -114,6 +115,7 @@ export interface EarthfastEntrypointV2Interface extends Interface {
     functionFragment: "deploySiteWithNodeIds",
     values: [
       EarthfastCreateProjectDataStruct,
+      AddressLike,
       BytesLike[],
       BigNumberish[],
       BigNumberish,
@@ -389,6 +391,7 @@ export interface EarthfastEntrypointV2 extends BaseContract {
   deploySite: TypedContractMethod<
     [
       project: EarthfastCreateProjectDataStruct,
+      fundingWallet: AddressLike,
       nodesToReserve: BigNumberish,
       escrowAmount: BigNumberish,
       slot: EarthfastSlotStruct,
@@ -402,6 +405,7 @@ export interface EarthfastEntrypointV2 extends BaseContract {
   deploySiteWithNodeIds: TypedContractMethod<
     [
       project: EarthfastCreateProjectDataStruct,
+      fundingWallet: AddressLike,
       nodeIds: BytesLike[],
       nodePrices: BigNumberish[],
       escrowAmount: BigNumberish,
@@ -514,6 +518,7 @@ export interface EarthfastEntrypointV2 extends BaseContract {
   ): TypedContractMethod<
     [
       project: EarthfastCreateProjectDataStruct,
+      fundingWallet: AddressLike,
       nodesToReserve: BigNumberish,
       escrowAmount: BigNumberish,
       slot: EarthfastSlotStruct,
@@ -528,6 +533,7 @@ export interface EarthfastEntrypointV2 extends BaseContract {
   ): TypedContractMethod<
     [
       project: EarthfastCreateProjectDataStruct,
+      fundingWallet: AddressLike,
       nodeIds: BytesLike[],
       nodePrices: BigNumberish[],
       escrowAmount: BigNumberish,

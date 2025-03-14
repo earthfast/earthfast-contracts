@@ -110,7 +110,7 @@ describe("EarthfastEntrypoint", function () {
     const deadline = Math.floor(Date.now() / 1000) + 3600;
     const signature = await signApproval(hre, usdc, project.address, projectsAddress, escrowAmount, deadline);
 
-    const tx = await expectReceipt(entrypoint.connect(project).deploySite(projectData, nodesToReserve, escrowAmount, slot, deadline, signature.serialized));
+    const tx = await expectReceipt(entrypoint.connect(project).deploySite(projectData, project.address, nodesToReserve, escrowAmount, slot, deadline, signature.serialized));
 
     const [projectId] = await expectEvent(tx, projects, "ProjectCreated");
     expect(projectId).to.not.eq(ZeroHash);
@@ -252,7 +252,7 @@ describe("EarthfastEntrypoint", function () {
     const signature = await signApproval(hre, usdc, project.address, projectsAddress, escrowAmount, deadline);
 
     // Call deploySiteWithNodeIds
-    const tx = await expectReceipt(entrypoint.connect(project).deploySiteWithNodeIds(projectData, nodeIds, nodePrices, escrowAmount, slot, deadline, signature.serialized));
+    const tx = await expectReceipt(entrypoint.connect(project).deploySiteWithNodeIds(projectData, project.address, nodeIds, nodePrices, escrowAmount, slot, deadline, signature.serialized));
 
     // Verify project was created
     const [projectId] = await expectEvent(tx, projects, "ProjectCreated");
@@ -269,6 +269,72 @@ describe("EarthfastEntrypoint", function () {
     // check if the nodes are assigned to the project
     expect(node1Data.projectIds[0]).to.equal(projectId);
     expect(node2Data.projectIds[0]).to.equal(projectId);
+  });
+
+  it("Should create a project via deploySiteWithNodeIds with a different funding wallet", async function () {
+    // Create operator
+    const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o4", "e4"));
+    const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
+    expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
+
+    const price1 = parseUSDC("1");
+    const price2 = parseUSDC("2");
+
+    // create a node
+    const node1: EarthfastCreateNodeDataStruct = { disabled: false, host: "h1", region: "r1", price: price1 };
+    const createNode1 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, [node1]));
+    const [nodeId1] = await expectEvent(createNode1, nodes, "NodeCreated");
+
+    // create a node
+    const node2: EarthfastCreateNodeDataStruct = { disabled: false, host: "h2", region: "r2", price: price2 };
+    const createNode2 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, [node2]));
+    const [nodeId2] = await expectEvent(createNode2, nodes, "NodeCreated");
+
+    // Create project data
+    const projectData: EarthfastCreateProjectDataStruct = {
+      owner: project.address,
+      name: "Test Project",
+      email: "test@test.com",
+      content: "Test Content",
+      checksum: ZeroHash,
+      metadata: "Test Metadata",
+    };
+
+    // Prepare node IDs and prices arrays
+    const nodeIds = [nodeId1, nodeId2];
+    const nodePrices = [price1, price2];
+    const escrowAmount = parseUSDC("100");
+    const slot: EarthfastSlot = { last: true, next: false };
+
+    // Mint USDC to the funding wallet
+    await usdc.connect(admin).transfer(operator.address, escrowAmount);
+
+    // Get permit values
+    const deadline = Math.floor(Date.now() / 1000) + 3600;
+    const signature = await signApproval(hre, usdc, operator.address, projectsAddress, escrowAmount, deadline);
+
+    // Call deploySiteWithNodeIds
+    const tx = await expectReceipt(entrypoint.connect(project).deploySiteWithNodeIds(projectData, operator.address, nodeIds, nodePrices, escrowAmount, slot, deadline, signature.serialized));
+
+    // Verify project was created
+    const [projectId] = await expectEvent(tx, projects, "ProjectCreated");
+    expect(projectId).to.not.eq(ZeroHash);
+
+    // check that the escrow was deposited
+    const deployedProject = await projects.getProject(projectId);
+    expect(deployedProject.escrow).to.equal(escrowAmount);
+
+    // get the nodes and verify they are assigned to the project
+    const node1Data = await nodes.getNode(nodeId1);
+    const node2Data = await nodes.getNode(nodeId2);
+
+    // check if the nodes are assigned to the project
+    expect(node1Data.projectIds[0]).to.equal(projectId);
+    expect(node2Data.projectIds[0]).to.equal(projectId);
+
+    // check that the project owner is project.address not the operator.address which submitted the funds and transaction
+    expect(deployedProject.owner).to.equal(project.address);
   });
 
   it("Should be upgradeable", async function () {
@@ -328,7 +394,7 @@ describe("EarthfastEntrypoint", function () {
     const deadline = Math.floor(Date.now() / 1000) + 3600;
     const signature = await signApproval(hre, usdc, project.address, projectsAddress, escrowAmount, deadline);
 
-    const tx = await expectReceipt(upgraded.connect(project).deploySite(projectData, nodesToReserve, escrowAmount, slot, deadline, signature.serialized));
+    const tx = await expectReceipt(upgraded.connect(project).deploySite(projectData, project.address, nodesToReserve, escrowAmount, slot, deadline, signature.serialized));
 
     const [projectId] = await expectEvent(tx, projects, "ProjectCreated");
     expect(projectId).to.not.eq(ZeroHash);
@@ -367,7 +433,7 @@ describe("EarthfastEntrypoint", function () {
     const signature = await signApproval(hre, usdc, project.address, projectsAddress, escrowAmount, expiredDeadline);
 
     // Should revert when trying to use an expired deadline
-    await expect(entrypoint.connect(project).deploySite(projectData, nodesToReserve, escrowAmount, slot, expiredDeadline, signature.serialized)).to.be.reverted;
+    await expect(entrypoint.connect(project).deploySite(projectData, project.address, nodesToReserve, escrowAmount, slot, expiredDeadline, signature.serialized)).to.be.reverted;
   });
 
   it("Should revert when nodeIds and nodePrices arrays have different lengths", async function () {
@@ -412,7 +478,9 @@ describe("EarthfastEntrypoint", function () {
     const signature = await signApproval(hre, usdc, project.address, projectsAddress, escrowAmount, deadline);
 
     // Should revert when nodeIds and nodePrices arrays have different lengths
-    await expect(entrypoint.connect(project).deploySiteWithNodeIds(projectData, nodeIds, nodePrices, escrowAmount, slot, deadline, signature.serialized)).to.be.revertedWith("length mismatch");
+    await expect(entrypoint.connect(project).deploySiteWithNodeIds(projectData, project.address, nodeIds, nodePrices, escrowAmount, slot, deadline, signature.serialized)).to.be.revertedWith(
+      "length mismatch"
+    );
   });
 
   it("Should revert when escrow amount is zero", async function () {
@@ -445,7 +513,7 @@ describe("EarthfastEntrypoint", function () {
     const signature = await signApproval(hre, usdc, project.address, projectsAddress, zeroEscrowAmount, deadline);
 
     // Should revert when escrow amount is zero
-    await expect(entrypoint.connect(project).deploySite(projectData, nodesToReserve, zeroEscrowAmount, slot, deadline, signature.serialized)).to.be.revertedWith(
+    await expect(entrypoint.connect(project).deploySite(projectData, project.address, nodesToReserve, zeroEscrowAmount, slot, deadline, signature.serialized)).to.be.revertedWith(
       "Escrow amount must be greater than 0"
     );
   });
@@ -562,10 +630,10 @@ describe("EarthfastEntrypoint", function () {
     const invalidSignature = "0x1234"; // Too short
 
     // Should revert when signature has invalid length
-    await expect(entrypoint.connect(project).deploySite(projectData, nodesToReserve, escrowAmount, slot, deadline, invalidSignature)).to.be.revertedWith("Invalid signature length");
+    await expect(entrypoint.connect(project).deploySite(projectData, project.address, nodesToReserve, escrowAmount, slot, deadline, invalidSignature)).to.be.revertedWith("Invalid signature length");
 
     // now deploy the site with the valid signature
-    const tx = await expectReceipt(entrypoint.connect(project).deploySite(projectData, nodesToReserve, escrowAmount, slot, deadline, signature.serialized));
+    const tx = await expectReceipt(entrypoint.connect(project).deploySite(projectData, project.address, nodesToReserve, escrowAmount, slot, deadline, signature.serialized));
 
     // Verify project was created
     const [projectId] = await expectEvent(tx, projects, "ProjectCreated");
@@ -606,7 +674,7 @@ describe("EarthfastEntrypoint", function () {
     const signature = await signApproval(hre, usdc, project.address, projectsAddress, escrowAmount, deadline);
 
     // Deploy site with specific node IDs for both epochs
-    const tx = await expectReceipt(entrypoint.connect(project).deploySiteWithNodeIds(projectData, [nodeId1], [price], escrowAmount, bothSlot, deadline, signature.serialized));
+    const tx = await expectReceipt(entrypoint.connect(project).deploySiteWithNodeIds(projectData, project.address, [nodeId1], [price], escrowAmount, bothSlot, deadline, signature.serialized));
 
     // Verify project was created
     const [projectId] = await expectEvent(tx, projects, "ProjectCreated");
@@ -665,7 +733,7 @@ describe("EarthfastEntrypoint", function () {
     const signature = await signApproval(hre, usdc, project.address, projectsAddress, escrowAmount, deadline);
 
     // Reserve node1
-    await entrypoint.connect(project).deploySiteWithNodeIds(projectData, [nodeId1], [price1], escrowAmount, slotLast, deadline, signature.serialized);
+    await entrypoint.connect(project).deploySiteWithNodeIds(projectData, project.address, [nodeId1], [price1], escrowAmount, slotLast, deadline, signature.serialized);
 
     // Now get available nodes - should not include node1
     const [availableNodeIds, availableNodePrices] = await entrypoint.getAvailableNodes(2, slotLast);
