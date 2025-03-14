@@ -144,7 +144,10 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
   }
 
   /// @notice Reserves content nodes and locks corresponding escrow amount. Reverts if escrow is insufficient.
+  /// @param projectId The ID of the project to reserve nodes for.
+  /// @param nodeIds The IDs of the nodes to reserve.
   /// @param maxPrices At what max price to reserve. A safety mechanism in case price changes during this call.
+  /// @param slot When to reserve the nodes.
   ///
   /// Use slot.last to reserve immediately in the current epoch (AKA spot), instead of at the start of next epoch.
   /// In this case, the node prices will be prorated, but the project won't be able to immediately release these
