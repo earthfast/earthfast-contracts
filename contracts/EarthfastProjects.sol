@@ -237,7 +237,7 @@ contract EarthfastProjects is AccessControlUpgradeable, PausableUpgradeable, Ree
   /// @dev Needs either a token allowance from projectFunder, or a gasless approval (v/r/s != 0).
   /// This is used instead of explicit input checks to enable third party funding and calling by an Entrypoint proxy contract.
   /// @dev CAUTION: To avoid loss of funds, do NOT deposit to this contract by token.transfer().
-  /// @param projectFunder The owner of the project.
+  /// @param projectFunder The wallet funding the escrow deposit for the the project.
   /// @param projectId The ID of the project.
   /// @param amount The amount of USDC to deposit.
   /// @param deadline The deadline for the permit.

@@ -8,6 +8,7 @@ import "./tasks/deploy";
 import "./tasks/node";
 import "./tasks/seed";
 import "./tasks/upgrade";
+import "./tasks/upgradeWithSafe";
 
 import dotenv from "dotenv";
 import { SignerWithAddress } from "ethers";

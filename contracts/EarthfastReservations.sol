@@ -20,9 +20,11 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
   bytes32 public constant IMPORTER_ROLE = keccak256("IMPORTER_ROLE");
 
   EarthfastRegistry private _registry;
-  mapping(address => bool) private _authorizedEntrypoints;
 
   mapping(bytes32 => EnumerableSet.Bytes32Set) private _projectNodeIds; // Union of last and next epoch
+
+  // Controls who can call functions on behalf of users
+  mapping(address => bool) private _authorizedEntrypoints;
 
   event ReservationCreated(bytes32 indexed nodeId, bytes32 indexed operatorId, bytes32 indexed projectId,
     uint256 lastPrice, uint256 nextPrice, EarthfastSlot slot);
@@ -283,6 +285,6 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
   }
 
   // Reserve storage for future upgrades
-  uint256[10] private __gap;
+  uint256[9] private __gap;
 
 }

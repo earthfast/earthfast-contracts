@@ -2,6 +2,7 @@ import { task } from "hardhat/config";
 import { upgradeProxy } from "../lib/deploy";
 import { signers } from "../lib/util";
 
+// usage of this task assumes that the contract admin is locally available
 task("upgrade")
   .addFlag("ask", "Ask for confirmations (always on for production)")
   .addPositionalParam("name", "Which deployment to upgrade (ex. EarthfastNodes)")
