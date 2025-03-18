@@ -24,7 +24,7 @@ task("upgradeWithSafe")
     const { deployer } = await signers(hre);
 
     // Get the contract factory for the implementation
-    const NewContract = await ethers.getContractFactory(args.contract ?? args.name);
+    const NewContract = await hre.ethers.getContractFactory(args.contract ?? args.name);
 
     try {
       console.log("Checking if proxy is already registered...");
@@ -64,7 +64,7 @@ task("upgradeWithSafe")
       const safeSdk = await Safe.init({
         provider: rpcUrl,
         safeAddress: args.safe,
-        signer: deployer,
+        signer: deployer.address,
       });
 
       // create a Safe transaction

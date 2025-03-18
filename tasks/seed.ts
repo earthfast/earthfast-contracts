@@ -71,6 +71,7 @@ task("seed", "Uploads dummy programmatic contract data").setAction(async (_args,
   await wait(nodes.connect(operator).createNodes(operatorId1, [n1]));
   const createNodes2 = await wait(nodes.connect(operator).createNodes(operatorId1, [n2]));
   const [nodeId2] = await decodeEvent(createNodes2, nodes, "NodeCreated");
+  console.log("nodes", await nodes.getNodes(operatorId1, 0, 10));
 
   // Create project
   const p1: EarthfastCreateProjectDataStruct = { owner: project.address, name: "p1", email: "", content: "", checksum: ZeroHash, metadata: "" }; // prettier-ignore
@@ -78,7 +79,9 @@ task("seed", "Uploads dummy programmatic contract data").setAction(async (_args,
   const [projectId1] = await decodeEvent(createProject1, projects, "ProjectCreated");
   const projectsAddress = await projects.getAddress();
   const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
-  await wait(projects.connect(admin).depositProjectEscrow(admin.address, projectId1, parseUSDC("100"), ...projectsPermit));
+  await wait(
+    projects.connect(admin).depositProjectEscrow(admin.address, projectId1, parseUSDC("100"), ...projectsPermit)
+  );
 
   // Create reservation
   await wait(reservations.connect(project).createReservations(projectId1, [nodeId2], [price1], { last: false, next: true })); // prettier-ignore
