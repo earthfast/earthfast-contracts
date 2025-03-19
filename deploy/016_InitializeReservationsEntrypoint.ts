@@ -8,7 +8,7 @@ async function main() {
   const reservations = await attach(hre, "EarthfastReservations");
   const entrypoint = await attach(hre, "EarthfastEntrypoint");
 
-  if (confirm(hre, `Execute EarthfastReservations.authorizeEntrypoint ${stringify([entrypoint])}`)) {
+  if (confirm(hre, `Execute EarthfastReservations.authorizeEntrypoint ${stringify([entrypoint.getAddress()])}`)) {
     await wait(reservations.connect(guardian).authorizeEntrypoint(entrypoint));
   }
 }
