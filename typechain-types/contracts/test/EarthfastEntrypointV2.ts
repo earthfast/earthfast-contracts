@@ -23,6 +23,13 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
+export type EarthfastSlotStruct = { last: boolean; next: boolean };
+
+export type EarthfastSlotStructOutput = [last: boolean, next: boolean] & {
+  last: boolean;
+  next: boolean;
+};
+
 export type EarthfastCreateProjectDataStruct = {
   owner: AddressLike;
   name: string;
@@ -46,13 +53,6 @@ export type EarthfastCreateProjectDataStructOutput = [
   content: string;
   checksum: string;
   metadata: string;
-};
-
-export type EarthfastSlotStruct = { last: boolean; next: boolean };
-
-export type EarthfastSlotStructOutput = [last: boolean, next: boolean] & {
-  last: boolean;
-  next: boolean;
 };
 
 export interface EarthfastEntrypointV2Interface extends Interface {
@@ -87,6 +87,7 @@ export interface EarthfastEntrypointV2Interface extends Interface {
       | "RoleAdminChanged"
       | "RoleGranted"
       | "RoleRevoked"
+      | "SiteDeployed"
       | "Upgraded"
   ): EventFragment;
 
@@ -320,6 +321,34 @@ export namespace RoleRevokedEvent {
     role: string;
     account: string;
     sender: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace SiteDeployedEvent {
+  export type InputTuple = [
+    projectId: BytesLike,
+    owner: AddressLike,
+    escrowAmount: BigNumberish,
+    nodeIds: BytesLike[],
+    slot: EarthfastSlotStruct
+  ];
+  export type OutputTuple = [
+    projectId: string,
+    owner: string,
+    escrowAmount: bigint,
+    nodeIds: string[],
+    slot: EarthfastSlotStructOutput
+  ];
+  export interface OutputObject {
+    projectId: string;
+    owner: string;
+    escrowAmount: bigint;
+    nodeIds: string[];
+    slot: EarthfastSlotStructOutput;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -681,6 +710,13 @@ export interface EarthfastEntrypointV2 extends BaseContract {
     RoleRevokedEvent.OutputObject
   >;
   getEvent(
+    key: "SiteDeployed"
+  ): TypedContractEvent<
+    SiteDeployedEvent.InputTuple,
+    SiteDeployedEvent.OutputTuple,
+    SiteDeployedEvent.OutputObject
+  >;
+  getEvent(
     key: "Upgraded"
   ): TypedContractEvent<
     UpgradedEvent.InputTuple,
@@ -753,6 +789,17 @@ export interface EarthfastEntrypointV2 extends BaseContract {
       RoleRevokedEvent.InputTuple,
       RoleRevokedEvent.OutputTuple,
       RoleRevokedEvent.OutputObject
+    >;
+
+    "SiteDeployed(bytes32,address,uint256,bytes32[],tuple)": TypedContractEvent<
+      SiteDeployedEvent.InputTuple,
+      SiteDeployedEvent.OutputTuple,
+      SiteDeployedEvent.OutputObject
+    >;
+    SiteDeployed: TypedContractEvent<
+      SiteDeployedEvent.InputTuple,
+      SiteDeployedEvent.OutputTuple,
+      SiteDeployedEvent.OutputObject
     >;
 
     "Upgraded(address)": TypedContractEvent<

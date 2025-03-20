@@ -21,6 +21,15 @@ contract EarthfastEntrypoint is
   // Role for admin functions
   bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
+  // Events
+  event SiteDeployed(
+    bytes32 indexed projectId,
+    address indexed owner,
+    uint256 escrowAmount,
+    bytes32[] nodeIds,
+    EarthfastSlot slot
+  );
+
   EarthfastNodes private _nodes;
   EarthfastProjects private _projects;
   EarthfastReservations private _reservations;
@@ -113,6 +122,14 @@ contract EarthfastEntrypoint is
 
     // Call createReservations directly
     _reservations.createReservations(projectId, nodeIds, nodePrices, slot);
+
+    emit SiteDeployed(
+      projectId,
+      project.owner,
+      escrowAmount,
+      nodeIds,
+      slot
+    );
   }
 
   /// @notice Creates a new project and reserves specific nodes
@@ -148,6 +165,14 @@ contract EarthfastEntrypoint is
 
     // Call createReservations directly
     _reservations.createReservations(projectId, nodeIds, nodePrices, slot);
+
+    emit SiteDeployed(
+      projectId,
+      project.owner,
+      escrowAmount,
+      nodeIds,
+      slot
+    );
   }
 
   // TODO: potentially optimize by returning the cheapest set of nodes

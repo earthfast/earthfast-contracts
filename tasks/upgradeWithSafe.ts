@@ -92,10 +92,4 @@ task("upgradeWithSafe")
       console.log("Value: 0");
       console.log("Data:", upgradeData);
     }
-
-    // await upgradeProxy(hre, args.name, {
-    //   from: guardian.address,
-    //   contract: args.contract ?? args.name,
-    //   libraries: args.libs?.split(","),
-    // });
   });

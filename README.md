@@ -73,7 +73,7 @@ $ git commit -a # Commit deployed ABI
 # Scripts (must run in scripts/ folder)
 $ npx ts-node submitRawTx.ts # sign and submit a raw tx
 $ sh abigen.sh # generate golang models for contracts and put them in earthfast-services
-$ sh copy-contract-deployments.sh <all|keeper|cli> # copy deployment artifacts (address & abi props only) to everywhere they're used like keeper, cli, etc
+$ sh copy-contract-deployments.sh <all|dashboard|keeper|cli> # copy deployment artifacts (address & abi props only) to everywhere they're used like keeper, cli, etc
 ```
 
 ### Production
