@@ -21,7 +21,7 @@ contract EarthfastEntrypoint is
   // Role for admin functions
   bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-  // Events
+  // Event for when a site is deployed
   event SiteDeployed(
     bytes32 indexed projectId,
     address indexed owner,

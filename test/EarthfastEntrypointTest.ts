@@ -115,6 +115,15 @@ describe("EarthfastEntrypoint", function () {
     const [projectId] = await expectEvent(tx, projects, "ProjectCreated");
     expect(projectId).to.not.eq(ZeroHash);
 
+    // Verify SiteDeployed event
+    const [siteDeployedProjectId, siteDeployedOwner, siteDeployedEscrow, siteDeployedNodeIds, siteDeployedSlot] = await expectEvent(tx, entrypoint, "SiteDeployed");
+    expect(siteDeployedProjectId).to.equal(projectId);
+    expect(siteDeployedOwner).to.equal(project.address);
+    expect(siteDeployedEscrow).to.equal(escrowAmount);
+    expect(siteDeployedNodeIds.length).to.equal(nodesToReserve);
+    expect(siteDeployedSlot[0]).to.equal(slot.last);
+    expect(siteDeployedSlot[1]).to.equal(slot.next);
+
     // check that the escrow was deposited
     const deployedProject = await projects.getProject(projectId);
     expect(deployedProject.escrow).to.equal(escrowAmount);
@@ -258,6 +267,15 @@ describe("EarthfastEntrypoint", function () {
     const [projectId] = await expectEvent(tx, projects, "ProjectCreated");
     expect(projectId).to.not.eq(ZeroHash);
 
+    // Verify SiteDeployed event
+    const [siteDeployedProjectId, siteDeployedOwner, siteDeployedEscrow, siteDeployedNodeIds, siteDeployedSlot] = await expectEvent(tx, entrypoint, "SiteDeployed");
+    expect(siteDeployedProjectId).to.equal(projectId);
+    expect(siteDeployedOwner).to.equal(project.address);
+    expect(siteDeployedEscrow).to.equal(escrowAmount);
+    expect(siteDeployedNodeIds).to.deep.equal(nodeIds);
+    expect(siteDeployedSlot[0]).to.equal(slot.last);
+    expect(siteDeployedSlot[1]).to.equal(slot.next);
+
     // check that the escrow was deposited
     const deployedProject = await projects.getProject(projectId);
     expect(deployedProject.escrow).to.equal(escrowAmount);
@@ -320,6 +338,15 @@ describe("EarthfastEntrypoint", function () {
     // Verify project was created
     const [projectId] = await expectEvent(tx, projects, "ProjectCreated");
     expect(projectId).to.not.eq(ZeroHash);
+
+    // Verify SiteDeployed event
+    const [siteDeployedProjectId, siteDeployedOwner, siteDeployedEscrow, siteDeployedNodeIds, siteDeployedSlot] = await expectEvent(tx, entrypoint, "SiteDeployed");
+    expect(siteDeployedProjectId).to.equal(projectId);
+    expect(siteDeployedOwner).to.equal(project.address);
+    expect(siteDeployedEscrow).to.equal(escrowAmount);
+    expect(siteDeployedNodeIds).to.deep.equal(nodeIds);
+    expect(siteDeployedSlot[0]).to.equal(slot.last);
+    expect(siteDeployedSlot[1]).to.equal(slot.next);
 
     // check that the escrow was deposited
     const deployedProject = await projects.getProject(projectId);
@@ -679,6 +706,16 @@ describe("EarthfastEntrypoint", function () {
     // Verify project was created
     const [projectId] = await expectEvent(tx, projects, "ProjectCreated");
     expect(projectId).to.not.eq(ZeroHash);
+
+    // Verify SiteDeployed event
+    const [siteDeployedProjectId, siteDeployedOwner, siteDeployedEscrow, siteDeployedNodeIds, siteDeployedSlot] = await expectEvent(tx, entrypoint, "SiteDeployed");
+    expect(siteDeployedProjectId).to.equal(projectId);
+    expect(siteDeployedOwner).to.equal(project.address);
+    expect(siteDeployedEscrow).to.equal(escrowAmount);
+    expect(siteDeployedNodeIds.length).to.equal(1);
+    expect(siteDeployedNodeIds[0]).to.equal(nodeId1);
+    expect(siteDeployedSlot[0]).to.equal(bothSlot.last);
+    expect(siteDeployedSlot[1]).to.equal(bothSlot.next);
 
     // Get the node and verify it's assigned to the project in both epochs
     const nodeData = await nodes.getNode(nodeId1);
