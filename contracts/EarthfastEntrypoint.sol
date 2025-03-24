@@ -187,6 +187,9 @@ contract EarthfastEntrypoint is
     uint256 nodesToReserve,
     EarthfastSlot calldata slot
   ) public view returns (bytes32[] memory nodeIds, uint256[] memory nodePrices) {
+    // Validate slot configuration
+    require(slot.last || slot.next, "Invalid slot configuration");
+
     uint256 nodeCount = _nodes.getNodeCount(0);
     EarthfastNode[] memory nodes = _nodes.getNodes(0, 0, nodeCount);
 
@@ -194,13 +197,22 @@ contract EarthfastEntrypoint is
     nodePrices = new uint256[](nodesToReserve);
     uint256 nodeIndex = 0;
     for (uint256 i = 0; i < nodeCount; ++i) {
-      // Check if the node is available for reservation at the specified slot
-      if (nodes[i].projectIds[slot.last ? EARTHFAST_LAST_EPOCH : EARTHFAST_NEXT_EPOCH] == 0) {
+        // Skip disabled nodes
+        if (nodes[i].disabled) {
+            continue;
+        }
+
+      // Check if the node is available for reservation at the specified slot and also available for reservation at the next slot
+      bool isAvailable = slot.last ?
+        nodes[i].projectIds[EARTHFAST_LAST_EPOCH] == 0 && nodes[i].projectIds[EARTHFAST_NEXT_EPOCH] == 0 :
+        nodes[i].projectIds[EARTHFAST_NEXT_EPOCH] == 0;
+
+      if (isAvailable) {
         // Add the node to the list of available nodes
         nodeIds[nodeIndex] = nodes[i].id;
         nodePrices[nodeIndex] = nodes[i].prices[slot.last ? EARTHFAST_LAST_EPOCH : EARTHFAST_NEXT_EPOCH];
         nodeIndex++;
-        
+
         // Stop if enough nodes have been found
         if (nodeIndex == nodesToReserve) {
           break;
