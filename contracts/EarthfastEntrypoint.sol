@@ -180,7 +180,8 @@ contract EarthfastEntrypoint is
   /// @notice Returns a list of available nodes for reservation
   /// @param nodesToReserve Number of nodes to reserve
   /// @param slot When to start the reservation. If slot.last is true, the reservation will start immediately.
-  /// If slot.next is true, the reservation will start at the beginning of the next epoch.
+  /// If slot.next is true and slot.last is false, the reservation will start at the beginning of the next epoch.
+  /// Slot.next being false will not be accounted for as the node reservation is always assumed to include the next epoch when created via the entrypoint.
   /// @return nodeIds IDs of the available nodes
   /// @return nodePrices Prices of the available nodes
   function getAvailableNodes(
@@ -197,10 +198,10 @@ contract EarthfastEntrypoint is
     nodePrices = new uint256[](nodesToReserve);
     uint256 nodeIndex = 0;
     for (uint256 i = 0; i < nodeCount; ++i) {
-        // Skip disabled nodes
-        if (nodes[i].disabled) {
-            continue;
-        }
+      // Skip disabled nodes
+      if (nodes[i].disabled) {
+          continue;
+      }
 
       // Check if the node is available for reservation at the specified slot and also available for reservation at the next slot
       bool isAvailable = slot.last ?

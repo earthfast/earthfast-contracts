@@ -784,4 +784,77 @@ describe("EarthfastEntrypoint", function () {
     expect(availableNodeIds).to.include(nodeId2);
     expect(availableNodeIds).to.include(nodeId3);
   });
+
+  it("Should properly validate node availability including disabled nodes and slot availability", async function () {
+    // Create operator
+    const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o13", "e13"));
+    const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
+    expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
+
+    // Create multiple nodes with different prices
+    const price1 = parseUSDC("1");
+    const price2 = parseUSDC("2");
+    const price3 = parseUSDC("3");
+
+    // Create three nodes: one disabled, one available in both slots, one only available in next slot
+    const node1: EarthfastCreateNodeDataStruct = { disabled: true, host: "h1", region: "r1", price: price1 }; // Disabled node
+    const node2: EarthfastCreateNodeDataStruct = { disabled: false, host: "h2", region: "r2", price: price2 }; // Available in both slots
+    const node3: EarthfastCreateNodeDataStruct = { disabled: false, host: "h3", region: "r3", price: price3 }; // Will be reserved for last epoch
+
+    // Create nodes one by one to get their IDs
+    const createNode1 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, [node1]));
+    await expectEvent(createNode1, nodes, "NodeCreated");
+
+    const createNode2 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, [node2]));
+    const [nodeId2] = await expectEvent(createNode2, nodes, "NodeCreated");
+
+    const createNode3 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, [node3]));
+    const [nodeId3] = await expectEvent(createNode3, nodes, "NodeCreated");
+
+    // Create a project to reserve node3 for the last epoch
+    const projectData: EarthfastCreateProjectDataStruct = {
+      owner: project.address,
+      name: "Test Project",
+      email: "test@test.com",
+      content: "Test Content",
+      checksum: ZeroHash,
+      metadata: "Test Metadata",
+    };
+
+    const escrowAmount = parseUSDC("100");
+    const slotLast: EarthfastSlot = { last: true, next: false };
+
+    // Mint USDC to the project account
+    await usdc.connect(admin).transfer(project.address, escrowAmount);
+
+    // Get permit values
+    const deadline = Math.floor(Date.now() / 1000) + 3600;
+    const signature = await signApproval(hre, usdc, project.address, projectsAddress, escrowAmount, deadline);
+
+    // Reserve node3 for the last epoch
+    await entrypoint.connect(project).deploySiteWithNodeIds(projectData, project.address, [nodeId3], [price3], escrowAmount, slotLast, deadline, signature.serialized);
+
+    // Test 1: Try to get available nodes for last epoch
+    // Should fail because node3 is reserved for last epoch
+    await expect(entrypoint.getAvailableNodes(2, slotLast)).to.be.revertedWith("Not enough available nodes");
+
+    // Test 2: Try to get available nodes for next epoch
+    // Should succeed and return node2 (node1 is disabled, node3 is available in next epoch)
+    const slotNext: EarthfastSlot = { last: false, next: true };
+    const [nextEpochNodeIds, nextEpochNodePrices] = await entrypoint.getAvailableNodes(1, slotNext);
+    expect(nextEpochNodeIds.length).to.equal(1);
+    expect(nextEpochNodeIds[0]).to.equal(nodeId2);
+    expect(nextEpochNodePrices[0]).to.equal(price2);
+
+    // Test 3: Try to get available nodes for both epochs
+    // Should fail because node3 is reserved for last epoch
+    const slotBoth: EarthfastSlot = { last: true, next: true };
+    await expect(entrypoint.getAvailableNodes(2, slotBoth)).to.be.revertedWith("Not enough available nodes");
+
+    // Test 4: Try to get available nodes with invalid slot configuration
+    // Should fail with "Invalid slot configuration"
+    const slotInvalid: EarthfastSlot = { last: false, next: false };
+    await expect(entrypoint.getAvailableNodes(1, slotInvalid)).to.be.revertedWith("Invalid slot configuration");
+  });
 });
