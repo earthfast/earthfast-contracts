@@ -186,6 +186,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.EarthfastBilling__factory>;
     getContractFactory(
+      name: "EarthfastEntrypoint",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.EarthfastEntrypoint__factory>;
+    getContractFactory(
       name: "EarthfastGovernor",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.EarthfastGovernor__factory>;
@@ -225,6 +229,10 @@ declare module "hardhat/types/runtime" {
       name: "EarthfastToken",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.EarthfastToken__factory>;
+    getContractFactory(
+      name: "EarthfastEntrypointV2",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.EarthfastEntrypointV2__factory>;
     getContractFactory(
       name: "USDC",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -446,6 +454,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.EarthfastBilling>;
     getContractAt(
+      name: "EarthfastEntrypoint",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.EarthfastEntrypoint>;
+    getContractAt(
       name: "EarthfastGovernor",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -495,6 +508,11 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.EarthfastToken>;
+    getContractAt(
+      name: "EarthfastEntrypointV2",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.EarthfastEntrypointV2>;
     getContractAt(
       name: "USDC",
       address: string | ethers.Addressable,
@@ -674,6 +692,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.EarthfastBilling>;
     deployContract(
+      name: "EarthfastEntrypoint",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.EarthfastEntrypoint>;
+    deployContract(
       name: "EarthfastGovernor",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.EarthfastGovernor>;
@@ -713,6 +735,10 @@ declare module "hardhat/types/runtime" {
       name: "EarthfastToken",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.EarthfastToken>;
+    deployContract(
+      name: "EarthfastEntrypointV2",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.EarthfastEntrypointV2>;
     deployContract(
       name: "USDC",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -934,6 +960,11 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.EarthfastBilling>;
     deployContract(
+      name: "EarthfastEntrypoint",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.EarthfastEntrypoint>;
+    deployContract(
       name: "EarthfastGovernor",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -983,6 +1014,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.EarthfastToken>;
+    deployContract(
+      name: "EarthfastEntrypointV2",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.EarthfastEntrypointV2>;
     deployContract(
       name: "USDC",
       args: any[],

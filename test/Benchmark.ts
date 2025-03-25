@@ -70,7 +70,7 @@ describe("Benchmark", function () {
     const createProject = await expectReceipt(projects.connect(project).createProject(p));
     const [projectId] = await expectEvent(createProject, projects, "ProjectCreated");
     const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("1"));
-    expect(await projects.connect(admin).depositProjectEscrow(projectId, parseUSDC("1"), ...projectsPermit)).to.be.ok;
+    expect(await projects.connect(admin).depositProjectEscrow(admin.address, projectId, parseUSDC("1"), ...projectsPermit)).to.be.ok;
 
     // Create reservations
     const prices = (nodeIds as []).map(() => 1);

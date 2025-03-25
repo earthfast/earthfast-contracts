@@ -234,20 +234,28 @@ contract EarthfastProjects is AccessControlUpgradeable, PausableUpgradeable, Ree
   }
 
   /// @notice Transfers USDC into the contract and applies them toward given operator stake.
-  /// @dev Needs either a token allowance from msg.sender, or a gasless approval (v/r/s != 0).
+  /// @dev Needs either a token allowance from projectFunder, or a gasless approval (v/r/s != 0).
+  /// This is used instead of explicit input checks to enable third party funding and calling by an Entrypoint proxy contract.
   /// @dev CAUTION: To avoid loss of funds, do NOT deposit to this contract by token.transfer().
-  function depositProjectEscrow(bytes32 projectId, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
+  /// @param projectFunder The wallet funding the escrow deposit for the the project.
+  /// @param projectId The ID of the project.
+  /// @param amount The amount of USDC to deposit.
+  /// @param deadline The deadline for the permit.
+  /// @param v The v value of the permit.
+  /// @param r The r value of the permit.
+  /// @param s The s value of the permit.
+  function depositProjectEscrow(address projectFunder, bytes32 projectId, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
   public virtual whenNotPaused {
     EarthfastProject storage project = _projects[projectId];
     require(project.id != 0, "unknown project");
     uint256 oldEscrow = project.escrow;
     project.escrow += amount;
     if (s != 0) {
-      _registry.getUSDC().permit(msg.sender, address(this), amount, deadline, v, r, s);
+      _registry.getUSDC().permit(projectFunder, address(this), amount, deadline, v, r, s);
     } else {
       require(deadline == 0 && v == 0 && r == 0, "invalid permit");
     }
-    _registry.getUSDC().transferFrom(msg.sender, address(_registry), amount);
+    _registry.getUSDC().transferFrom(projectFunder, address(_registry), amount);
     emit ProjectEscrowChanged(projectId, oldEscrow, project.escrow);
   }
 
@@ -255,7 +263,7 @@ contract EarthfastProjects is AccessControlUpgradeable, PausableUpgradeable, Ree
   function withdrawProjectEscrow(bytes32 projectId, uint256 amount, address to)
   public virtual nonReentrant onlyAdminOrProjectOwner(projectId) whenNotReconciling whenNotPaused {
     EarthfastProject storage project = _projects[projectId];
-    assert(project.id != 0); // Impossible because of onlyProjectOwner
+    assert(project.id != 0); // Impossible because of onlyAdminOrProjectOwner
     require(project.escrow >= project.reserve + amount, "not enough escrow");
     uint256 oldEscrow = project.escrow;
     project.escrow -= amount;

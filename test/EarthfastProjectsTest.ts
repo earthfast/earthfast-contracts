@@ -218,7 +218,7 @@ describe("EarthfastProjects", function () {
 
     // Deposit escrow
     const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
+    expect(await projects.connect(admin).depositProjectEscrow(admin.address, projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
     expect((await projects.getProject(projectId1)).escrow).to.equal(parseUSDC("100"));
     expect((await projects.getProject(projectId1)).reserve).to.equal(parseUSDC("0"));
 
@@ -260,8 +260,8 @@ describe("EarthfastProjects", function () {
 
     // Deposit escrow
     const projectsPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("100"));
-    await expect(projects.connect(admin).depositProjectEscrow(ZeroHash, parseUSDC("100"), ...projectsPermit)).to.be.revertedWith("unknown project");
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
+    await expect(projects.connect(admin).depositProjectEscrow(admin.address, ZeroHash, parseUSDC("100"), ...projectsPermit)).to.be.revertedWith("unknown project");
+    expect(await projects.connect(admin).depositProjectEscrow(admin.address, projectId1, parseUSDC("100"), ...projectsPermit)).to.be.ok;
     expect(await usdc.connect(admin).balanceOf(project.address)).to.equal(parseUSDC("0"));
     expect(await token.connect(admin).balanceOf(project.address)).to.equal(parseTokens("0"));
     expect(await usdc.connect(admin).balanceOf(registryAddress)).to.equal(parseUSDC("100"));
@@ -311,15 +311,15 @@ describe("EarthfastProjects", function () {
     expect(projectId1 !== ZeroHash);
 
     // Check invalid permits
-    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 1, 0, ZeroHash, ZeroHash)).to.be.revertedWith("invalid permit");
-    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 1, ZeroHash, ZeroHash)).to.be.revertedWith("invalid permit");
-    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 0, projectId1, ZeroHash)).to.be.revertedWith("invalid permit");
+    await expect(projects.connect(admin).depositProjectEscrow(project.address, projectId1, parseTokens("100"), 1, 0, ZeroHash, ZeroHash)).to.be.revertedWith("invalid permit");
+    await expect(projects.connect(admin).depositProjectEscrow(project.address, projectId1, parseTokens("100"), 0, 1, ZeroHash, ZeroHash)).to.be.revertedWith("invalid permit");
+    await expect(projects.connect(admin).depositProjectEscrow(project.address, projectId1, parseTokens("100"), 0, 0, projectId1, ZeroHash)).to.be.revertedWith("invalid permit");
 
     // Deposit with allowance
-    await expect(projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 0, ZeroHash, ZeroHash)).to.be.revertedWith("ERC20: insufficient allowance");
+    await expect(projects.connect(admin).depositProjectEscrow(admin.address, projectId1, parseTokens("100"), 0, 0, ZeroHash, ZeroHash)).to.be.revertedWith("ERC20: insufficient allowance");
     expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 1, 0: p1 });
     expect(await usdc.connect(admin).approve(projectsAddress, parseTokens("100"))).to.be.ok;
-    expect(await projects.connect(admin).depositProjectEscrow(projectId1, parseTokens("100"), 0, 0, ZeroHash, ZeroHash)).to.be.ok;
+    expect(await projects.connect(admin).depositProjectEscrow(admin.address, projectId1, parseTokens("100"), 0, 0, ZeroHash, ZeroHash)).to.be.ok;
     expect(await projects.getProjects(0, 10)).to.shallowDeepEqual({ length: 1, 0: { ...p1, escrow: parseTokens("100") } });
   });
 
@@ -359,6 +359,121 @@ describe("EarthfastProjects", function () {
 
     // admin can upgrade
     expect(await hre.upgrades.upgradeProxy(proxy, adminProjectFactory)).to.be.ok;
+  });
+
+  it("Should enforce proper access control for depositProjectEscrow", async function () {
+    // Create a project owned by the project signer
+    const projectData: EarthfastCreateProjectDataStruct = {
+      name: "escrow-test",
+      owner: project.address,
+      email: "escrow@test.com",
+      content: "",
+      checksum: ZeroHash,
+      metadata: "",
+    };
+    const createProjectTx = await expectReceipt(projects.connect(project).createProject(projectData));
+    const [projectId] = await expectEvent(createProjectTx, projects, "ProjectCreated");
+
+    // Initial balances
+    const initialAdminBalance = await usdc.balanceOf(admin.address);
+    const initialOperatorBalance = await usdc.balanceOf(operator.address);
+    const initialProjectBalance = await usdc.balanceOf(project.address);
+    const initialRegistryBalance = await usdc.balanceOf(registryAddress);
+
+    // Mint some USDC to operator for testing
+    await usdc.connect(admin).transfer(operator.address, parseUSDC("100"));
+
+    // Scenario 1: Admin funds project escrow with admin's USDC
+    // Generate permit for admin
+    const adminPermit = await approve(hre, usdc, admin.address, projectsAddress, parseUSDC("10"));
+
+    // Admin calls depositProjectEscrow with admin as funder
+    await projects.connect(admin).depositProjectEscrow(admin.address, projectId, parseUSDC("10"), ...adminPermit);
+
+    // Verify escrow was deposited correctly
+    let projectDetails = await projects.getProject(projectId);
+    expect(projectDetails.escrow).to.equal(parseUSDC("10"));
+
+    // Verify USDC was transferred from admin to registry
+    expect(await usdc.balanceOf(admin.address)).to.equal(initialAdminBalance - parseUSDC("100") - parseUSDC("10"));
+    expect(await usdc.balanceOf(registryAddress)).to.equal(initialRegistryBalance + parseUSDC("10"));
+
+    // Scenario 2: Project owner funds project escrow with project owner's USDC
+    // Mint some USDC to project for this scenario
+    await usdc.connect(admin).transfer(project.address, parseUSDC("20"));
+
+    // Project owner approves projects contract to spend USDC
+    await usdc.connect(project).approve(projectsAddress, parseUSDC("20"));
+
+    // Project owner calls depositProjectEscrow with themselves as funder
+    await projects.connect(project).depositProjectEscrow(
+      project.address,
+      projectId,
+      parseUSDC("20"),
+      0,
+      0,
+      ZeroHash,
+      ZeroHash // No permit, using allowance
+    );
+
+    // Verify escrow was deposited correctly
+    projectDetails = await projects.getProject(projectId);
+    expect(projectDetails.escrow).to.equal(parseUSDC("30")); // 10 + 20
+
+    // Verify USDC was transferred from project to registry
+    expect(await usdc.balanceOf(project.address)).to.equal(initialProjectBalance + parseUSDC("20") - parseUSDC("20"));
+    expect(await usdc.balanceOf(registryAddress)).to.equal(initialRegistryBalance + parseUSDC("30"));
+
+    // Scenario 3: Operator funds project escrow with operator's USDC (non-owner funding)
+    // Generate permit for operator
+    const operatorPermit = await approve(hre, usdc, operator.address, projectsAddress, parseUSDC("15"));
+
+    // Operator calls depositProjectEscrow with operator as funder
+    await projects.connect(operator).depositProjectEscrow(operator.address, projectId, parseUSDC("15"), ...operatorPermit);
+
+    // Verify escrow was deposited correctly
+    projectDetails = await projects.getProject(projectId);
+    expect(projectDetails.escrow).to.equal(parseUSDC("45")); // 10 + 20 + 15
+
+    // Verify USDC was transferred from operator to registry
+    expect(await usdc.balanceOf(operator.address)).to.equal(initialOperatorBalance + parseUSDC("100") - parseUSDC("15"));
+    expect(await usdc.balanceOf(registryAddress)).to.equal(initialRegistryBalance + parseUSDC("45"));
+
+    // Scenario 4: Attempt to use someone else's funds without approval
+    // Admin tries to use project's USDC without approval
+    await expect(
+      projects.connect(admin).depositProjectEscrow(
+        project.address,
+        projectId,
+        parseUSDC("5"),
+        0,
+        0,
+        ZeroHash,
+        ZeroHash // No permit, no allowance
+      )
+    ).to.be.revertedWith("ERC20: insufficient allowance");
+
+    // Verify escrow remains unchanged
+    projectDetails = await projects.getProject(projectId);
+    expect(projectDetails.escrow).to.equal(parseUSDC("45"));
+
+    // Scenario 5: Using permit to fund from a different account
+    // Mint some USDC to project for testing
+    await usdc.connect(admin).transfer(project.address, parseUSDC("50"));
+
+    // Generate permit for project's USDC
+    const projectPermit = await approve(hre, usdc, project.address, projectsAddress, parseUSDC("25"));
+
+    // Admin calls depositProjectEscrow with project as funder using permit
+    await projects.connect(admin).depositProjectEscrow(project.address, projectId, parseUSDC("25"), ...projectPermit);
+
+    // Verify escrow was deposited correctly
+    projectDetails = await projects.getProject(projectId);
+    expect(projectDetails.escrow).to.equal(parseUSDC("70")); // 45 + 25
+
+    // Verify USDC was transferred from project to registry
+    expect(await usdc.balanceOf(project.address)).to.equal(initialProjectBalance + parseUSDC("70") - parseUSDC("45"));
+    expect(await usdc.balanceOf(registryAddress)).to.equal(initialRegistryBalance + parseUSDC("70"));
   });
 
   it("Should disallow impl calls from unauthorized senders", async function () {

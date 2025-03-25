@@ -8,3 +8,4 @@ coverage.json
 deployments/hardhat
 deployments/localhost
 node_modules
+data/*.json

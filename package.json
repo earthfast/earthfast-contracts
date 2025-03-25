@@ -17,6 +17,7 @@
     "@openzeppelin/contracts-upgradeable": "^4.9.6",
     "@openzeppelin/defender-sdk": "^1.14.4",
     "@openzeppelin/hardhat-upgrades": "^3.4.0",
+    "@safe-global/protocol-kit": "^6.0.0",
     "@types/mocha": "^9.1.1",
     "@types/node": "^20.16.10",
     "@types/readline-sync": "^1.4.4",

@@ -23,6 +23,9 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
 
   mapping(bytes32 => EnumerableSet.Bytes32Set) private _projectNodeIds; // Union of last and next epoch
 
+  // Controls who can call functions on behalf of users
+  mapping(address => bool) private _authorizedEntrypoints;
+
   event ReservationCreated(bytes32 indexed nodeId, bytes32 indexed operatorId, bytes32 indexed projectId,
     uint256 lastPrice, uint256 nextPrice, EarthfastSlot slot);
   event ReservationDeleted(bytes32 indexed nodeId, bytes32 indexed operatorId, bytes32 indexed projectId,
@@ -47,7 +50,9 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
   modifier onlyProjectOwner(bytes32 projectId) {
     EarthfastProjects projects = _registry.getProjects();
     EarthfastProject memory project = projects.getProject(projectId);
-    require(msg.sender == project.owner, "not project owner");
+    require(msg.sender == project.owner || 
+           (_authorizedEntrypoints[msg.sender]), 
+           "not project owner");
     _;
   }
 
@@ -98,6 +103,21 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
   /// @dev CAUTION: This can break data consistency. Used for proxy-less upgrades.
   function unsafeSetRegistry(EarthfastRegistry registry) public virtual onlyAdmin { _registry = registry; }
 
+  /// @dev Authorizes an entrypoint to call functions on behalf of users
+  function authorizeEntrypoint(address entrypoint) public virtual onlyAdmin { 
+    _authorizedEntrypoints[entrypoint] = true; 
+  }
+
+  /// @dev Revokes authorization for an entrypoint
+  function revokeEntrypoint(address entrypoint) public virtual onlyAdmin { 
+    _authorizedEntrypoints[entrypoint] = false; 
+  }
+
+  /// @dev Checks if an address is an authorized entrypoint
+  function isAuthorizedEntrypoint(address entrypoint) public virtual view returns (bool) { 
+    return _authorizedEntrypoints[entrypoint]; 
+  }
+
   /// @dev Allows to import initial contract data. Used for proxy-less upgrades.
   /// @param revokeImporterRole stops further data import by revoking the role.
   /// CAUTION: Once import is finished, the role should be explicitly revoked.
@@ -126,7 +146,10 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
   }
 
   /// @notice Reserves content nodes and locks corresponding escrow amount. Reverts if escrow is insufficient.
+  /// @param projectId The ID of the project to reserve nodes for.
+  /// @param nodeIds The IDs of the nodes to reserve.
   /// @param maxPrices At what max price to reserve. A safety mechanism in case price changes during this call.
+  /// @param slot When to reserve the nodes.
   ///
   /// Use slot.last to reserve immediately in the current epoch (AKA spot), instead of at the start of next epoch.
   /// In this case, the node prices will be prorated, but the project won't be able to immediately release these
@@ -139,39 +162,47 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
     EarthfastNodes allNodes = _registry.getNodes();
     EarthfastProjects projects = _registry.getProjects();
     uint256 epochRemainder = _registry.getEpochRemainder();
+    
+    EarthfastCreateReservationData memory params;
+    params.nodes = allNodes;
+    params.projects = projects;
+    params.projectId = projectId;
+    params.epochRemainder = epochRemainder;
+    params.slot = slot;
+    
     for (uint256 i = 0; i < nodeIds.length; i++) {
-      EarthfastNode memory nodeCopy = allNodes.getNode(nodeIds[i]);
-      createReservationImpl(allNodes, projects, projectId, nodeCopy, epochRemainder, maxPrices[i], slot);
+      params.node = allNodes.getNode(nodeIds[i]);
+      params.maxPrice = maxPrices[i];
+      createReservationImpl(params);
     }
+    
     EarthfastProject memory projectCopy = projects.getProject(projectId);
     require(projectCopy.escrow >= projectCopy.reserve, "not enough escrow");
   }
 
-  function createReservationImpl(
-    EarthfastNodes allNodes, EarthfastProjects projects, bytes32 projectId, EarthfastNode memory nodeCopy,
-    uint256 epochRemainder, uint256 maxPrice, EarthfastSlot calldata slot)
+  function createReservationImpl(EarthfastCreateReservationData memory params)
   internal virtual {
-    require(!nodeCopy.disabled, "node disabled");
+    require(!params.node.disabled, "node disabled");
     uint256 lastPrice = 0;
     uint256 nextPrice = 0;
-    if (slot.last) {
-      require(nodeCopy.projectIds[EARTHFAST_LAST_EPOCH] == 0, "node reserved");
-      lastPrice = nodeCopy.prices[EARTHFAST_LAST_EPOCH];
-      require(lastPrice <= maxPrice, "price mismatch");
-      uint256 proratedPrice = lastPrice * epochRemainder / _registry.getLastEpochLength(); 
-      allNodes.setNodeProjectImpl(nodeCopy.id, EARTHFAST_LAST_EPOCH, projectId);
-      allNodes.setNodePriceImpl(nodeCopy.id, EARTHFAST_LAST_EPOCH, proratedPrice);
-      projects.setProjectReserveImpl(projectId, 0, proratedPrice);
+    if (params.slot.last) {
+      require(params.node.projectIds[EARTHFAST_LAST_EPOCH] == 0, "node reserved");
+      lastPrice = params.node.prices[EARTHFAST_LAST_EPOCH];
+      require(lastPrice <= params.maxPrice, "price mismatch");
+      uint256 proratedPrice = lastPrice * params.epochRemainder / _registry.getLastEpochLength(); 
+      params.nodes.setNodeProjectImpl(params.node.id, EARTHFAST_LAST_EPOCH, params.projectId);
+      params.nodes.setNodePriceImpl(params.node.id, EARTHFAST_LAST_EPOCH, proratedPrice);
+      params.projects.setProjectReserveImpl(params.projectId, 0, proratedPrice);
     }
-    if (slot.next) {
-      require(nodeCopy.projectIds[EARTHFAST_NEXT_EPOCH] == 0, "node reserved");
-      nextPrice = nodeCopy.prices[EARTHFAST_NEXT_EPOCH];
-      require(nextPrice <= maxPrice, "price mismatch");
-      allNodes.setNodeProjectImpl(nodeCopy.id, EARTHFAST_NEXT_EPOCH, projectId);
-      projects.setProjectReserveImpl(projectId, 0, nextPrice);
+    if (params.slot.next) {
+      require(params.node.projectIds[EARTHFAST_NEXT_EPOCH] == 0, "node reserved");
+      nextPrice = params.node.prices[EARTHFAST_NEXT_EPOCH];
+      require(nextPrice <= params.maxPrice, "price mismatch");
+      params.nodes.setNodeProjectImpl(params.node.id, EARTHFAST_NEXT_EPOCH, params.projectId);
+      params.projects.setProjectReserveImpl(params.projectId, 0, nextPrice);
     }
-    _projectNodeIds[projectId].add(nodeCopy.id);
-    emit ReservationCreated(nodeCopy.id, nodeCopy.operatorId, projectId, lastPrice, nextPrice, slot);
+    _projectNodeIds[params.projectId].add(params.node.id);
+    emit ReservationCreated(params.node.id, params.node.operatorId, params.projectId, lastPrice, nextPrice, params.slot);
   }
 
   /// @notice Releases content nodes starting from next epoch and unlocks project escrow
@@ -254,6 +285,6 @@ contract EarthfastReservations is AccessControlUpgradeable, PausableUpgradeable,
   }
 
   // Reserve storage for future upgrades
-  uint256[10] private __gap;
+  uint256[9] private __gap;
 
 }

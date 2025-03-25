@@ -92,6 +92,8 @@ export type { DoubleEndedQueue } from "./@openzeppelin/contracts/utils/structs/D
 export { DoubleEndedQueue__factory } from "./factories/@openzeppelin/contracts/utils/structs/DoubleEndedQueue__factory";
 export type { EarthfastBilling } from "./contracts/EarthfastBilling";
 export { EarthfastBilling__factory } from "./factories/contracts/EarthfastBilling__factory";
+export type { EarthfastEntrypoint } from "./contracts/EarthfastEntrypoint";
+export { EarthfastEntrypoint__factory } from "./factories/contracts/EarthfastEntrypoint__factory";
 export type { EarthfastGovernor } from "./contracts/EarthfastGovernor";
 export { EarthfastGovernor__factory } from "./factories/contracts/EarthfastGovernor__factory";
 export type { EarthfastNodes } from "./contracts/EarthfastNodes";
@@ -112,5 +114,7 @@ export type { EarthfastTimelock } from "./contracts/EarthfastTimelock";
 export { EarthfastTimelock__factory } from "./factories/contracts/EarthfastTimelock__factory";
 export type { EarthfastToken } from "./contracts/EarthfastToken";
 export { EarthfastToken__factory } from "./factories/contracts/EarthfastToken__factory";
+export type { EarthfastEntrypointV2 } from "./contracts/test/EarthfastEntrypointV2";
+export { EarthfastEntrypointV2__factory } from "./factories/contracts/test/EarthfastEntrypointV2__factory";
 export type { USDC } from "./contracts/test/USDC";
 export { USDC__factory } from "./factories/contracts/test/USDC__factory";

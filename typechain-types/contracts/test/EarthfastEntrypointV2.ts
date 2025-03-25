@@ -21,7 +21,7 @@ import type {
   TypedLogDescription,
   TypedListener,
   TypedContractMethod,
-} from "../common";
+} from "../../common";
 
 export type EarthfastSlotStruct = { last: boolean; next: boolean };
 
@@ -30,62 +30,51 @@ export type EarthfastSlotStructOutput = [last: boolean, next: boolean] & {
   next: boolean;
 };
 
-export type EarthfastNodeStruct = {
-  id: BytesLike;
-  operatorId: BytesLike;
-  host: string;
-  region: string;
-  disabled: boolean;
-  prices: [BigNumberish, BigNumberish];
-  projectIds: [BytesLike, BytesLike];
+export type EarthfastCreateProjectDataStruct = {
+  owner: AddressLike;
+  name: string;
+  email: string;
+  content: string;
+  checksum: BytesLike;
+  metadata: string;
 };
 
-export type EarthfastNodeStructOutput = [
-  id: string,
-  operatorId: string,
-  host: string,
-  region: string,
-  disabled: boolean,
-  prices: [bigint, bigint],
-  projectIds: [string, string]
+export type EarthfastCreateProjectDataStructOutput = [
+  owner: string,
+  name: string,
+  email: string,
+  content: string,
+  checksum: string,
+  metadata: string
 ] & {
-  id: string;
-  operatorId: string;
-  host: string;
-  region: string;
-  disabled: boolean;
-  prices: [bigint, bigint];
-  projectIds: [string, string];
+  owner: string;
+  name: string;
+  email: string;
+  content: string;
+  checksum: string;
+  metadata: string;
 };
 
-export interface EarthfastReservationsInterface extends Interface {
+export interface EarthfastEntrypointV2Interface extends Interface {
   getFunction(
     nameOrSignature:
+      | "ADMIN_ROLE"
       | "DEFAULT_ADMIN_ROLE"
-      | "IMPORTER_ROLE"
-      | "authorizeEntrypoint"
-      | "createReservations"
-      | "deleteReservationImpl"
-      | "deleteReservations"
-      | "getRegistry"
-      | "getReservationCount"
-      | "getReservations"
+      | "VERSION"
+      | "deploySite"
+      | "deploySiteWithNodeIds"
+      | "getAvailableNodes"
+      | "getContracts"
       | "getRoleAdmin"
+      | "getVersion"
       | "grantRole"
       | "hasRole"
       | "initialize"
-      | "isAuthorizedEntrypoint"
-      | "pause"
-      | "paused"
       | "proxiableUUID"
-      | "removeProjectNodeIdImpl"
       | "renounceRole"
-      | "revokeEntrypoint"
       | "revokeRole"
       | "supportsInterface"
-      | "unpause"
-      | "unsafeImportData"
-      | "unsafeSetRegistry"
+      | "updateContracts"
       | "upgradeTo"
       | "upgradeToAndCall"
   ): FunctionFragment;
@@ -95,61 +84,62 @@ export interface EarthfastReservationsInterface extends Interface {
       | "AdminChanged"
       | "BeaconUpgraded"
       | "Initialized"
-      | "Paused"
-      | "ReservationCreated"
-      | "ReservationDeleted"
       | "RoleAdminChanged"
       | "RoleGranted"
       | "RoleRevoked"
-      | "Unpaused"
+      | "SiteDeployed"
       | "Upgraded"
   ): EventFragment;
 
   encodeFunctionData(
+    functionFragment: "ADMIN_ROLE",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "DEFAULT_ADMIN_ROLE",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "VERSION", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "IMPORTER_ROLE",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "authorizeEntrypoint",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "createReservations",
-    values: [BytesLike, BytesLike[], BigNumberish[], EarthfastSlotStruct]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "deleteReservationImpl",
+    functionFragment: "deploySite",
     values: [
+      EarthfastCreateProjectDataStruct,
       AddressLike,
-      AddressLike,
-      BytesLike,
-      BytesLike,
-      EarthfastSlotStruct
+      BigNumberish,
+      BigNumberish,
+      EarthfastSlotStruct,
+      BigNumberish,
+      BytesLike
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "deleteReservations",
-    values: [BytesLike, BytesLike[], EarthfastSlotStruct]
+    functionFragment: "deploySiteWithNodeIds",
+    values: [
+      EarthfastCreateProjectDataStruct,
+      AddressLike,
+      BytesLike[],
+      BigNumberish[],
+      BigNumberish,
+      EarthfastSlotStruct,
+      BigNumberish,
+      BytesLike
+    ]
   ): string;
   encodeFunctionData(
-    functionFragment: "getRegistry",
+    functionFragment: "getAvailableNodes",
+    values: [BigNumberish, EarthfastSlotStruct]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getContracts",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getReservationCount",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getReservations",
-    values: [BytesLike, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getRoleAdmin",
     values: [BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getVersion",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "grantRole",
@@ -161,29 +151,15 @@ export interface EarthfastReservationsInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [AddressLike[], AddressLike, boolean]
+    values: [AddressLike[], AddressLike, AddressLike, AddressLike]
   ): string;
-  encodeFunctionData(
-    functionFragment: "isAuthorizedEntrypoint",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(functionFragment: "pause", values?: undefined): string;
-  encodeFunctionData(functionFragment: "paused", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "proxiableUUID",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "removeProjectNodeIdImpl",
-    values: [BytesLike, BytesLike]
-  ): string;
-  encodeFunctionData(
     functionFragment: "renounceRole",
     values: [BytesLike, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "revokeEntrypoint",
-    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "revokeRole",
@@ -193,14 +169,9 @@ export interface EarthfastReservationsInterface extends Interface {
     functionFragment: "supportsInterface",
     values: [BytesLike]
   ): string;
-  encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "unsafeImportData",
-    values: [EarthfastNodeStruct[], boolean]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "unsafeSetRegistry",
-    values: [AddressLike]
+    functionFragment: "updateContracts",
+    values: [AddressLike, AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "upgradeTo",
@@ -211,69 +182,39 @@ export interface EarthfastReservationsInterface extends Interface {
     values: [AddressLike, BytesLike]
   ): string;
 
+  decodeFunctionResult(functionFragment: "ADMIN_ROLE", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "DEFAULT_ADMIN_ROLE",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "VERSION", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "deploySite", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "IMPORTER_ROLE",
+    functionFragment: "deploySiteWithNodeIds",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "authorizeEntrypoint",
+    functionFragment: "getAvailableNodes",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "createReservations",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "deleteReservationImpl",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "deleteReservations",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getRegistry",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getReservationCount",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getReservations",
+    functionFragment: "getContracts",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "getRoleAdmin",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "getVersion", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "grantRole", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "isAuthorizedEntrypoint",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "pause", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "paused", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "proxiableUUID",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "removeProjectNodeIdImpl",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "renounceRole",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "revokeEntrypoint",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "revokeRole", data: BytesLike): Result;
@@ -281,13 +222,8 @@ export interface EarthfastReservationsInterface extends Interface {
     functionFragment: "supportsInterface",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "unpause", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "unsafeImportData",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "unsafeSetRegistry",
+    functionFragment: "updateContracts",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "upgradeTo", data: BytesLike): Result;
@@ -327,80 +263,6 @@ export namespace InitializedEvent {
   export type OutputTuple = [version: bigint];
   export interface OutputObject {
     version: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace PausedEvent {
-  export type InputTuple = [account: AddressLike];
-  export type OutputTuple = [account: string];
-  export interface OutputObject {
-    account: string;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace ReservationCreatedEvent {
-  export type InputTuple = [
-    nodeId: BytesLike,
-    operatorId: BytesLike,
-    projectId: BytesLike,
-    lastPrice: BigNumberish,
-    nextPrice: BigNumberish,
-    slot: EarthfastSlotStruct
-  ];
-  export type OutputTuple = [
-    nodeId: string,
-    operatorId: string,
-    projectId: string,
-    lastPrice: bigint,
-    nextPrice: bigint,
-    slot: EarthfastSlotStructOutput
-  ];
-  export interface OutputObject {
-    nodeId: string;
-    operatorId: string;
-    projectId: string;
-    lastPrice: bigint;
-    nextPrice: bigint;
-    slot: EarthfastSlotStructOutput;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace ReservationDeletedEvent {
-  export type InputTuple = [
-    nodeId: BytesLike,
-    operatorId: BytesLike,
-    projectId: BytesLike,
-    lastPrice: BigNumberish,
-    nextPrice: BigNumberish,
-    slot: EarthfastSlotStruct
-  ];
-  export type OutputTuple = [
-    nodeId: string,
-    operatorId: string,
-    projectId: string,
-    lastPrice: bigint,
-    nextPrice: bigint,
-    slot: EarthfastSlotStructOutput
-  ];
-  export interface OutputObject {
-    nodeId: string;
-    operatorId: string;
-    projectId: string;
-    lastPrice: bigint;
-    nextPrice: bigint;
-    slot: EarthfastSlotStructOutput;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -466,11 +328,27 @@ export namespace RoleRevokedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace UnpausedEvent {
-  export type InputTuple = [account: AddressLike];
-  export type OutputTuple = [account: string];
+export namespace SiteDeployedEvent {
+  export type InputTuple = [
+    projectId: BytesLike,
+    owner: AddressLike,
+    escrowAmount: BigNumberish,
+    nodeIds: BytesLike[],
+    slot: EarthfastSlotStruct
+  ];
+  export type OutputTuple = [
+    projectId: string,
+    owner: string,
+    escrowAmount: bigint,
+    nodeIds: string[],
+    slot: EarthfastSlotStructOutput
+  ];
   export interface OutputObject {
-    account: string;
+    projectId: string;
+    owner: string;
+    escrowAmount: bigint;
+    nodeIds: string[];
+    slot: EarthfastSlotStructOutput;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -490,11 +368,11 @@ export namespace UpgradedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface EarthfastReservations extends BaseContract {
-  connect(runner?: ContractRunner | null): EarthfastReservations;
+export interface EarthfastEntrypointV2 extends BaseContract {
+  connect(runner?: ContractRunner | null): EarthfastEntrypointV2;
   waitForDeployment(): Promise<this>;
 
-  interface: EarthfastReservationsInterface;
+  interface: EarthfastEntrypointV2Interface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -533,60 +411,62 @@ export interface EarthfastReservations extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
+
   DEFAULT_ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
 
-  IMPORTER_ROLE: TypedContractMethod<[], [string], "view">;
+  VERSION: TypedContractMethod<[], [string], "view">;
 
-  authorizeEntrypoint: TypedContractMethod<
-    [entrypoint: AddressLike],
-    [void],
+  deploySite: TypedContractMethod<
+    [
+      project: EarthfastCreateProjectDataStruct,
+      fundingWallet: AddressLike,
+      nodesToReserve: BigNumberish,
+      escrowAmount: BigNumberish,
+      slot: EarthfastSlotStruct,
+      deadline: BigNumberish,
+      signature: BytesLike
+    ],
+    [string],
     "nonpayable"
   >;
 
-  createReservations: TypedContractMethod<
+  deploySiteWithNodeIds: TypedContractMethod<
     [
-      projectId: BytesLike,
+      project: EarthfastCreateProjectDataStruct,
+      fundingWallet: AddressLike,
       nodeIds: BytesLike[],
-      maxPrices: BigNumberish[],
-      slot: EarthfastSlotStruct
+      nodePrices: BigNumberish[],
+      escrowAmount: BigNumberish,
+      slot: EarthfastSlotStruct,
+      deadline: BigNumberish,
+      signature: BytesLike
     ],
-    [void],
+    [string],
     "nonpayable"
   >;
 
-  deleteReservationImpl: TypedContractMethod<
-    [
-      allNodes: AddressLike,
-      projects: AddressLike,
-      projectId: BytesLike,
-      nodeId: BytesLike,
-      slot: EarthfastSlotStruct
-    ],
-    [void],
-    "nonpayable"
-  >;
-
-  deleteReservations: TypedContractMethod<
-    [projectId: BytesLike, nodeIds: BytesLike[], slot: EarthfastSlotStruct],
-    [void],
-    "nonpayable"
-  >;
-
-  getRegistry: TypedContractMethod<[], [string], "view">;
-
-  getReservationCount: TypedContractMethod<
-    [projectId: BytesLike],
-    [bigint],
+  getAvailableNodes: TypedContractMethod<
+    [nodesToReserve: BigNumberish, slot: EarthfastSlotStruct],
+    [[string[], bigint[]] & { nodeIds: string[]; nodePrices: bigint[] }],
     "view"
   >;
 
-  getReservations: TypedContractMethod<
-    [projectId: BytesLike, skip: BigNumberish, size: BigNumberish],
-    [EarthfastNodeStructOutput[]],
+  getContracts: TypedContractMethod<
+    [],
+    [
+      [string, string, string] & {
+        nodes: string;
+        projects: string;
+        reservations: string;
+      }
+    ],
     "view"
   >;
 
   getRoleAdmin: TypedContractMethod<[role: BytesLike], [string], "view">;
+
+  getVersion: TypedContractMethod<[], [string], "view">;
 
   grantRole: TypedContractMethod<
     [role: BytesLike, account: AddressLike],
@@ -601,37 +481,20 @@ export interface EarthfastReservations extends BaseContract {
   >;
 
   initialize: TypedContractMethod<
-    [admins: AddressLike[], registry: AddressLike, grantImporterRole: boolean],
+    [
+      admins: AddressLike[],
+      nodes: AddressLike,
+      projects: AddressLike,
+      reservations: AddressLike
+    ],
     [void],
     "nonpayable"
   >;
-
-  isAuthorizedEntrypoint: TypedContractMethod<
-    [entrypoint: AddressLike],
-    [boolean],
-    "view"
-  >;
-
-  pause: TypedContractMethod<[], [void], "nonpayable">;
-
-  paused: TypedContractMethod<[], [boolean], "view">;
 
   proxiableUUID: TypedContractMethod<[], [string], "view">;
 
-  removeProjectNodeIdImpl: TypedContractMethod<
-    [projectId: BytesLike, nodeId: BytesLike],
-    [boolean],
-    "nonpayable"
-  >;
-
   renounceRole: TypedContractMethod<
     [role: BytesLike, account: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-
-  revokeEntrypoint: TypedContractMethod<
-    [entrypoint: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -648,16 +511,8 @@ export interface EarthfastReservations extends BaseContract {
     "view"
   >;
 
-  unpause: TypedContractMethod<[], [void], "nonpayable">;
-
-  unsafeImportData: TypedContractMethod<
-    [nodes: EarthfastNodeStruct[], revokeImporterRole: boolean],
-    [void],
-    "nonpayable"
-  >;
-
-  unsafeSetRegistry: TypedContractMethod<
-    [registry: AddressLike],
+  updateContracts: TypedContractMethod<
+    [nodes: AddressLike, projects: AddressLike, reservations: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -679,62 +534,71 @@ export interface EarthfastReservations extends BaseContract {
   ): T;
 
   getFunction(
+    nameOrSignature: "ADMIN_ROLE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "DEFAULT_ADMIN_ROLE"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "IMPORTER_ROLE"
+    nameOrSignature: "VERSION"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "authorizeEntrypoint"
-  ): TypedContractMethod<[entrypoint: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "createReservations"
+    nameOrSignature: "deploySite"
   ): TypedContractMethod<
     [
-      projectId: BytesLike,
+      project: EarthfastCreateProjectDataStruct,
+      fundingWallet: AddressLike,
+      nodesToReserve: BigNumberish,
+      escrowAmount: BigNumberish,
+      slot: EarthfastSlotStruct,
+      deadline: BigNumberish,
+      signature: BytesLike
+    ],
+    [string],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "deploySiteWithNodeIds"
+  ): TypedContractMethod<
+    [
+      project: EarthfastCreateProjectDataStruct,
+      fundingWallet: AddressLike,
       nodeIds: BytesLike[],
-      maxPrices: BigNumberish[],
-      slot: EarthfastSlotStruct
+      nodePrices: BigNumberish[],
+      escrowAmount: BigNumberish,
+      slot: EarthfastSlotStruct,
+      deadline: BigNumberish,
+      signature: BytesLike
     ],
-    [void],
+    [string],
     "nonpayable"
   >;
   getFunction(
-    nameOrSignature: "deleteReservationImpl"
+    nameOrSignature: "getAvailableNodes"
   ): TypedContractMethod<
+    [nodesToReserve: BigNumberish, slot: EarthfastSlotStruct],
+    [[string[], bigint[]] & { nodeIds: string[]; nodePrices: bigint[] }],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getContracts"
+  ): TypedContractMethod<
+    [],
     [
-      allNodes: AddressLike,
-      projects: AddressLike,
-      projectId: BytesLike,
-      nodeId: BytesLike,
-      slot: EarthfastSlotStruct
+      [string, string, string] & {
+        nodes: string;
+        projects: string;
+        reservations: string;
+      }
     ],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "deleteReservations"
-  ): TypedContractMethod<
-    [projectId: BytesLike, nodeIds: BytesLike[], slot: EarthfastSlotStruct],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "getRegistry"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "getReservationCount"
-  ): TypedContractMethod<[projectId: BytesLike], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "getReservations"
-  ): TypedContractMethod<
-    [projectId: BytesLike, skip: BigNumberish, size: BigNumberish],
-    [EarthfastNodeStructOutput[]],
     "view"
   >;
   getFunction(
     nameOrSignature: "getRoleAdmin"
   ): TypedContractMethod<[role: BytesLike], [string], "view">;
+  getFunction(
+    nameOrSignature: "getVersion"
+  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "grantRole"
   ): TypedContractMethod<
@@ -752,29 +616,18 @@ export interface EarthfastReservations extends BaseContract {
   getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<
-    [admins: AddressLike[], registry: AddressLike, grantImporterRole: boolean],
+    [
+      admins: AddressLike[],
+      nodes: AddressLike,
+      projects: AddressLike,
+      reservations: AddressLike
+    ],
     [void],
     "nonpayable"
   >;
   getFunction(
-    nameOrSignature: "isAuthorizedEntrypoint"
-  ): TypedContractMethod<[entrypoint: AddressLike], [boolean], "view">;
-  getFunction(
-    nameOrSignature: "pause"
-  ): TypedContractMethod<[], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "paused"
-  ): TypedContractMethod<[], [boolean], "view">;
-  getFunction(
     nameOrSignature: "proxiableUUID"
   ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "removeProjectNodeIdImpl"
-  ): TypedContractMethod<
-    [projectId: BytesLike, nodeId: BytesLike],
-    [boolean],
-    "nonpayable"
-  >;
   getFunction(
     nameOrSignature: "renounceRole"
   ): TypedContractMethod<
@@ -782,9 +635,6 @@ export interface EarthfastReservations extends BaseContract {
     [void],
     "nonpayable"
   >;
-  getFunction(
-    nameOrSignature: "revokeEntrypoint"
-  ): TypedContractMethod<[entrypoint: AddressLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "revokeRole"
   ): TypedContractMethod<
@@ -796,18 +646,12 @@ export interface EarthfastReservations extends BaseContract {
     nameOrSignature: "supportsInterface"
   ): TypedContractMethod<[interfaceId: BytesLike], [boolean], "view">;
   getFunction(
-    nameOrSignature: "unpause"
-  ): TypedContractMethod<[], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "unsafeImportData"
+    nameOrSignature: "updateContracts"
   ): TypedContractMethod<
-    [nodes: EarthfastNodeStruct[], revokeImporterRole: boolean],
+    [nodes: AddressLike, projects: AddressLike, reservations: AddressLike],
     [void],
     "nonpayable"
   >;
-  getFunction(
-    nameOrSignature: "unsafeSetRegistry"
-  ): TypedContractMethod<[registry: AddressLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "upgradeTo"
   ): TypedContractMethod<
@@ -845,27 +689,6 @@ export interface EarthfastReservations extends BaseContract {
     InitializedEvent.OutputObject
   >;
   getEvent(
-    key: "Paused"
-  ): TypedContractEvent<
-    PausedEvent.InputTuple,
-    PausedEvent.OutputTuple,
-    PausedEvent.OutputObject
-  >;
-  getEvent(
-    key: "ReservationCreated"
-  ): TypedContractEvent<
-    ReservationCreatedEvent.InputTuple,
-    ReservationCreatedEvent.OutputTuple,
-    ReservationCreatedEvent.OutputObject
-  >;
-  getEvent(
-    key: "ReservationDeleted"
-  ): TypedContractEvent<
-    ReservationDeletedEvent.InputTuple,
-    ReservationDeletedEvent.OutputTuple,
-    ReservationDeletedEvent.OutputObject
-  >;
-  getEvent(
     key: "RoleAdminChanged"
   ): TypedContractEvent<
     RoleAdminChangedEvent.InputTuple,
@@ -887,11 +710,11 @@ export interface EarthfastReservations extends BaseContract {
     RoleRevokedEvent.OutputObject
   >;
   getEvent(
-    key: "Unpaused"
+    key: "SiteDeployed"
   ): TypedContractEvent<
-    UnpausedEvent.InputTuple,
-    UnpausedEvent.OutputTuple,
-    UnpausedEvent.OutputObject
+    SiteDeployedEvent.InputTuple,
+    SiteDeployedEvent.OutputTuple,
+    SiteDeployedEvent.OutputObject
   >;
   getEvent(
     key: "Upgraded"
@@ -935,39 +758,6 @@ export interface EarthfastReservations extends BaseContract {
       InitializedEvent.OutputObject
     >;
 
-    "Paused(address)": TypedContractEvent<
-      PausedEvent.InputTuple,
-      PausedEvent.OutputTuple,
-      PausedEvent.OutputObject
-    >;
-    Paused: TypedContractEvent<
-      PausedEvent.InputTuple,
-      PausedEvent.OutputTuple,
-      PausedEvent.OutputObject
-    >;
-
-    "ReservationCreated(bytes32,bytes32,bytes32,uint256,uint256,tuple)": TypedContractEvent<
-      ReservationCreatedEvent.InputTuple,
-      ReservationCreatedEvent.OutputTuple,
-      ReservationCreatedEvent.OutputObject
-    >;
-    ReservationCreated: TypedContractEvent<
-      ReservationCreatedEvent.InputTuple,
-      ReservationCreatedEvent.OutputTuple,
-      ReservationCreatedEvent.OutputObject
-    >;
-
-    "ReservationDeleted(bytes32,bytes32,bytes32,uint256,uint256,tuple)": TypedContractEvent<
-      ReservationDeletedEvent.InputTuple,
-      ReservationDeletedEvent.OutputTuple,
-      ReservationDeletedEvent.OutputObject
-    >;
-    ReservationDeleted: TypedContractEvent<
-      ReservationDeletedEvent.InputTuple,
-      ReservationDeletedEvent.OutputTuple,
-      ReservationDeletedEvent.OutputObject
-    >;
-
     "RoleAdminChanged(bytes32,bytes32,bytes32)": TypedContractEvent<
       RoleAdminChangedEvent.InputTuple,
       RoleAdminChangedEvent.OutputTuple,
@@ -1001,15 +791,15 @@ export interface EarthfastReservations extends BaseContract {
       RoleRevokedEvent.OutputObject
     >;
 
-    "Unpaused(address)": TypedContractEvent<
-      UnpausedEvent.InputTuple,
-      UnpausedEvent.OutputTuple,
-      UnpausedEvent.OutputObject
+    "SiteDeployed(bytes32,address,uint256,bytes32[],tuple)": TypedContractEvent<
+      SiteDeployedEvent.InputTuple,
+      SiteDeployedEvent.OutputTuple,
+      SiteDeployedEvent.OutputObject
     >;
-    Unpaused: TypedContractEvent<
-      UnpausedEvent.InputTuple,
-      UnpausedEvent.OutputTuple,
-      UnpausedEvent.OutputObject
+    SiteDeployed: TypedContractEvent<
+      SiteDeployedEvent.InputTuple,
+      SiteDeployedEvent.OutputTuple,
+      SiteDeployedEvent.OutputObject
     >;
 
     "Upgraded(address)": TypedContractEvent<

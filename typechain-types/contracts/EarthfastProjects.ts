@@ -158,6 +158,7 @@ export interface EarthfastProjectsInterface extends Interface {
   encodeFunctionData(
     functionFragment: "depositProjectEscrow",
     values: [
+      AddressLike,
       BytesLike,
       BigNumberish,
       BigNumberish,
@@ -751,6 +752,7 @@ export interface EarthfastProjects extends BaseContract {
 
   depositProjectEscrow: TypedContractMethod<
     [
+      projectFunder: AddressLike,
       projectId: BytesLike,
       amount: BigNumberish,
       deadline: BigNumberish,
@@ -925,6 +927,7 @@ export interface EarthfastProjects extends BaseContract {
     nameOrSignature: "depositProjectEscrow"
   ): TypedContractMethod<
     [
+      projectFunder: AddressLike,
       projectId: BytesLike,
       amount: BigNumberish,
       deadline: BigNumberish,
