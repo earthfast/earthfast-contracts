@@ -3,10 +3,6 @@ import { Interface } from "ethers";
 import { task } from "hardhat/config";
 import { signers } from "../lib/util";
 
-// npx hardhat upgradeWithSafe --network sepolia --proxy 0x0000000000000000000000000000000000000000 --name EarthfastNodes --safe 0x0000000000000000000000000000000000000000 --contract EarthfastNodesV2
-// npx hardhat upgradeWithSafe 0x496e5Ba816f4C593c3b31fa78279dfB57DAaad26 0x76824f74de8c1e4985d73a9ea475b7e01432cdf5 EarthfastReservations
-
-// TODO: potentially retrieve safe address from the guardian signer
 // Creates a Safe transaction to upgrade a contract that can be submitted to a Gnosis Safe UI for execution
 task("upgradeWithSafe")
   .addFlag("ask", "Ask for confirmations (always on for production)")
