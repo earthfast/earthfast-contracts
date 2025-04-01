@@ -62,6 +62,7 @@ export interface EarthfastEntrypointV2Interface extends Interface {
       | "DEFAULT_ADMIN_ROLE"
       | "VERSION"
       | "deploySite"
+      | "deploySiteWithApproval"
       | "deploySiteWithNodeIds"
       | "getAvailableNodes"
       | "getContracts"
@@ -110,6 +111,18 @@ export interface EarthfastEntrypointV2Interface extends Interface {
       EarthfastSlotStruct,
       BigNumberish,
       BytesLike
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "deploySiteWithApproval",
+    values: [
+      EarthfastCreateProjectDataStruct,
+      AddressLike,
+      BytesLike[],
+      BigNumberish[],
+      BigNumberish,
+      BigNumberish,
+      EarthfastSlotStruct
     ]
   ): string;
   encodeFunctionData(
@@ -189,6 +202,10 @@ export interface EarthfastEntrypointV2Interface extends Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "VERSION", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "deploySite", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "deploySiteWithApproval",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "deploySiteWithNodeIds",
     data: BytesLike
@@ -431,6 +448,20 @@ export interface EarthfastEntrypointV2 extends BaseContract {
     "nonpayable"
   >;
 
+  deploySiteWithApproval: TypedContractMethod<
+    [
+      project: EarthfastCreateProjectDataStruct,
+      fundingWallet: AddressLike,
+      nodeIds: BytesLike[],
+      nodePrices: BigNumberish[],
+      nodesToReserve: BigNumberish,
+      escrowAmount: BigNumberish,
+      slot: EarthfastSlotStruct
+    ],
+    [string],
+    "nonpayable"
+  >;
+
   deploySiteWithNodeIds: TypedContractMethod<
     [
       project: EarthfastCreateProjectDataStruct,
@@ -553,6 +584,21 @@ export interface EarthfastEntrypointV2 extends BaseContract {
       slot: EarthfastSlotStruct,
       deadline: BigNumberish,
       signature: BytesLike
+    ],
+    [string],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "deploySiteWithApproval"
+  ): TypedContractMethod<
+    [
+      project: EarthfastCreateProjectDataStruct,
+      fundingWallet: AddressLike,
+      nodeIds: BytesLike[],
+      nodePrices: BigNumberish[],
+      nodesToReserve: BigNumberish,
+      escrowAmount: BigNumberish,
+      slot: EarthfastSlotStruct
     ],
     [string],
     "nonpayable"
