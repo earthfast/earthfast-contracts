@@ -175,6 +175,44 @@ contract EarthfastEntrypoint is
     );
   }
 
+  function deploySiteWithApproval(
+    EarthfastCreateProjectData memory project,
+    address fundingWallet,
+    bytes32[] memory nodeIds,
+    uint256[] memory nodePrices,    
+    uint256 nodesToReserve,
+    uint256 escrowAmount,
+    EarthfastSlot calldata slot
+  ) public nonReentrant returns (bytes32 projectId) {
+    // Create project
+    projectId = _projects.createProject(project);
+
+    // Check that the escrow amount is greater than 0
+    require(escrowAmount > 0, "Escrow amount must be greater than 0");
+
+    // Check that the nodeIds and nodePrices arrays are the same length
+    require(nodeIds.length == nodePrices.length, "Length mismatch");
+
+    // Call depositProjectEscrow directly
+    _projects.depositProjectEscrow(fundingWallet, projectId, escrowAmount, 0, 0, 0, 0);
+
+    if (nodeIds.length == 0 || nodePrices.length == 0) {
+      // Get available nodes for reservation
+      (nodeIds, nodePrices) = getAvailableNodes(nodesToReserve, slot);
+    }
+
+    // Call createReservations directly
+    _reservations.createReservations(projectId, nodeIds, nodePrices, slot);
+
+    emit SiteDeployed(
+      projectId,
+      project.owner,
+      escrowAmount,
+      nodeIds,
+      slot
+    );
+  }
+
   // TODO: potentially optimize by returning the cheapest set of nodes
   // TODO: Potentially optimize by returning a list of available nodes if full number not available
   /// @notice Returns a list of available nodes for reservation

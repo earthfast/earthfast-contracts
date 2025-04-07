@@ -61,6 +61,7 @@ export interface EarthfastEntrypointInterface extends Interface {
       | "ADMIN_ROLE"
       | "DEFAULT_ADMIN_ROLE"
       | "deploySite"
+      | "deploySiteWithApproval"
       | "deploySiteWithNodeIds"
       | "getAvailableNodes"
       | "getContracts"
@@ -107,6 +108,18 @@ export interface EarthfastEntrypointInterface extends Interface {
       EarthfastSlotStruct,
       BigNumberish,
       BytesLike
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "deploySiteWithApproval",
+    values: [
+      EarthfastCreateProjectDataStruct,
+      AddressLike,
+      BytesLike[],
+      BigNumberish[],
+      BigNumberish,
+      BigNumberish,
+      EarthfastSlotStruct
     ]
   ): string;
   encodeFunctionData(
@@ -181,6 +194,10 @@ export interface EarthfastEntrypointInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "deploySite", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "deploySiteWithApproval",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "deploySiteWithNodeIds",
     data: BytesLike
@@ -420,6 +437,20 @@ export interface EarthfastEntrypoint extends BaseContract {
     "nonpayable"
   >;
 
+  deploySiteWithApproval: TypedContractMethod<
+    [
+      project: EarthfastCreateProjectDataStruct,
+      fundingWallet: AddressLike,
+      nodeIds: BytesLike[],
+      nodePrices: BigNumberish[],
+      nodesToReserve: BigNumberish,
+      escrowAmount: BigNumberish,
+      slot: EarthfastSlotStruct
+    ],
+    [string],
+    "nonpayable"
+  >;
+
   deploySiteWithNodeIds: TypedContractMethod<
     [
       project: EarthfastCreateProjectDataStruct,
@@ -537,6 +568,21 @@ export interface EarthfastEntrypoint extends BaseContract {
       slot: EarthfastSlotStruct,
       deadline: BigNumberish,
       signature: BytesLike
+    ],
+    [string],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "deploySiteWithApproval"
+  ): TypedContractMethod<
+    [
+      project: EarthfastCreateProjectDataStruct,
+      fundingWallet: AddressLike,
+      nodeIds: BytesLike[],
+      nodePrices: BigNumberish[],
+      nodesToReserve: BigNumberish,
+      escrowAmount: BigNumberish,
+      slot: EarthfastSlotStruct
     ],
     [string],
     "nonpayable"

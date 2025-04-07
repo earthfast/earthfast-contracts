@@ -857,4 +857,151 @@ describe("EarthfastEntrypoint", function () {
     const slotInvalid: EarthfastSlot = { last: false, next: false };
     await expect(entrypoint.getAvailableNodes(1, slotInvalid)).to.be.revertedWith("Invalid slot configuration");
   });
+
+  it("Should properly handle all branches of deploySiteWithApproval", async function () {
+    // Create operator
+    const createOperator = await expectReceipt(operators.connect(admin).createOperator(operator.address, "o14", "e14"));
+    const [operatorId] = await expectEvent(createOperator, operators, "OperatorCreated");
+    const operatorsPermit = await approve(hre, token, admin.address, operatorsAddress, parseTokens("100"));
+    expect(await operators.connect(admin).depositOperatorStake(operatorId, parseTokens("100"), ...operatorsPermit)).to.be.ok;
+
+    // Create multiple nodes with different prices
+    const price1 = parseUSDC("1");
+    const price2 = parseUSDC("2");
+    const price3 = parseUSDC("3");
+
+    // Create three nodes: one disabled, two available
+    const node1: EarthfastCreateNodeDataStruct = { disabled: true, host: "h1", region: "r1", price: price1 }; // Disabled node
+    const node2: EarthfastCreateNodeDataStruct = { disabled: false, host: "h2", region: "r2", price: price2 }; // Available node
+    const node3: EarthfastCreateNodeDataStruct = { disabled: false, host: "h3", region: "r3", price: price3 }; // Available node
+
+    // Create nodes one by one to get their IDs
+    const createNode1 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, [node1]));
+    await expectEvent(createNode1, nodes, "NodeCreated");
+
+    const createNode2 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, [node2]));
+    const [nodeId2] = await expectEvent(createNode2, nodes, "NodeCreated");
+
+    const createNode3 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, [node3]));
+    const [nodeId3] = await expectEvent(createNode3, nodes, "NodeCreated");
+
+    // Create project data
+    const projectData: EarthfastCreateProjectDataStruct = {
+      owner: project.address,
+      name: "Test Project",
+      email: "test@test.com",
+      content: "Test Content",
+      checksum: ZeroHash,
+      metadata: "Test Metadata",
+    };
+
+    const escrowAmount = parseUSDC("100");
+    const slotLast: EarthfastSlot = { last: true, next: false };
+
+    // Mint USDC to the project account
+    await usdc.connect(admin).transfer(project.address, escrowAmount);
+
+    // Approve the Projects contract to spend USDC for the project
+    await usdc.connect(project).approve(projectsAddress, escrowAmount);
+
+    // Test 1: Deploy with specific node IDs
+    const tx1 = await expectReceipt(entrypoint.connect(project).deploySiteWithApproval(projectData, project.address, [nodeId2, nodeId3], [price2, price3], 2, escrowAmount, slotLast));
+
+    // Verify SiteDeployed event for first deployment
+    const [siteDeployedProjectId1, siteDeployedOwner1, siteDeployedEscrow1, siteDeployedNodeIds1, siteDeployedSlot1] = await expectEvent(tx1, entrypoint, "SiteDeployed");
+    expect(siteDeployedProjectId1).to.not.equal(ZeroHash);
+    expect(siteDeployedOwner1).to.equal(project.address);
+    expect(siteDeployedEscrow1).to.equal(escrowAmount);
+    expect(siteDeployedNodeIds1).to.deep.equal([nodeId2, nodeId3]);
+    expect(siteDeployedSlot1[0]).to.equal(slotLast.last);
+    expect(siteDeployedSlot1[1]).to.equal(slotLast.next);
+
+    // Verify nodes are assigned to the project
+    const node2Data = await nodes.getNode(nodeId2);
+    const node3Data = await nodes.getNode(nodeId3);
+    expect(node2Data.projectIds[0]).to.equal(siteDeployedProjectId1);
+    expect(node3Data.projectIds[0]).to.equal(siteDeployedProjectId1);
+
+    // Create an additional available node for the second deployment
+    const node4: EarthfastCreateNodeDataStruct = { disabled: false, host: "h4", region: "r4", price: parseUSDC("4") };
+    const createNode4 = await expectReceipt(nodes.connect(operator).createNodes(operatorId, [node4]));
+    await expectEvent(createNode4, nodes, "NodeCreated");
+
+    // Mint additional USDC to the project account
+    await usdc.connect(admin).transfer(project.address, escrowAmount);
+
+    // Approve the Projects contract to spend USDC for the project
+    await usdc.connect(project).approve(projectsAddress, escrowAmount);
+
+    // Test 2: Deploy with empty node IDs (should use getAvailableNodes)
+    const tx2 = await expectReceipt(
+      entrypoint.connect(project).deploySiteWithApproval(
+        projectData,
+        project.address,
+        [], // Empty node IDs
+        [], // Empty prices
+        1, // Request one node
+        escrowAmount,
+        slotLast
+      )
+    );
+
+    // Verify SiteDeployed event for second deployment
+    const [siteDeployedProjectId2, siteDeployedOwner2, siteDeployedEscrow2, siteDeployedNodeIds2, siteDeployedSlot2] = await expectEvent(tx2, entrypoint, "SiteDeployed");
+    expect(siteDeployedProjectId2).to.not.equal(siteDeployedProjectId1); // Should be a different project
+    expect(siteDeployedOwner2).to.equal(project.address);
+    expect(siteDeployedEscrow2).to.equal(escrowAmount);
+    expect(siteDeployedNodeIds2.length).to.equal(1);
+    expect(siteDeployedSlot2[0]).to.equal(slotLast.last);
+    expect(siteDeployedSlot2[1]).to.equal(slotLast.next);
+
+    // Test 3: Deploy with mismatched node IDs and prices arrays
+    await expect(
+      entrypoint.connect(project).deploySiteWithApproval(
+        projectData,
+        project.address,
+        [nodeId2], // One node ID
+        [price2, price3], // Two prices
+        1,
+        escrowAmount,
+        slotLast
+      )
+    ).to.be.revertedWith("Length mismatch");
+
+    // Test 4: Deploy with zero escrow amount
+    await expect(
+      entrypoint.connect(project).deploySiteWithApproval(
+        projectData,
+        project.address,
+        [nodeId2],
+        [price2],
+        1,
+        0, // Zero escrow
+        slotLast
+      )
+    ).to.be.revertedWith("Escrow amount must be greater than 0");
+
+    // Mint additional USDC to the project account
+    await usdc.connect(admin).transfer(project.address, escrowAmount);
+
+    // Approve the Projects contract to spend USDC for the project
+    await usdc.connect(project).approve(projectsAddress, escrowAmount);
+
+    // Test 5: Deploy with invalid slot configuration
+    const slotInvalid: EarthfastSlot = { last: false, next: false };
+    await expect(entrypoint.connect(project).deploySiteWithApproval(projectData, project.address, [], [], 1, escrowAmount, slotInvalid)).to.be.revertedWith("Invalid slot configuration");
+
+    // Test 6: Deploy with more nodes requested than available
+    await expect(
+      entrypoint.connect(project).deploySiteWithApproval(
+        projectData,
+        project.address,
+        [], // Empty node IDs
+        [], // Empty prices
+        3, // Request more nodes than available
+        escrowAmount,
+        slotLast
+      )
+    ).to.be.revertedWith("Not enough available nodes");
+  });
 });
